@@ -1,8 +1,8 @@
 import { openai } from "../lib/openai.js";
-import { BANNED_AI_WORDS, MAX_GENERATION_ATTEMPTS } from "@superrbrain/shared";
+import { BANNED_AI_WORDS, MAX_GENERATION_ATTEMPTS } from "@covable/shared";
 import type { BrandVoiceProfile } from "./brand-voice.service.js";
 import type { PlatformAnalysis } from "./platform-analyzer.service.js";
-import type { CitationGap, GeneratedContent } from "@superrbrain/shared";
+import type { CitationGap, GeneratedContent } from "@covable/shared";
 
 interface ContentGeneratorInput {
   gap: CitationGap;

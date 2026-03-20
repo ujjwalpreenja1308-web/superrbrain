@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorCard } from "@/components/ErrorCard";
 import { ExternalLink, Loader2, Zap, MessageSquare } from "lucide-react";
-import type { GapQueueItem } from "@superrbrain/shared";
+import type { GapQueueItem } from "@covable/shared";
 
 function statusBadgeVariant(status: string | null): "default" | "secondary" | "outline" | "destructive" {
   if (!status) return "outline";

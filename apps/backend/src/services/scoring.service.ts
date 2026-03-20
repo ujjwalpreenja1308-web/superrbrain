@@ -1,4 +1,4 @@
-import type { VisibilityReport } from "@superrbrain/shared";
+import type { VisibilityReport } from "@covable/shared";
 import { supabaseAdmin } from "../lib/supabase.js";
 
 export async function computeReport(

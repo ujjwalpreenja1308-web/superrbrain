@@ -4,7 +4,7 @@ import { analyzePlatform } from "../services/platform-analyzer.service.js";
 import { getBrandVoice } from "../services/brand-voice.service.js";
 import { runContentPipeline } from "../services/content-generator.service.js";
 import { getPromptTextForGap } from "../services/gap-query.service.js";
-import type { CitationGap } from "@superrbrain/shared";
+import type { CitationGap } from "@covable/shared";
 
 export const generateContent = task({
   id: "generate-content",

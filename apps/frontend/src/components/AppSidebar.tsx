@@ -72,9 +72,9 @@ export function AppSidebar() {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild tooltip="Superrbrain">
+            <SidebarMenuButton size="lg" asChild tooltip="Covable">
               <NavLink to="/dashboard">
-                <img src="/logo.svg" alt="Superrbrain" className="h-5 w-auto" />
+                <img src="/logo.svg" alt="Covable" className="h-5 w-auto" />
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>

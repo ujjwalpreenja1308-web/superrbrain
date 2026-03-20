@@ -1,4 +1,4 @@
-import type { SourceType } from "@superrbrain/shared";
+import type { SourceType } from "@covable/shared";
 
 export interface CitationAnalysis {
   url: string;

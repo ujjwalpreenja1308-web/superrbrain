@@ -17,6 +17,9 @@ importers:
 
   apps/backend:
     dependencies:
+      '@covable/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@hono/node-server':
         specifier: ^1.13.0
         version: 1.19.11(hono@4.12.8)
@@ -29,9 +32,6 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.47.0
         version: 2.99.2
-      '@superrbrain/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@trigger.dev/sdk':
         specifier: 4.4.3
         version: 4.4.3(zod@3.25.76)
@@ -69,6 +69,9 @@ importers:
 
   apps/frontend:
     dependencies:
+      '@covable/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@radix-ui/react-dialog':
         specifier: ^1.1.15
         version: 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -105,9 +108,6 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.47.0
         version: 2.99.2
-      '@superrbrain/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@tanstack/react-query':
         specifier: ^5.62.0
         version: 5.90.21(react@19.2.4)

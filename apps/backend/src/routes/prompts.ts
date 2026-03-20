@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { updatePromptsSchema } from "@superrbrain/shared";
+import { updatePromptsSchema } from "@covable/shared";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { AppError } from "../middleware/error.js";
 import { generatePrompts } from "../services/prompt-generator.service.js";

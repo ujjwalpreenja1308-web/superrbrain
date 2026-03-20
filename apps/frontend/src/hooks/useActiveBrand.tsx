@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { useBrands } from "@/hooks/useBrand";
-import type { Brand } from "@superrbrain/shared";
+import type { Brand } from "@covable/shared";
 
-const STORAGE_KEY = "superrbrain_brand_id";
+const STORAGE_KEY = "covable_brand_id";
 
 interface ActiveBrandContextValue {
   activeBrand: Brand | undefined;

@@ -1,7 +1,7 @@
 import { openai } from "../lib/openai.js";
 import { scrapeUrl } from "./scraper.service.js";
 import { supabaseAdmin } from "../lib/supabase.js";
-import type { PlatformProfile } from "@superrbrain/shared";
+import type { PlatformProfile } from "@covable/shared";
 
 export interface PlatformAnalysis {
   subreddit: string | null;

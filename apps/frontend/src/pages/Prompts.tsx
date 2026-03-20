@@ -19,7 +19,7 @@ import {
   Globe,
   X,
 } from "lucide-react";
-import type { Prompt } from "@superrbrain/shared";
+import type { Prompt } from "@covable/shared";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

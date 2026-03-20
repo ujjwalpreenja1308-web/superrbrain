@@ -3,7 +3,7 @@ import { supabaseAdmin } from "../lib/supabase.js";
 import { firePrompt } from "../services/ai-engine.service.js";
 import { enrichCitation, extractBrandsFromResponse } from "../services/citation.service.js";
 import { computeReport } from "../services/scoring.service.js";
-import { AI_ENGINES } from "@superrbrain/shared";
+import { AI_ENGINES } from "@covable/shared";
 
 export const runMonitoring = task({
   id: "run-monitoring",

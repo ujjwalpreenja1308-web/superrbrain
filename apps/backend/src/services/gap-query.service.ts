@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "../lib/supabase.js";
-import type { GapQueueItem } from "@superrbrain/shared";
+import type { GapQueueItem } from "@covable/shared";
 
 export async function getPromptTextForGap(gapId: string): Promise<string | null> {
   // Traverse: citation_gaps → source_url → citations → ai_response_id → ai_responses → prompt_id → prompts

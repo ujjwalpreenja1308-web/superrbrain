@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { createBrandSchema } from "@superrbrain/shared";
+import { createBrandSchema } from "@covable/shared";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { AppError } from "../middleware/error.js";
 import { tasks } from "@trigger.dev/sdk/v3";

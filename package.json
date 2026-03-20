@@ -1,10 +1,10 @@
 {
-  "name": "superrbrain",
+  "name": "covable",
   "private": true,
   "scripts": {
-    "dev:backend": "pnpm --filter @superrbrain/backend dev",
-    "dev:frontend": "pnpm --filter @superrbrain/frontend dev",
-    "dev:landing": "pnpm --filter @superrbrain/landing dev",
+    "dev:backend": "pnpm --filter @covable/backend dev",
+    "dev:frontend": "pnpm --filter @covable/frontend dev",
+    "dev:landing": "pnpm --filter @covable/landing dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck"
   },

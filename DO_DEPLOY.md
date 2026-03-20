@@ -82,9 +82,9 @@ NODE_OPTIONS=--max-old-space-size=1024
 
 ```bash
 npm install -g pm2
-cd /srv/superrbrain/apps/backend
+cd /srv/covable/apps/backend
 pnpm build
-pm2 start dist/index.js --name superrbrain-api \
+pm2 start dist/index.js --name covable-api \
   --max-memory-restart 1500M \
   --node-args="--max-old-space-size=1024"
 pm2 save
@@ -99,7 +99,7 @@ pm2 startup
 │     ~300 MB baseline + ~80 MB per active tab
 │     JS heap capped at 512 MB
 │
-└── superrbrain-api (Node/Hono)
+└── covable-api (Node/Hono)
       ~200 MB idle, capped at 1500 MB before PM2 restarts
       │
       └── getBrowser() — singleton, reconnects on CDP disconnect

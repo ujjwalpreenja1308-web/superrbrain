@@ -1,6 +1,6 @@
 import { openai, perplexity } from "../lib/openai.js";
 import { scrapeChatGPT } from "./chatgpt-scraper.service.js";
-import type { AiEngine } from "@superrbrain/shared";
+import type { AiEngine } from "@covable/shared";
 
 export interface AiQueryResult {
   engine: AiEngine;

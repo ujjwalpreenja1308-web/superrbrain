@@ -45,7 +45,7 @@ export function Onboarding() {
     e.preventDefault();
     try {
       const result = await createBrand.mutateAsync({ url: normalizeUrl(url), country: country || undefined, city: city || undefined });
-      localStorage.setItem("superrbrain_brand_id", result.id);
+      localStorage.setItem("covable_brand_id", result.id);
       setBrandId(result.id);
       setStep("analyzing");
     } catch {

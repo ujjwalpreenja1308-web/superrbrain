@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Zap, ExternalLink } from "lucide-react";
-import type { CitationGap } from "@superrbrain/shared";
+import type { CitationGap } from "@covable/shared";
 
 interface TopOpportunitiesProps {
   gaps: CitationGap[];

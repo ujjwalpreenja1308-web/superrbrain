@@ -36,7 +36,7 @@ export function Login() {
       <Card className="w-full max-w-md">
         <CardHeader className="items-center text-center">
           <Activity className="h-10 w-10 text-primary mb-2" />
-          <CardTitle className="text-2xl">Superrbrain</CardTitle>
+          <CardTitle className="text-2xl">Covable</CardTitle>
           <p className="text-sm text-muted-foreground">
             AI Citation & Visibility Monitoring
           </p>

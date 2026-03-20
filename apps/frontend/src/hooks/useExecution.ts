@@ -6,7 +6,7 @@ import type {
   ExecutionJob,
   GeneratedContent,
   GapOutcome,
-} from "@superrbrain/shared";
+} from "@covable/shared";
 
 interface JobWithContent extends ExecutionJob {
   content: GeneratedContent | null;

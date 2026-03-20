@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import type { Brand, Prompt } from "@superrbrain/shared";
+import type { Brand, Prompt } from "@covable/shared";
 
 export function useBrands() {
   return useQuery({

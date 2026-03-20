@@ -3,7 +3,7 @@ import { tasks } from "@trigger.dev/sdk/v3";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { AppError } from "../middleware/error.js";
 import { getGapQueue } from "../services/gap-query.service.js";
-import { startExecutionSchema, updateContentSchema, deployContentSchema } from "@superrbrain/shared";
+import { startExecutionSchema, updateContentSchema, deployContentSchema } from "@covable/shared";
 import type { AppVariables } from "../types.js";
 
 const app = new Hono<{ Variables: AppVariables }>();

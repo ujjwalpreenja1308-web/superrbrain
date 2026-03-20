@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import type { Citation, CitationGap } from "@superrbrain/shared";
+import type { Citation, CitationGap } from "@covable/shared";
 
 interface EngineBreakdown {
   engine: string;

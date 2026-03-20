@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink } from "lucide-react";
-import type { Citation } from "@superrbrain/shared";
+import type { Citation } from "@covable/shared";
 
 interface CitationMapProps {
   citations: (Citation & { frequency_score: number })[];

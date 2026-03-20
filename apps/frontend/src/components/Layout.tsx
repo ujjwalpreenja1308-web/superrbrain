@@ -14,7 +14,7 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
               <Activity className="h-6 w-6 text-primary" />
-              <span className="text-lg font-bold">Superrbrain</span>
+              <span className="text-lg font-bold">Covable</span>
             </div>
             <nav className="flex items-center gap-4">
               <NavLink

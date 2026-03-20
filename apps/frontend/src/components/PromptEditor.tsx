@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Check, X } from "lucide-react";
-import type { Prompt } from "@superrbrain/shared";
+import type { Prompt } from "@covable/shared";
 
 interface PromptEditorProps {
   prompts: Prompt[];
