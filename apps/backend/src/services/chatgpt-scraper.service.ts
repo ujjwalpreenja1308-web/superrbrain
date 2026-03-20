@@ -159,13 +159,27 @@ export async function getBrowser(): Promise<{ browser: Browser; context: Browser
         _quotaMap.clear();
       });
 
-      // Reuse existing context (CDP) or create fresh one
-      const contexts = _browser.contexts();
-      _context = contexts[0] ?? await _browser.newContext({
-        // Conservative viewport to reduce memory
+      const proxyServer = process.env.PROXY_SERVER;
+      const proxyConfig = proxyServer
+        ? {
+            server: proxyServer,
+            username: process.env.PROXY_USERNAME,
+            password: process.env.PROXY_PASSWORD,
+          }
+        : undefined;
+
+      if (proxyConfig) {
+        console.log(`[ChatGPT] Using proxy: ${proxyConfig.server}`);
+      }
+
+      // Always create a fresh context so proxy + UA settings are applied cleanly
+      // (reusing contexts[0] from CDP would skip proxy)
+      _context = await _browser.newContext({
         viewport: { width: 1280, height: 800 },
-        // Block unnecessary resources to reduce memory + bandwidth
         serviceWorkers: "block",
+        userAgent:
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        ...(proxyConfig && { proxy: proxyConfig }),
       });
 
       console.log("[ChatGPT] Browser ready");
@@ -233,6 +247,9 @@ async function scrapeOneTab(
       waitUntil: "domcontentloaded",
       timeout: NAV_TIMEOUT,
     });
+
+    // Dismiss cookie banner if present (blocks interaction on first visit)
+    await page.locator('button:has-text("Accept all")').click({ timeout: 5_000 }).catch(() => {});
 
     await page.waitForSelector('div#prompt-textarea[contenteditable="true"]', {
       timeout: EDITOR_TIMEOUT,
