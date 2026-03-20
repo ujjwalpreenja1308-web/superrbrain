@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Superrbrain - AI Citation Intelligence</title>
+  <meta name="description" content="Every conversation someone has with ChatGPT about your category is sending them to a competitor. Superrbrain shows you exactly where and helps you close the gap." />
+  <meta property="og:title" content="Superrbrain - AI Citation Intelligence" />
+  <meta property="og:description" content="Every conversation someone has with ChatGPT about your category is sending them to a competitor. Superrbrain shows you exactly where and helps you close the gap." />
+  <meta property="og:type" content="website" />
+  <!-- Preload critical fonts -->
+  <link rel="preload" as="font" href="/PPEditorialNew-Ultralight.woff" type="font/woff" crossorigin />
+  <link rel="preload" as="font" href="/SFPRODISPLAYREGULAR.woff" type="font/woff" crossorigin />
+  <!-- Preload ASCII snippet so fetch is instant -->
+  <link rel="prefetch" href="/ascii-snippet.html" />
+  <link rel="stylesheet" href="/styles/base.css" />
+  <link rel="stylesheet" href="/styles/components.css" />
+  <link rel="stylesheet" href="/styles/layout.css" />
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <img src="/logo.svg" alt="Superrbrain" width="26" height="26">
+    </a>
+    <ul class="nav-links">
+      <li><a href="javascript:void(0)" data-scroll="how-it-works">How it works</a></li>
+      <li><a href="javascript:void(0)" data-scroll="features">Features</a></li>
+      <li><a href="javascript:void(0)" data-scroll="pricing">Pricing</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="https://app.superrbrain.com" class="btn-secondary nav-btn-signin" style="padding: 8px 16px; font-size: 12px;">
+        <span class="nav-btn-text">Sign in</span>
+        <svg class="nav-btn-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </a>
+      <a href="https://app.superrbrain.com/onboarding" class="btn-primary nav-btn-start" style="padding: 8px 16px; font-size: 12px;">
+        <span class="nav-btn-text">Get started</span>
+        <svg class="nav-btn-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="section" style="padding-top: 140px; padding-bottom: 80px;">
+  <div class="container">
+    <div class="hero-split">
+      <!-- Left: copy -->
+      <div class="hero-text">
+        <p class="label" style="animation: fadeUp 600ms 100ms both ease-out;">AI Citation Intelligence</p>
+        <h1 class="hero-headline" style="animation: fadeUp 600ms 200ms both ease-out; margin-bottom: 24px;">
+          ChatGPT is telling your buyers<br>to go elsewhere
+        </h1>
+        <p class="subheading" style="animation: fadeUp 600ms 400ms both ease-out; margin-bottom: 40px;">
+          When someone asks ChatGPT what to buy in your category, the answer is built from sources your competitors seeded: Reddit threads, review articles, listicles. Superrbrain shows you exactly which ones, and generates content to get you cited instead
+        </p>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; animation: fadeUp 600ms 600ms both ease-out;">
+          <a href="https://app.superrbrain.com/onboarding" class="btn-primary">See where you stand</a>
+        </div>
+      </div>
+      <!-- Right: ASCII art -->
+      <div class="hero-ascii" style="animation: fadeUp 600ms 500ms both ease-out;">
+        <div id="ascii-mount"></div>
+      </div>
+    </div>
+
+    <!-- Logo marquee -->
+    <div style="animation: fadeUp 600ms 700ms both ease-out; margin-top: 56px; text-align: center;">
+      <p style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 20px;">Sources ChatGPT cites in your category</p>
+    </div>
+    <div class="marquee-outer" style="animation: fadeUp 600ms 750ms both ease-out;">
+      <div class="marquee-fade-left"></div>
+      <div class="marquee-fade-right"></div>
+      <div class="marquee-track">
+        <div class="marquee-inner">
+          <!-- Reddit -->
+          <div class="marquee-item">
+            <svg width="22" height="22" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="10" fill="#FF4500" opacity="0.85"/><path d="M16.67 10a1.46 1.46 0 0 0-2.47-1 7.12 7.12 0 0 0-3.85-1.23l.65-3.07 2.13.45a1 1 0 1 0 1.07-.97 1 1 0 0 0-.96.68l-2.38-.5a.16.16 0 0 0-.19.12l-.73 3.42a7.14 7.14 0 0 0-3.89 1.23 1.46 1.46 0 1 0-1.6 2.36 2.9 2.9 0 0 0 0 .4c0 2.02 2.35 3.66 5.25 3.66s5.25-1.64 5.25-3.66a2.9 2.9 0 0 0 0-.4 1.46 1.46 0 0 0 .67-1.49zM7.5 11a1 1 0 1 1 1 1 1 1 0 0 1-1-1zm5.57 2.64a3.54 3.54 0 0 1-2.07.52 3.54 3.54 0 0 1-2.07-.52.17.17 0 0 1 .2-.27 3.23 3.23 0 0 0 1.87.46 3.23 3.23 0 0 0 1.87-.46.17.17 0 0 1 .2.27zm-.07-1.64a1 1 0 1 1 1-1 1 1 0 0 1-1 1z" fill="white"/></svg>
+            <span>Reddit</span>
+          </div>
+          <!-- YouTube -->
+          <div class="marquee-item">
+            <svg width="22" height="16" viewBox="0 0 24 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M23.5 2.5a3 3 0 0 0-2.1-2.1C19.5 0 12 0 12 0S4.5 0 2.6.4A3 3 0 0 0 .5 2.5C0 4.4 0 8.5 0 8.5s0 4.1.5 6a3 3 0 0 0 2.1 2.1C4.5 17 12 17 12 17s7.5 0 9.4-.4a3 3 0 0 0 2.1-2.1C24 12.6 24 8.5 24 8.5s0-4.1-.5-6z" fill="#FF0000" opacity="0.85"/><path d="M9.5 12.1V4.9l6.5 3.6-6.5 3.6z" fill="white"/></svg>
+            <span>YouTube</span>
+          </div>
+          <!-- X / Twitter -->
+          <div class="marquee-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.633L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" fill="currentColor" opacity="0.7"/></svg>
+            <span>X</span>
+          </div>
+          <!-- Trustpilot -->
+          <div class="marquee-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 0L14.7 8.3H24L16.6 13.4L19.4 21.7L12 16.6L4.6 21.7L7.4 13.4L0 8.3H9.3L12 0Z" fill="#00B67A" opacity="0.85"/></svg>
+            <span>Trustpilot</span>
+          </div>
+          <!-- G2 -->
+          <div class="marquee-item">
+            <svg width="22" height="22" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="20" fill="#FF492C" opacity="0.85"/><path d="M20 8l3.5 10.8H35L25.8 25l3.5 10.8L20 29.6l-9.3 6.2L14.2 25 5 18.8h11.5L20 8z" fill="white"/></svg>
+            <span>G2</span>
+          </div>
+          <!-- Quora -->
+          <div class="marquee-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#B92B27" opacity="0.85"/><path d="M14.61 16.2c-.4-.8-.87-1.56-1.6-1.56-.18 0-.36.04-.53.1l-.47-.94c.5-.35 1.15-.56 1.96-.56 1.32 0 2.2.7 2.78 1.73A5.98 5.98 0 0 0 18 12c0-3.31-2.69-6-6-6S6 8.69 6 12s2.69 6 6 6c.9 0 1.75-.21 2.5-.58l.11.78h1.77l-.47-2.64c.24.21.44.44.7.64zM12 16.5A4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 0 1 0 9z" fill="white"/></svg>
+            <span>Quora</span>
+          </div>
+          <!-- Duplicate set for seamless loop -->
+          <div class="marquee-item">
+            <svg width="22" height="22" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="10" fill="#FF4500" opacity="0.85"/><path d="M16.67 10a1.46 1.46 0 0 0-2.47-1 7.12 7.12 0 0 0-3.85-1.23l.65-3.07 2.13.45a1 1 0 1 0 1.07-.97 1 1 0 0 0-.96.68l-2.38-.5a.16.16 0 0 0-.19.12l-.73 3.42a7.14 7.14 0 0 0-3.89 1.23 1.46 1.46 0 1 0-1.6 2.36 2.9 2.9 0 0 0 0 .4c0 2.02 2.35 3.66 5.25 3.66s5.25-1.64 5.25-3.66a2.9 2.9 0 0 0 0-.4 1.46 1.46 0 0 0 .67-1.49zM7.5 11a1 1 0 1 1 1 1 1 1 0 0 1-1-1zm5.57 2.64a3.54 3.54 0 0 1-2.07.52 3.54 3.54 0 0 1-2.07-.52.17.17 0 0 1 .2-.27 3.23 3.23 0 0 0 1.87.46 3.23 3.23 0 0 0 1.87-.46.17.17 0 0 1 .2.27zm-.07-1.64a1 1 0 1 1 1-1 1 1 0 0 1-1 1z" fill="white"/></svg>
+            <span>Reddit</span>
+          </div>
+          <div class="marquee-item">
+            <svg width="22" height="16" viewBox="0 0 24 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M23.5 2.5a3 3 0 0 0-2.1-2.1C19.5 0 12 0 12 0S4.5 0 2.6.4A3 3 0 0 0 .5 2.5C0 4.4 0 8.5 0 8.5s0 4.1.5 6a3 3 0 0 0 2.1 2.1C4.5 17 12 17 12 17s7.5 0 9.4-.4a3 3 0 0 0 2.1-2.1C24 12.6 24 8.5 24 8.5s0-4.1-.5-6z" fill="#FF0000" opacity="0.85"/><path d="M9.5 12.1V4.9l6.5 3.6-6.5 3.6z" fill="white"/></svg>
+            <span>YouTube</span>
+          </div>
+          <div class="marquee-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.633L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" fill="currentColor" opacity="0.7"/></svg>
+            <span>X</span>
+          </div>
+          <div class="marquee-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 0L14.7 8.3H24L16.6 13.4L19.4 21.7L12 16.6L4.6 21.7L7.4 13.4L0 8.3H9.3L12 0Z" fill="#00B67A" opacity="0.85"/></svg>
+            <span>Trustpilot</span>
+          </div>
+          <div class="marquee-item">
+            <svg width="22" height="22" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="20" fill="#FF492C" opacity="0.85"/><path d="M20 8l3.5 10.8H35L25.8 25l3.5 10.8L20 29.6l-9.3 6.2L14.2 25 5 18.8h11.5L20 8z" fill="white"/></svg>
+            <span>G2</span>
+          </div>
+          <div class="marquee-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#B92B27" opacity="0.85"/><path d="M14.61 16.2c-.4-.8-.87-1.56-1.6-1.56-.18 0-.36.04-.53.1l-.47-.94c.5-.35 1.15-.56 1.96-.56 1.32 0 2.2.7 2.78 1.73A5.98 5.98 0 0 0 18 12c0-3.31-2.69-6-6-6S6 8.69 6 12s2.69 6 6 6c.9 0 1.75-.21 2.5-.58l.11.78h1.77l-.47-2.64c.24.21.44.44.7.64zM12 16.5A4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 0 1 0 9z" fill="white"/></svg>
+            <span>Quora</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero mockup -->
+    <div style="margin-top: 80px; animation: fadeUp 600ms 500ms both ease-out;">
+      <div class="mockup" style="padding: 24px 28px;">
+        <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+          <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--bg-tertiary);"></div>
+          <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--bg-tertiary);"></div>
+          <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--bg-tertiary);"></div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+          <div class="feature-card" style="padding: 16px;">
+            <div class="mock-stat-label">Visibility Score</div>
+            <div class="mock-stat-value" style="color: var(--danger); font-size: 28px;">12%</div>
+          </div>
+          <div class="feature-card" style="padding: 16px;">
+            <div class="mock-stat-label">Gaps Found</div>
+            <div class="mock-stat-value" style="color: var(--danger); font-size: 28px;">44</div>
+          </div>
+          <div class="feature-card" style="padding: 16px;">
+            <div class="mock-stat-label">Prompts Monitored</div>
+            <div class="mock-stat-value" style="font-size: 28px;">21</div>
+          </div>
+          <div class="feature-card" style="padding: 16px;">
+            <div class="mock-stat-label">Top Competitor</div>
+            <div class="mock-stat-value" style="font-size: 20px; color: var(--text-secondary);">Garden of Life</div>
+          </div>
+        </div>
+        <div class="feature-card" style="padding: 20px;">
+          <div style="font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 12px;">AI Visibility Ranking · ChatGPT</div>
+          <div class="mock-bar-row">
+            <span class="mock-bar-label">Garden of Life</span>
+            <div class="mock-bar-track"><div class="mock-bar-fill competitor" style="width: 68%;"></div></div>
+            <span class="mock-bar-pct">68%</span>
+          </div>
+          <div class="mock-bar-row">
+            <span class="mock-bar-label">Ritual</span>
+            <div class="mock-bar-track"><div class="mock-bar-fill competitor" style="width: 52%;"></div></div>
+            <span class="mock-bar-pct">52%</span>
+          </div>
+          <div class="mock-bar-row">
+            <span class="mock-bar-label">Thorne</span>
+            <div class="mock-bar-track"><div class="mock-bar-fill competitor" style="width: 41%;"></div></div>
+            <span class="mock-bar-pct">41%</span>
+          </div>
+          <div class="mock-bar-row" style="border-bottom: none;">
+            <span class="mock-bar-label" style="color: var(--accent);">You</span>
+            <div class="mock-bar-track"><div class="mock-bar-fill" style="width: 12%;"></div></div>
+            <span class="mock-bar-pct" style="color: var(--accent);">12%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- NUMBERS -->
+<section class="section-sm">
+  <div class="container">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border);">
+      <div style="background: var(--bg-primary); padding: 40px; text-align: center;">
+        <div class="metric-number" style="color: var(--accent);" data-countup data-target="94" data-suffix="%">0%</div>
+        <div class="metric-label">of brands invisible in AI responses for their category</div>
+      </div>
+      <div style="background: var(--bg-primary); padding: 40px; text-align: center;">
+        <div class="metric-number" data-countup data-target="3" data-suffix="x">0x</div>
+        <div class="metric-label">more citations after closing top 5 gaps</div>
+      </div>
+      <div style="background: var(--bg-primary); padding: 40px; text-align: center;">
+        <div class="metric-number" data-countup data-target="60" data-suffix="s">0s</div>
+        <div class="metric-label">to your first visibility score</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how-it-works">
+  <div class="container">
+    <div class="centered reveal" style="margin-bottom: 64px;">
+      <p class="label">How it works</p>
+      <h2 class="section-heading">From invisible to cited<br>in three steps</h2>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+      <div class="feature-card reveal" style="padding: 32px 28px;">
+        <div style="font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 20px;">01</div>
+        <h3 style="font-size: 22px; color: var(--text-primary); margin-bottom: 12px;">Monitor</h3>
+        <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.8;">We send real buyer-intent prompts to ChatGPT. The same questions your customers are asking right now. Every response is recorded. Every citation tracked</p>
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <span class="mock-badge">ChatGPT</span>
+            <span class="mock-badge" style="opacity: 0.4;">more coming</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature-card accent-top reveal" style="padding: 32px 28px;">
+        <div style="font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 20px;">02</div>
+        <h3 style="font-size: 22px; color: var(--text-primary); margin-bottom: 12px;">Find Gaps</h3>
+        <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.8;">Every source ChatGPT cites for a competitor but not for you is a gap. Ranked by opportunity score so you know exactly where one piece of content will move the needle most</p>
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);">
+          <div style="font-size: 12px; color: var(--danger);">44 gaps found · reddit, listicles, reviews</div>
+        </div>
+      </div>
+
+      <div class="feature-card reveal" style="padding: 32px 28px;">
+        <div style="font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 20px;">03</div>
+        <h3 style="font-size: 22px; color: var(--text-primary); margin-bottom: 12px;">Close Gaps</h3>
+        <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.8;">Generate platform-native content for each gap. A Reddit comment that reads like a real user. A blog post structured for AI citation. You approve it, you post it. The source becomes yours</p>
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);">
+          <div style="font-size: 12px; color: var(--accent);">Quality-scored before it reaches you</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FEATURE: Visibility Score -->
+<section class="section" id="features">
+  <div class="container">
+    <div class="split reveal">
+      <div class="split-visual">
+        <div class="mockup" style="padding: 32px;">
+          <div style="margin-bottom: 24px;">
+            <div class="mock-stat-label" style="margin-bottom: 8px;">AI Visibility Score · ChatGPT</div>
+            <div style="font-size: 72px; font-weight: 300; font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; color: var(--danger); line-height: 1;">12<span style="font-size: 40px;">%</span></div>
+            <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 8px;">Category average: 31%</div>
+          </div>
+          <div style="border-top: 1px solid var(--border); padding-top: 20px;">
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 12px; font-weight: 500;">Who ChatGPT recommends instead</div>
+            <div class="mock-bar-row">
+              <span class="mock-bar-label">Garden of Life</span>
+              <div class="mock-bar-track"><div class="mock-bar-fill competitor" style="width: 68%;"></div></div>
+              <span class="mock-bar-pct">68%</span>
+            </div>
+            <div class="mock-bar-row">
+              <span class="mock-bar-label">Ritual</span>
+              <div class="mock-bar-track"><div class="mock-bar-fill competitor" style="width: 52%;"></div></div>
+              <span class="mock-bar-pct">52%</span>
+            </div>
+            <div class="mock-bar-row" style="border-bottom: none;">
+              <span class="mock-bar-label" style="color: var(--accent);">You</span>
+              <div class="mock-bar-track"><div class="mock-bar-fill" style="width: 12%;"></div></div>
+              <span class="mock-bar-pct" style="color: var(--accent);">12%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="split-text">
+        <p class="label">Visibility Score</p>
+        <h2 class="section-heading" style="margin-bottom: 20px;">See exactly where you stand in ChatGPT</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 24px; line-height: 1.8;">Your visibility score is how often ChatGPT cites your brand when someone asks about your category. Right now, most brands are at zero and have no idea. Your competitors aren't smarter, they're just in the sources ChatGPT trusts</p>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Real prompts your buyers type into ChatGPT</li>
+          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Side-by-side competitor breakdown</li>
+          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Score updates every weekly scan</li>
+          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Watch it move as you close gaps</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FEATURE: Citation Map -->
+<section class="section">
+  <div class="container">
+    <div class="split reverse reveal">
+      <div class="split-text">
+        <p class="label">Citation Map</p>
+        <h2 class="section-heading" style="margin-bottom: 20px;">The exact sources shaping ChatGPT's answer</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 24px; line-height: 1.8;">ChatGPT doesn't make up recommendations. It pulls from sources. Reddit threads, review sites, listicles, news articles. The citation map shows every URL it's citing in your category, who appears in each one, and how often. These are the doors your competitors walked through</p>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Organised by source type</li>
+          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Shows who's cited in each source</li>
+          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Frequency score: how often each source is pulled</li>
+          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Direct links to every source</li>
+        </ul>
+      </div>
+      <div class="split-visual">
+        <div class="mockup" style="padding: 24px;">
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 16px; font-weight: 500;">Citation Map · Reddit · 8 sources</div>
+          <div class="mock-source-row">
+            <span class="mock-source-domain">reddit.com/r/Supplements/best-protein</span>
+            <span class="mock-badge" style="color: var(--danger); border-color: var(--danger);">GOL</span>
+          </div>
+          <div class="mock-source-row">
+            <span class="mock-source-domain">reddit.com/r/PlantBased/vitamins-2024</span>
+            <span class="mock-badge" style="color: var(--danger); border-color: var(--danger);">Ritual</span>
+          </div>
+          <div class="mock-source-row">
+            <span class="mock-source-domain">reddit.com/r/nutrition/magnesium-guide</span>
+            <span class="mock-badge" style="color: var(--danger); border-color: var(--danger);">Thorne</span>
+          </div>
+          <div class="mock-source-row">
+            <span class="mock-source-domain">reddit.com/r/Supplements/omega3-recs</span>
+            <span class="mock-badge" style="color: var(--accent); border-color: var(--accent);">You</span>
+            <span class="mock-badge" style="color: var(--danger); border-color: var(--danger);">GOL</span>
+          </div>
+          <div class="mock-source-row" style="border-bottom: none;">
+            <span class="mock-source-domain">reddit.com/r/PlantBased/protein-powder</span>
+            <span class="mock-badge" style="color: var(--danger); border-color: var(--danger);">Ritual</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FEATURE: Gap Queue -->
+<section class="section">
+  <div class="container">
+    <div class="split reveal">
+      <div class="split-visual">
+        <div class="mockup" style="padding: 24px;">
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 16px; font-weight: 500;">Gap Queue · 44 opportunities</div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div class="feature-card" style="padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 12px; color: var(--text-primary); margin-bottom: 4px;">Garden of Life</div>
+                <div style="font-size: 11px; color: var(--text-tertiary);">reddit · impact 9.2</div>
+              </div>
+              <span style="font-size: 11px; font-weight: 500; background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 4px 10px;">Generate</span>
+            </div>
+            <div class="feature-card" style="padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 12px; color: var(--text-primary); margin-bottom: 4px;">Ritual</div>
+                <div style="font-size: 11px; color: var(--text-tertiary);">listicle · impact 8.7</div>
+              </div>
+              <span style="font-size: 11px; color: var(--text-tertiary); border: 1px solid var(--border); border-radius: 3px; padding: 4px 10px;">Blog post</span>
+            </div>
+            <div class="feature-card" style="padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 12px; color: var(--text-primary); margin-bottom: 4px;">Thorne</div>
+                <div style="font-size: 11px; color: var(--text-tertiary);">news · impact 7.1</div>
+              </div>
+              <span style="font-size: 11px; color: var(--text-tertiary); border: 1px solid var(--border); border-radius: 3px; padding: 4px 10px;">Blog post</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="split-text">
+        <p class="label">Gap Queue</p>
+        <h2 class="section-heading" style="margin-bottom: 20px;">Your action list for getting into the conversation</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 24px; line-height: 1.8;">Each gap is a specific source where ChatGPT is learning about your competitors. Sorted by impact. One click generates content that targets that exact source: a Reddit comment in the right thread, a blog post with the right structure. You own the output, you post it, you get cited</p>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Reddit comments written for the specific thread</li>
+          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>AEO blog posts built from real citation patterns</li>
+          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Quality-scored before you approve</li>
+          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Track deployed content and measure gap closure</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PRICING -->
+<section class="section" id="pricing">
+  <div class="container">
+    <div class="centered reveal" style="margin-bottom: 48px;">
+      <p class="label">Pricing</p>
+      <h2 class="section-heading">Simple. No seat fees</h2>
+    </div>
+    <div class="centered-wide reveal">
+      <div style="overflow-x: auto;">
+        <table class="pricing-table">
+          <thead>
+            <tr>
+              <th style="width: 40%;"></th>
+              <th>Starter</th>
+              <th class="featured">Growth</th>
+              <th>Pro</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color: var(--text-secondary); font-weight: 400;">Monthly price</td>
+              <td>$49</td>
+              <td class="featured" style="color: var(--accent);">$149</td>
+              <td>$399</td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-secondary); font-weight: 400;">Brands monitored</td>
+              <td>1</td>
+              <td class="featured">3</td>
+              <td>10</td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-secondary); font-weight: 400;">Prompts per scan</td>
+              <td>25</td>
+              <td class="featured">100</td>
+              <td>500</td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-secondary); font-weight: 400;">Weekly auto-scan</td>
+              <td><span class="pricing-check">✓</span></td>
+              <td class="featured"><span class="pricing-check">✓</span></td>
+              <td><span class="pricing-check">✓</span></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-secondary); font-weight: 400;">Content generation</td>
+              <td>5/mo</td>
+              <td class="featured">50/mo</td>
+              <td>Unlimited</td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-secondary); font-weight: 400;">Blog post generator</td>
+              <td><span class="pricing-cross">×</span></td>
+              <td class="featured"><span class="pricing-check">✓</span></td>
+              <td><span class="pricing-check">✓</span></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-secondary); font-weight: 400;">Gap closure tracking</td>
+              <td><span class="pricing-cross">×</span></td>
+              <td class="featured"><span class="pricing-check">✓</span></td>
+              <td><span class="pricing-check">✓</span></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td><a href="https://app.superrbrain.com/onboarding" class="btn-secondary" style="padding: 8px 16px; font-size: 12px;">Get started</a></td>
+              <td class="featured"><a href="https://app.superrbrain.com/onboarding" class="btn-primary" style="padding: 8px 16px; font-size: 12px;">Get started</a></td>
+              <td><a href="https://app.superrbrain.com/onboarding" class="btn-secondary" style="padding: 8px 16px; font-size: 12px;">Get started</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FAQ -->
+<section class="section">
+  <div class="container">
+    <div class="split reveal">
+      <div class="split-text" style="grid-column: 1 / 2;">
+        <p class="label">FAQ</p>
+        <h2 class="section-heading">Questions</h2>
+      </div>
+      <div style="grid-column: 2 / 3;">
+        <div class="faq-item reveal">
+          <div class="faq-question">Which AI do you monitor right now</div>
+          <div class="faq-answer">ChatGPT (GPT-4o) in v1. We built for depth before breadth. It's better to have reliable, accurate data from one engine than noisy coverage across many. More engines ship in v2.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-question">How is this different from traditional SEO tools</div>
+          <div class="faq-answer">Traditional SEO tracks Google rankings. Superrbrain tracks AI citations: a completely separate signal. A page can rank #1 on Google and never appear in a ChatGPT response. We measure what AI recommends, which is increasingly where buyers go first.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-question">What exactly is a citation gap</div>
+          <div class="faq-answer">A citation gap is a specific URL that ChatGPT cites when recommending competitors in your category, but your brand isn't mentioned in it. Each gap is a concrete piece of content you can target to get cited alongside or instead of your competitor.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-question">Does the generated content sound AI-written</div>
+          <div class="faq-answer">Every piece is scored on four dimensions before you see it: human-sounding, platform match, natural brand mention, and on-topic. Content that doesn't pass is regenerated automatically. You only ever see the best attempt.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-question">How quickly do score changes show up after I post content</div>
+          <div class="faq-answer">ChatGPT's training data updates on its own cycle, typically 2 to 6 weeks after content is live and indexed. Your score updates every time you run a scan, so you'll see the delta as it happens.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CTA -->
+<section class="section" style="padding: 120px 0;">
+  <div class="container">
+    <div class="centered reveal" style="max-width: 640px;">
+      <p class="label">Get started</p>
+      <h2 class="section-heading" style="margin-bottom: 20px;">Find out what ChatGPT says about your category</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 40px; line-height: 1.8;">Enter your brand URL. We'll run a scan, show you your visibility score, every competitor ChatGPT recommends instead, and your first gap queue. In 60 seconds</p>
+      <a href="https://app.superrbrain.com/onboarding" class="btn-primary">See where you stand</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer style="border-top: 1px solid var(--border); padding: 32px 0;">
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+      <span style="font-size: 13px; font-weight: 500; color: var(--text-primary);">superrbrain</span>
+      <div style="display: flex; gap: 32px;">
+        <a href="/privacy" style="font-size: 12px; color: var(--text-tertiary); transition: color 120ms ease;" onmouseover="this.style.color='var(--text-secondary)'" onmouseout="this.style.color='var(--text-tertiary)'">Privacy</a>
+        <a href="/terms" style="font-size: 12px; color: var(--text-tertiary); transition: color 120ms ease;" onmouseover="this.style.color='var(--text-secondary)'" onmouseout="this.style.color='var(--text-tertiary)'">Terms</a>
+        <a href="mailto:hello@superrbrain.com" style="font-size: 12px; color: var(--text-tertiary); transition: color 120ms ease;" onmouseover="this.style.color='var(--text-secondary)'" onmouseout="this.style.color='var(--text-tertiary)'">Contact</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 768px) {
+  .pricing-table { min-width: 600px; }
+}
+@media (max-width: 1024px) {
+  .split { display: flex; flex-direction: column; }
+  .split.reverse .split-text { order: 1; }
+  .split.reverse .split-visual { order: 2; }
+}
+</style>
+
+<style>
+#ascii-mount {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+#ascii-mount .ln {
+  font: bold 5.5px/1.15 'Courier New', monospace;
+  white-space: pre;
+  opacity: 0;
+  animation: asciiFadeIn .3s forwards;
+}
+@keyframes asciiFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+<script type="module" src="/scripts/reveal.js"></script>
+<script type="module" src="/scripts/navbar.js"></script>
+<script type="module" src="/scripts/countup.js"></script>
+<script type="module" src="/scripts/ascii.js"></script>
+</body>
+</html>

@@ -1,0 +1,463 @@
+/* ── Buttons ── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent);
+  color: #0A0A09;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 12px 24px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: background 120ms ease, transform 120ms ease;
+  text-decoration: none;
+}
+.btn-primary:hover {
+  background: var(--accent-dim);
+  transform: translateY(-1px);
+}
+.btn-primary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 12px 24px;
+  border-radius: 4px;
+  border: 1px solid var(--border-active);
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease;
+  text-decoration: none;
+}
+.btn-secondary:hover {
+  border-color: var(--text-tertiary);
+  color: var(--text-primary);
+}
+.btn-secondary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Stat Pill ── */
+.stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.stat-pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ── Feature card / Mockup container ── */
+.feature-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 32px;
+  overflow: hidden;
+  transition: border-color 150ms ease;
+}
+.feature-card:hover {
+  border-color: var(--border-active);
+}
+.feature-card.accent-top {
+  border-top-color: var(--accent);
+}
+
+/* ── Mockup container ── */
+.mockup {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--border), 0 24px 48px rgba(0,0,0,0.4);
+  background: var(--bg-secondary);
+}
+
+/* ── Nav ── */
+nav {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 48px);
+  max-width: 760px;
+  background: rgba(17, 17, 16, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-active);
+  border-radius: 100px;
+  height: 50px;
+  z-index: 100;
+  overflow: hidden;
+  will-change: width, max-width;
+  transition: width 500ms cubic-bezier(0.76, 0, 0.24, 1),
+              max-width 500ms cubic-bezier(0.76, 0, 0.24, 1);
+}
+nav.nav-collapsed {
+  width: 140px;
+  max-width: 140px;
+}
+.nav-inner {
+  padding: 0 16px 0 20px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transition: padding 500ms cubic-bezier(0.76, 0, 0.24, 1),
+              gap 500ms cubic-bezier(0.76, 0, 0.24, 1);
+}
+nav.nav-collapsed .nav-inner {
+  padding: 0 12px;
+  gap: 10px;
+}
+.nav-logo {
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  list-style: none;
+  overflow: hidden;
+  opacity: 1;
+  max-width: 300px;
+  transition: max-width 500ms cubic-bezier(0.76, 0, 0.24, 1),
+              opacity 300ms cubic-bezier(0.76, 0, 0.24, 1),
+              gap 500ms cubic-bezier(0.76, 0, 0.24, 1);
+}
+nav.nav-collapsed .nav-links {
+  max-width: 0;
+  opacity: 0;
+  gap: 0;
+  pointer-events: none;
+}
+.nav-links a {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  transition: color 120ms ease;
+  white-space: nowrap;
+}
+.nav-links a:hover {
+  color: var(--text-primary);
+}
+.nav-cta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.nav-cta .btn-primary,
+.nav-cta .btn-secondary {
+  border-radius: 100px;
+  height: 34px;
+  padding: 0 16px !important;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* Nav button icon/text swap */
+.nav-btn-text {
+  white-space: nowrap;
+  overflow: hidden;
+  width: auto;
+  opacity: 1;
+  transition: opacity 250ms cubic-bezier(0.76, 0, 0.24, 1),
+              width 500ms cubic-bezier(0.76, 0, 0.24, 1);
+}
+.nav-btn-icon {
+  flex-shrink: 0;
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  transition: opacity 250ms cubic-bezier(0.76, 0, 0.24, 1),
+              width 500ms cubic-bezier(0.76, 0, 0.24, 1);
+}
+nav.nav-collapsed .nav-btn-text {
+  opacity: 0;
+  width: 0;
+}
+nav.nav-collapsed .nav-btn-icon {
+  opacity: 1;
+  width: 15px;
+}
+.nav-btn-signin,
+.nav-btn-start {
+  transition: padding 500ms cubic-bezier(0.76, 0, 0.24, 1),
+              width 500ms cubic-bezier(0.76, 0, 0.24, 1),
+              background 120ms ease,
+              border-color 120ms ease,
+              color 120ms ease,
+              transform 120ms ease !important;
+  overflow: hidden;
+}
+nav.nav-collapsed .nav-btn-signin,
+nav.nav-collapsed .nav-btn-start {
+  padding: 0 !important;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0 !important;
+}
+
+/* ── Pricing table ── */
+.pricing-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.pricing-table th,
+.pricing-table td {
+  border: 1px solid var(--border);
+  padding: 16px 20px;
+  font-size: 13px;
+  font-weight: 300;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  text-align: left;
+}
+.pricing-table thead th {
+  font-weight: 500;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+.pricing-table thead th.featured {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.pricing-table td.featured {
+  border-left-color: var(--accent);
+  border-right-color: var(--accent);
+}
+.pricing-table tr:last-child td.featured {
+  border-bottom-color: var(--accent);
+}
+.pricing-check { color: var(--accent); }
+.pricing-cross { color: var(--text-tertiary); }
+
+/* ── FAQ ── */
+.faq-item {
+  border-top: 1px solid var(--border);
+  padding: 24px 0;
+}
+.faq-question {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+.faq-answer {
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+/* ── Metric display ── */
+.metric-number {
+  font-size: 56px;
+  font-weight: 300;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  line-height: 1;
+}
+.metric-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+/* ── Dashboard mockup internal elements ── */
+.mock-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.mock-bar-label {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  width: 100px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mock-bar-track {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.mock-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.mock-bar-fill.competitor {
+  background: var(--danger);
+  opacity: 0.6;
+}
+.mock-bar-pct {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.mock-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.mock-stat-value {
+  font-size: 24px;
+  font-weight: 300;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  color: var(--accent);
+}
+.mock-stat-label {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+}
+
+.mock-badge {
+  display: inline-flex;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 2px 8px;
+  color: var(--text-secondary);
+}
+
+.mock-source-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(37,37,34,0.6);
+  font-size: 12px;
+}
+/* ── Logo Marquee ── */
+.marquee-outer {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.marquee-fade-left,
+.marquee-fade-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  z-index: 2;
+  pointer-events: none;
+}
+.marquee-fade-left {
+  left: 0;
+  background: linear-gradient(to right, var(--bg-primary), transparent);
+}
+.marquee-fade-right {
+  right: 0;
+  background: linear-gradient(to left, var(--bg-primary), transparent);
+}
+.marquee-track {
+  overflow: hidden;
+}
+.marquee-inner {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  width: max-content;
+  will-change: transform;
+  animation: marquee 18s linear infinite;
+}
+.marquee-inner:hover {
+  animation-play-state: paused;
+}
+.marquee-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.35;
+  transition: opacity 150ms ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  filter: grayscale(1);
+}
+.marquee-item:hover {
+  opacity: 0.6;
+}
+.marquee-item span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.mock-source-domain {
+  font-weight: 400;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
