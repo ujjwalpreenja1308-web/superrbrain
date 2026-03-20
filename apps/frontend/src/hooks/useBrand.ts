@@ -51,10 +51,25 @@ export function usePrompts(brandId?: string) {
 export function useUpdatePrompts(brandId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (prompts: { id?: string; text: string; is_active: boolean }[]) =>
+    mutationFn: (prompts: { id?: string; text: string; is_active: boolean; category?: string | null }[]) =>
       api.put<Prompt[]>(`/api/brands/${brandId}/prompts`, { prompts }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["prompts", brandId] });
+    },
+  });
+}
+
+export function useRegeneratePrompts(brandId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      api.post<{ prompts: Prompt[]; count: number }>(`/api/brands/${brandId}/prompts/regenerate`),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["prompts", brandId] });
+      toast.success(`Generated ${data.count} search-optimized prompts`);
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
     },
   });
 }

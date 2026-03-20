@@ -50,6 +50,7 @@ export const updatePromptsSchema = z.object({
       id: z.string().uuid().optional(),
       text: z.string().min(1),
       is_active: z.boolean(),
+      category: z.string().nullable().optional(),
     })
   ),
 });

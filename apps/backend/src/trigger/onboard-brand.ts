@@ -53,10 +53,11 @@ export const onboardBrand = task({
         extracted.competitors
       );
 
-      // 6. Insert prompts
-      const promptRows = prompts.map((text) => ({
+      // 6. Insert prompts with category
+      const promptRows = prompts.map((p) => ({
         brand_id: brandId,
-        text,
+        text: p.text,
+        category: p.category,
         is_active: true,
       }));
 
