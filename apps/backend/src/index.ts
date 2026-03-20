@@ -17,10 +17,14 @@ import { closeBrowser } from "./services/chatgpt-scraper.service.js";
 const app = new Hono<{ Variables: AppVariables }>();
 
 app.use("*", logger());
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(",").map((u) => u.trim())
+  : ["http://localhost:5173"];
+
 app.use(
   "*",
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: (origin) => (allowedOrigins.includes(origin) ? origin : allowedOrigins[0]),
     credentials: true,
   })
 );

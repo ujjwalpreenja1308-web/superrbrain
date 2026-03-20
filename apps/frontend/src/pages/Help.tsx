@@ -69,8 +69,8 @@ export function Help() {
             <Mail className="size-4 text-muted-foreground" />
             <span className="text-sm">
               Contact support:{" "}
-              <a href="mailto:support@covable.ai" className="text-primary hover:underline">
-                support@covable.ai
+              <a href="mailto:support@covable.app" className="text-primary hover:underline">
+                support@covable.app
               </a>
             </span>
           </div>

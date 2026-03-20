@@ -29,7 +29,7 @@ External:
   OpenAI API           ← backend (prompt gen, content gen, scoring)
   Firecrawl API        ← backend (URL scraping on onboard)
   Trigger.dev Cloud    ← runs background tasks (monitoring, content gen)
-  Vercel               ← frontend (app.covable.ai) + landing (covable.ai)
+  Vercel               ← frontend (app.covable.app) + landing (covable.app)
 ```
 
 ---
@@ -145,7 +145,7 @@ FIRECRAWL_API_KEY=fc-...
 TRIGGER_SECRET_KEY=tr_dev_...
 
 # Server
-FRONTEND_URL=https://app.covable.ai
+FRONTEND_URL=https://app.covable.app
 PORT=3001
 
 # Chromium CDP (DO droplet)
@@ -219,24 +219,58 @@ BROWSER_WS_ENDPOINT=http://<DROPLET_IP>:9222
 
 ## 4. Deploy Frontend (Vercel)
 
-### 4.1 Vercel project settings
+The frontend is a single Vite app deployed to **two Vercel projects** (same code, different domains).
+`isAuthDomain()` / `isHomeDomain()` in the app detect which subdomain is active and serve the
+appropriate UI.
 
+### 4.1 Vercel project 1 — auth subdomain
+
+- **Project name**: `covable-auth`
 - **Root Directory**: `apps/frontend`
 - **Build Command**: `pnpm --filter @covable/shared build && pnpm --filter @covable/frontend build`
 - **Output Directory**: `dist`
 - **Install Command**: `pnpm install`
 
-### 4.2 Environment variables (Vercel dashboard)
-
+Environment variables:
 ```
-VITE_API_URL=https://api.covable.ai
+VITE_API_URL=https://api.covable.app
 VITE_SUPABASE_URL=https://xxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
+VITE_AUTH_URL=https://auth.covable.app
+VITE_HOME_URL=https://home.covable.app
 ```
 
-### 4.3 Domain
+Point `auth.covable.app` → this Vercel project.
 
-Point `app.covable.ai` → Vercel project
+### 4.2 Vercel project 2 — home subdomain
+
+- **Project name**: `covable-home`
+- Same settings as above (same repo, same root directory)
+- Same environment variables
+
+Point `home.covable.app` → this Vercel project.
+
+### 4.3 Supabase — cross-subdomain session sharing
+
+In the Supabase dashboard → **Authentication → URL Configuration**:
+
+- **Site URL**: `https://home.covable.app`
+- **Redirect URLs** (add all):
+  ```
+  https://auth.covable.app/**
+  https://home.covable.app/**
+  http://localhost:5173/**
+  ```
+
+The session cookie is set on `.covable.app` (Supabase default for `*.covable.app` subdomains),
+so both `auth.covable.app` and `home.covable.app` share the same auth session automatically.
+
+### 4.4 Backend CORS
+
+In the backend `.env`:
+```
+FRONTEND_URL=https://auth.covable.app,https://home.covable.app
+```
 
 ---
 
@@ -250,7 +284,7 @@ Point `app.covable.ai` → Vercel project
 
 ### 5.2 Domain
 
-Point `covable.ai` → Vercel project
+Point `covable.app` → Vercel project
 
 ---
 
@@ -267,7 +301,7 @@ Create `/etc/nginx/sites-available/covable-api`:
 ```nginx
 server {
     listen 80;
-    server_name api.covable.ai;
+    server_name api.covable.app;
 
     location / {
         proxy_pass http://127.0.0.1:3001;
@@ -288,7 +322,7 @@ server {
 ```bash
 ln -s /etc/nginx/sites-available/covable-api /etc/nginx/sites-enabled/
 nginx -t && systemctl reload nginx
-certbot --nginx -d api.covable.ai
+certbot --nginx -d api.covable.app
 ```
 
 ---
@@ -297,9 +331,10 @@ certbot --nginx -d api.covable.ai
 
 | Record | Type | Value |
 |--------|------|-------|
-| `covable.ai` | A / CNAME | Vercel (landing) |
-| `app.covable.ai` | A / CNAME | Vercel (frontend) |
-| `api.covable.ai` | A | Droplet IP |
+| `covable.app` | A / CNAME | Vercel (landing) |
+| `auth.covable.app` | A / CNAME | Vercel (frontend — auth subdomain) |
+| `home.covable.app` | A / CNAME | Vercel (frontend — dashboard subdomain) |
+| `api.covable.app` | A | Droplet IP |
 
 ---
 
@@ -307,7 +342,7 @@ certbot --nginx -d api.covable.ai
 
 ```bash
 # Backend API
-curl https://api.covable.ai/health
+curl https://api.covable.app/health
 # → {"status":"ok"}
 
 # Chromium CDP (from droplet only)
