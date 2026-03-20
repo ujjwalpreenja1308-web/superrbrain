@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "trigger:dev": "npx trigger.dev@latest dev",
-    "build": "tsc",
+    "build": "pnpm --filter @superrbrain/shared build && tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit"
   },
