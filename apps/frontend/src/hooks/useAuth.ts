@@ -32,19 +32,23 @@ export function useAuth() {
   async function signIn(email: string, password: string) {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
-    // Redirect to home app after sign in
-    if (import.meta.env.PROD) {
-      window.location.href = HOME_URL;
-    }
+    if (import.meta.env.PROD) window.location.href = HOME_URL;
   }
 
   async function signUp(email: string, password: string) {
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) throw new Error(error.message);
-    // Redirect to home app after sign up
-    if (import.meta.env.PROD) {
-      window.location.href = HOME_URL;
-    }
+    if (import.meta.env.PROD) window.location.href = HOME_URL;
+  }
+
+  async function signInWithGoogle() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: HOME_URL,
+      },
+    });
+    if (error) throw new Error(error.message);
   }
 
   async function signOut() {
@@ -55,7 +59,7 @@ export function useAuth() {
     }
   }
 
-  return { user, loading, signIn, signUp, signOut };
+  return { user, loading, signIn, signUp, signOut, signInWithGoogle };
 }
 
 /** Returns true if running on the auth subdomain (or localhost in dev) */
