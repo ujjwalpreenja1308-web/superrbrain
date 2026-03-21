@@ -96,7 +96,6 @@ export function getPlanLimits(tier: PlanTier) {
 
 /** Call once on first dashboard load to set trial_expires_at on new users */
 export function useActivateTrial() {
-  const api = useApi();
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
