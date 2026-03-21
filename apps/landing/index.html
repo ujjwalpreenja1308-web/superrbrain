@@ -403,27 +403,43 @@
 <!-- PRICING -->
 <section class="section" id="pricing">
   <div class="container">
-    <div class="centered reveal" style="margin-bottom: 48px;">
+    <div class="centered reveal" style="margin-bottom: 16px;">
       <p class="label">Pricing</p>
       <h2 class="section-heading">Simple. No seat fees</h2>
+      <p style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;">14-day free trial · No credit card required · Cancel anytime</p>
     </div>
+
+    <!-- Monthly / Annual toggle -->
+    <div class="centered reveal" style="margin-bottom: 40px;">
+      <div style="display:inline-flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:4px 8px;">
+        <button id="toggle-monthly" onclick="setPricing('monthly')" style="padding:6px 16px; border-radius:999px; font-size:13px; border:none; cursor:pointer; background:var(--accent); color:#000; font-weight:600;">Monthly</button>
+        <button id="toggle-annual" onclick="setPricing('annual')" style="padding:6px 16px; border-radius:999px; font-size:13px; border:none; cursor:pointer; background:transparent; color:var(--text-secondary); font-weight:500;">Annual <span style="background:rgba(200,245,60,0.15);color:var(--accent);padding:1px 6px;border-radius:4px;font-size:11px;margin-left:4px;">Save 17%</span></button>
+      </div>
+    </div>
+
     <div class="centered-wide reveal">
       <div style="overflow-x: auto;">
         <table class="pricing-table">
           <thead>
             <tr>
-              <th style="width: 40%;"></th>
+              <th style="width: 38%;"></th>
               <th>Starter</th>
               <th class="featured">Growth</th>
-              <th>Pro</th>
+              <th>Scale</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td style="color: var(--text-secondary); font-weight: 400;">Monthly price</td>
-              <td>$49</td>
-              <td class="featured" style="color: var(--accent);">$149</td>
-              <td>$399</td>
+              <td><span class="price-monthly">$59</span><span class="price-annual" style="display:none;">$49</span><span style="color:var(--text-secondary);font-size:12px;">/mo</span></td>
+              <td class="featured" style="color: var(--accent);"><span class="price-monthly">$149</span><span class="price-annual" style="display:none;">$124</span><span style="color:var(--text-secondary);font-size:12px;">/mo</span></td>
+              <td><span class="price-monthly">$349</span><span class="price-annual" style="display:none;">$290</span><span style="color:var(--text-secondary);font-size:12px;">/mo</span></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-secondary); font-weight: 400;">AI-optimized prompts</td>
+              <td>10</td>
+              <td class="featured">20</td>
+              <td>40</td>
             </tr>
             <tr>
               <td style="color: var(--text-secondary); font-weight: 400;">Brands monitored</td>
@@ -432,40 +448,46 @@
               <td>10</td>
             </tr>
             <tr>
-              <td style="color: var(--text-secondary); font-weight: 400;">Prompts per scan</td>
-              <td>25</td>
-              <td class="featured">100</td>
-              <td>500</td>
+              <td style="color: var(--text-secondary); font-weight: 400;">Citation scan frequency</td>
+              <td>Weekly</td>
+              <td class="featured">Daily</td>
+              <td>Real-time</td>
             </tr>
             <tr>
-              <td style="color: var(--text-secondary); font-weight: 400;">Weekly auto-scan</td>
+              <td style="color: var(--text-secondary); font-weight: 400;">Gap detection</td>
               <td><span class="pricing-check">✓</span></td>
               <td class="featured"><span class="pricing-check">✓</span></td>
               <td><span class="pricing-check">✓</span></td>
             </tr>
             <tr>
-              <td style="color: var(--text-secondary); font-weight: 400;">Content generation</td>
-              <td>5/mo</td>
-              <td class="featured">50/mo</td>
-              <td>Unlimited</td>
-            </tr>
-            <tr>
-              <td style="color: var(--text-secondary); font-weight: 400;">Blog post generator</td>
+              <td style="color: var(--text-secondary); font-weight: 400;">Reddit execution engine</td>
               <td><span class="pricing-cross">×</span></td>
               <td class="featured"><span class="pricing-check">✓</span></td>
               <td><span class="pricing-check">✓</span></td>
             </tr>
             <tr>
-              <td style="color: var(--text-secondary); font-weight: 400;">Gap closure tracking</td>
+              <td style="color: var(--text-secondary); font-weight: 400;">Blog post generation</td>
               <td><span class="pricing-cross">×</span></td>
-              <td class="featured"><span class="pricing-check">✓</span></td>
+              <td class="featured"><span class="pricing-cross">×</span></td>
               <td><span class="pricing-check">✓</span></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-secondary); font-weight: 400;">API access</td>
+              <td><span class="pricing-cross">×</span></td>
+              <td class="featured"><span class="pricing-cross">×</span></td>
+              <td><span class="pricing-check">✓</span></td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-secondary); font-weight: 400;">Support</td>
+              <td>Email</td>
+              <td class="featured">Priority</td>
+              <td>Dedicated</td>
             </tr>
             <tr>
               <td></td>
-              <td><a href="https://auth.covable.app" class="btn-secondary" style="padding: 8px 16px; font-size: 12px;">Get started</a></td>
-              <td class="featured"><a href="https://auth.covable.app" class="btn-primary" style="padding: 8px 16px; font-size: 12px;">Get started</a></td>
-              <td><a href="https://auth.covable.app" class="btn-secondary" style="padding: 8px 16px; font-size: 12px;">Get started</a></td>
+              <td><a href="https://auth.covable.app" class="btn-secondary" style="padding: 8px 16px; font-size: 12px;">Start free trial</a></td>
+              <td class="featured"><a href="https://auth.covable.app" class="btn-primary" style="padding: 8px 16px; font-size: 12px;">Start free trial</a></td>
+              <td><a href="https://auth.covable.app" class="btn-secondary" style="padding: 8px 16px; font-size: 12px;">Start free trial</a></td>
             </tr>
           </tbody>
         </table>
@@ -473,6 +495,20 @@
     </div>
   </div>
 </section>
+
+<script>
+function setPricing(mode) {
+  var isAnnual = mode === 'annual';
+  document.querySelectorAll('.price-monthly').forEach(function(el){ el.style.display = isAnnual ? 'none' : ''; });
+  document.querySelectorAll('.price-annual').forEach(function(el){ el.style.display = isAnnual ? '' : 'none'; });
+  var mBtn = document.getElementById('toggle-monthly');
+  var aBtn = document.getElementById('toggle-annual');
+  mBtn.style.background = isAnnual ? 'transparent' : 'var(--accent)';
+  mBtn.style.color = isAnnual ? 'var(--text-secondary)' : '#000';
+  aBtn.style.background = isAnnual ? 'var(--accent)' : 'transparent';
+  aBtn.style.color = isAnnual ? '#000' : 'var(--text-secondary)';
+}
+</script>
 
 <div class="divider"></div>
 
