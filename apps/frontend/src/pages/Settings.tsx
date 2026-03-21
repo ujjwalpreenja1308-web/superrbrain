@@ -19,10 +19,13 @@ const DODO_PRODUCTS: Record<string, string> = {
   scale_annual:    import.meta.env.VITE_DODO_PRODUCT_SCALE_ANNUAL    ?? "",
 };
 
-function buildCheckoutUrl(productKey: string, email: string): string {
+function buildCheckoutUrl(productKey: string, email: string, userId: string): string {
   const productId = DODO_PRODUCTS[productKey];
   if (!productId) return "#";
-  const params = new URLSearchParams({ email });
+  const params = new URLSearchParams({
+    email,
+    "metadata[user_id]": userId,
+  });
   return `https://checkout.dodopayments.com/buy/${productId}?${params.toString()}`;
 }
 
@@ -36,12 +39,13 @@ interface PlanCardProps {
   isCurrent: boolean;
   isAnnual: boolean;
   userEmail: string;
+  userId: string;
 }
 
-function PlanCard({ tier, name, monthlyPrice, annualMonthlyPrice, features, isPopular, isCurrent, isAnnual, userEmail }: PlanCardProps) {
+function PlanCard({ tier, name, monthlyPrice, annualMonthlyPrice, features, isPopular, isCurrent, isAnnual, userEmail, userId }: PlanCardProps) {
   const price = isAnnual ? annualMonthlyPrice : monthlyPrice;
   const linkKey = `${tier}_${isAnnual ? "annual" : "monthly"}`;
-  const checkoutUrl = buildCheckoutUrl(linkKey, userEmail);
+  const checkoutUrl = buildCheckoutUrl(linkKey, userEmail, userId);
 
   const isStarter = tier === "starter";
 
@@ -348,6 +352,7 @@ export function Settings() {
                 isCurrent={plan.tier === p.tier}
                 isAnnual={isAnnual}
                 userEmail={user?.email ?? ""}
+                userId={user?.id ?? ""}
               />
             ))}
           </div>

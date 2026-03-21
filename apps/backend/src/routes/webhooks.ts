@@ -72,17 +72,31 @@ webhookRoutes.post("/dodo", async (c) => {
       return c.json({ received: true });
     }
 
-    // Look up user by email
-    const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-    if (listError) {
-      console.error("[webhook] Failed to list users", listError);
-      return c.json({ error: "Internal error" }, 500);
-    }
+    // Prefer user_id from metadata (fast, O(1)) — fall back to email scan
+    const metadataUserId = (data.metadata as Record<string, string> | undefined)?.user_id;
 
-    const user = users.users.find((u) => u.email === customerEmail);
-    if (!user) {
-      console.warn(`[webhook] No user found for email: ${customerEmail}`);
-      return c.json({ received: true });
+    let user: { id: string; email?: string; user_metadata: Record<string, unknown> } | undefined;
+
+    if (metadataUserId) {
+      const { data: found, error } = await supabaseAdmin.auth.admin.getUserById(metadataUserId);
+      if (error || !found.user) {
+        console.warn(`[webhook] No user found for id: ${metadataUserId}`);
+        return c.json({ received: true });
+      }
+      user = found.user;
+    } else {
+      // Fallback: scan by email
+      if (!customerEmail) return c.json({ received: true });
+      const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+      if (listError) {
+        console.error("[webhook] Failed to list users", listError);
+        return c.json({ error: "Internal error" }, 500);
+      }
+      user = users.users.find((u) => u.email === customerEmail);
+      if (!user) {
+        console.warn(`[webhook] No user found for email: ${customerEmail}`);
+        return c.json({ received: true });
+      }
     }
 
     // Update user metadata with plan info
@@ -108,11 +122,19 @@ webhookRoutes.post("/dodo", async (c) => {
   if (eventType === "subscription.cancelled" || eventType === "subscription.expired") {
     const data = (event.data ?? event) as Record<string, unknown>;
     const customerEmail = (data.customer_email ?? data.email) as string | undefined;
+    const metadataUserId = (data.metadata as Record<string, string> | undefined)?.user_id;
 
-    if (!customerEmail) return c.json({ received: true });
+    let user: { id: string; user_metadata: Record<string, unknown> } | undefined;
 
-    const { data: users } = await supabaseAdmin.auth.admin.listUsers();
-    const user = users?.users.find((u) => u.email === customerEmail);
+    if (metadataUserId) {
+      const { data: found } = await supabaseAdmin.auth.admin.getUserById(metadataUserId);
+      user = found?.user ?? undefined;
+    } else {
+      if (!customerEmail) return c.json({ received: true });
+      const { data: users } = await supabaseAdmin.auth.admin.listUsers();
+      user = users?.users.find((u) => u.email === customerEmail);
+    }
+
     if (!user) return c.json({ received: true });
 
     await supabaseAdmin.auth.admin.updateUserById(user.id, {
