@@ -68,7 +68,7 @@ export function Login() {
   return (
     <div className="relative flex min-h-screen w-full overflow-hidden bg-black">
       {/* ASCII video background — full screen, locked */}
-      <AsciiVideoBackground src="/bg-148.mp4" />
+      <AsciiVideoBackground src="https://rwqxpfmktpzsnujnmyca.supabase.co/storage/v1/object/public/assets/bg-148.mp4" />
 
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/10 to-black/65" />
