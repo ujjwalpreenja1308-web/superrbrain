@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { AsciiVideoBackground } from "@/components/AsciiVideoBackground";
 
 function GoogleIcon() {
   return (
@@ -66,40 +67,22 @@ export function Login() {
 
   return (
     <div className="relative flex min-h-screen w-full overflow-hidden bg-black">
-      {/* Full-screen video background — portrait source rotated 90° clockwise */}
-      <div className="absolute inset-0 overflow-hidden">
-        <video
-          className="absolute opacity-60"
-          style={{
-            top: "50%",
-            left: "50%",
-            /* rotate 90° clockwise then scale up so the rotated video fills the viewport */
-            width: "100vh",
-            height: "100vw",
-            transform: "translate(-50%, -50%) rotate(90deg)",
-            objectFit: "cover",
-            minWidth: "100%",
-            minHeight: "100%",
-          }}
-          src="/ascii-art.mp4"
-          autoPlay
-          loop
-          muted
-          playsInline
-          aria-hidden="true"
-        />
-      </div>
+      {/* ASCII video background — full screen, locked */}
+      <AsciiVideoBackground src="/bg-148.mp4" />
 
-      {/* Gradient overlay — darkens edges, keeps center legible */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/30 to-black/80" />
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/10 to-black/65" />
 
       {/* Top-left wordmark */}
-      <div className="absolute left-8 top-8 z-10 flex items-center gap-2">
+      <a
+        href={import.meta.env.PROD ? "https://covable.app" : "/"}
+        className="absolute left-8 top-8 z-10 flex items-center gap-2 transition-opacity hover:opacity-70"
+      >
         <img src="/logo.svg" alt="" className="h-6 w-6" />
         <span className="text-sm font-semibold tracking-wide text-white/90">
           Covable
         </span>
-      </div>
+      </a>
 
       {/* Auth card — right-side panel */}
       <div className="relative z-10 ml-auto flex h-full min-h-screen w-full max-w-md flex-col justify-center bg-black/50 px-10 py-16 backdrop-blur-xl backdrop-saturate-150 md:border-l md:border-white/10">

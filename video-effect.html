@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>effect</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+
+    #container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #vid {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: blur(1.5px) brightness(0.8);
+    }
+
+    #ascii {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* vignette */
+    #vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.95) 100%);
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <video id="vid" src="14846386_3840_2160_24fps.mp4" autoplay loop muted playsinline></video>
+    <canvas id="ascii"></canvas>
+    <div id="vignette"></div>
+  </div>
+
+  <script>
+    const video  = document.getElementById("vid");
+    const canvas = document.getElementById("ascii");
+    const ctx    = canvas.getContext("2d");
+
+    // dense ascii ramp — will tile uniformly across screen
+    const CHARS = " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
+
+    const CELL = 6;       // size of each ascii cell in px
+    const FONT_SIZE = 6;  // match cell size
+
+    function resize() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener("resize", resize);
+
+    // pre-build a random ascii grid that refreshes slowly for atmosphere
+    let asciiGrid = [];
+    let lastGridTime = 0;
+    const GRID_REFRESH_INTERVAL = 80; // ms between grid updates
+
+    function buildGrid(cols, rows) {
+      asciiGrid = [];
+      for (let row = 0; row < rows; row++) {
+        asciiGrid[row] = [];
+        for (let col = 0; col < cols; col++) {
+          asciiGrid[row][col] = CHARS[Math.floor(Math.random() * CHARS.length)];
+        }
+      }
+    }
+
+    function draw(ts) {
+      requestAnimationFrame(draw);
+
+      const W = canvas.width;
+      const H = canvas.height;
+      const cols = Math.floor(W / CELL);
+      const rows = Math.floor(H / CELL);
+
+      // rebuild grid occasionally for animated feel
+      if (!asciiGrid.length || asciiGrid[0].length !== cols || asciiGrid.length !== rows) {
+        buildGrid(cols, rows);
+      }
+      if (ts - lastGridTime > GRID_REFRESH_INTERVAL) {
+        // only randomise ~5% of chars each tick so it shimmers, not flickers
+        const count = Math.floor(cols * rows * 0.05);
+        for (let i = 0; i < count; i++) {
+          const r = Math.floor(Math.random() * rows);
+          const c = Math.floor(Math.random() * cols);
+          asciiGrid[r][c] = CHARS[Math.floor(Math.random() * CHARS.length)];
+        }
+        lastGridTime = ts;
+      }
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.font = `${FONT_SIZE}px "Courier New", monospace`;
+      ctx.textBaseline = "top";
+      ctx.textAlign = "left";
+
+      // slow global pulse
+      const pulse = 0.08 + Math.sin(ts * 0.0006) * 0.05;
+      const RADIUS = 120;
+
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const cx = col * CELL + CELL / 2;
+          const cy = row * CELL + CELL / 2;
+          const dist = Math.sqrt((cx - mouseX) ** 2 + (cy - mouseY) ** 2);
+
+          let opacity = pulse;
+          if (dist < RADIUS) {
+            const influence = 1 - dist / RADIUS;
+            // only scatter randomly — no uniform brightness boost
+            // each char independently decides to flicker based on random chance + influence
+            if (Math.random() < influence * 0.3) {
+              opacity = pulse + Math.random() * 0.25;
+              asciiGrid[row][col] = CHARS[Math.floor(Math.random() * CHARS.length)];
+            }
+          }
+
+          ctx.fillStyle = `rgba(220, 230, 255, ${opacity})`;
+          ctx.fillText(asciiGrid[row][col], col * CELL, row * CELL);
+        }
+      }
+    }
+
+    // mouse tracking
+    let mouseX = -999, mouseY = -999;
+    window.addEventListener("mousemove", e => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    video.addEventListener("canplay", () => video.play());
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>
