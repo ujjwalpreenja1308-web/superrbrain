@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useActiveBrand } from "@/hooks/useActiveBrand";
+import { usePlan } from "@/hooks/usePlan";
+import { UpgradeGate } from "@/components/UpgradeGate";
 import {
   useExecutionJob,
   useUpdateContent,
@@ -137,6 +139,17 @@ export function ContentWorkbench() {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
   const { activeBrand: brand } = useActiveBrand();
+  const plan = usePlan();
+
+  if (!plan.hasExecution) {
+    return (
+      <UpgradeGate
+        feature="Reddit Execution Engine"
+        requiredPlan="growth"
+        description="Automatically generate and deploy Reddit comments to fill your AI citation gaps. Available on Growth and Scale plans."
+      />
+    );
+  }
 
   const { data: jobData, isLoading: jobLoading } = useExecutionJob(brand?.id, jobId);
   const content = jobData?.content;

@@ -1,15 +1,186 @@
 import { useActiveBrand } from "@/hooks/useActiveBrand";
 import { useAuth } from "@/hooks/useAuth";
+import { usePlan, getPlanLimits } from "@/hooks/usePlan";
+import type { PlanTier } from "@/hooks/usePlan";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, CreditCard, Globe, Check, Zap, Building2 } from "lucide-react";
+import { User, CreditCard, Globe, Check, X, Zap, Building2, Layers } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// Dodo Payments checkout links — replace with real payment links from Dodo dashboard
+const DODO_LINKS: Record<string, string> = {
+  starter_monthly: "https://checkout.dodopayments.com/buy/starter-monthly",
+  starter_annual: "https://checkout.dodopayments.com/buy/starter-annual",
+  growth_monthly: "https://checkout.dodopayments.com/buy/growth-monthly",
+  growth_annual: "https://checkout.dodopayments.com/buy/growth-annual",
+  scale_monthly: "https://checkout.dodopayments.com/buy/scale-monthly",
+  scale_annual: "https://checkout.dodopayments.com/buy/scale-annual",
+};
+
+interface PlanCardProps {
+  tier: PlanTier;
+  name: string;
+  monthlyPrice: number;
+  annualMonthlyPrice: number;
+  features: { label: string; included: boolean }[];
+  isPopular?: boolean;
+  isCurrent: boolean;
+  isAnnual: boolean;
+}
+
+function PlanCard({ tier, name, monthlyPrice, annualMonthlyPrice, features, isPopular, isCurrent, isAnnual }: PlanCardProps) {
+  const price = isAnnual ? annualMonthlyPrice : monthlyPrice;
+  const linkKey = `${tier}_${isAnnual ? "annual" : "monthly"}`;
+  const checkoutUrl = DODO_LINKS[linkKey];
+
+  const isStarter = tier === "starter";
+
+  return (
+    <Card className={cn(
+      "relative flex flex-col transition-colors",
+      isPopular ? "border-primary/40 bg-primary/[0.03]" : "border-border hover:border-primary/30",
+      isCurrent && "ring-1 ring-primary/50"
+    )}>
+      {isPopular && (
+        <div className="absolute -top-2.5 left-4">
+          <span className="bg-primary text-primary-foreground text-[10px] font-semibold px-2 py-0.5 rounded-full">
+            Most popular
+          </span>
+        </div>
+      )}
+
+      <CardHeader className={cn("pb-3", isPopular && "pt-5")}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className={cn(
+              "flex size-7 items-center justify-center rounded-md",
+              isPopular ? "bg-primary/10" : "bg-secondary"
+            )}>
+              {tier === "starter" && <Zap className="size-3.5 text-primary" />}
+              {tier === "growth" && <Building2 className="size-3.5 text-primary" />}
+              {tier === "scale" && <Layers className="size-3.5 text-primary" />}
+            </div>
+            <CardTitle className="text-sm">{name}</CardTitle>
+          </div>
+          <div className="text-right">
+            <span className="text-lg font-semibold">${price}</span>
+            <span className="text-xs text-muted-foreground">/mo</span>
+          </div>
+        </div>
+        {isAnnual && (
+          <p className="text-[10px] text-muted-foreground mt-1">
+            Billed ${monthlyPrice * 10}/yr · save ${(monthlyPrice - annualMonthlyPrice) * 12}/yr
+          </p>
+        )}
+      </CardHeader>
+
+      <CardContent className="flex flex-col flex-1 gap-4">
+        <ul className="space-y-1.5 flex-1">
+          {features.map((f) => (
+            <li key={f.label} className="flex items-start gap-2 text-xs text-muted-foreground">
+              {f.included
+                ? <Check className="size-3.5 mt-0.5 shrink-0 text-primary" />
+                : <X className="size-3.5 mt-0.5 shrink-0 text-muted-foreground/40" />
+              }
+              <span className={!f.included ? "opacity-40" : ""}>{f.label}</span>
+            </li>
+          ))}
+        </ul>
+
+        {isCurrent ? (
+          <div className="w-full rounded-md border border-primary/30 py-2 text-xs text-primary text-center font-medium">
+            Current plan
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            <a
+              href={checkoutUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                "block w-full rounded-md py-2 text-xs text-center font-medium transition-colors",
+                isPopular
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "border border-border hover:border-primary/40 text-foreground"
+              )}
+            >
+              {isStarter && !isCurrent ? "Try 3 days free" : "Get started"}
+            </a>
+            {isStarter && (
+              <p className="text-[10px] text-muted-foreground text-center">
+                Card required · cancel before day 3
+              </p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export function Settings() {
   const { user } = useAuth();
   const { activeBrand: brand, brands } = useActiveBrand();
+  const plan = usePlan();
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? "U";
+
+  const plans: { tier: PlanTier; name: string; monthly: number; annual: number; features: { label: string; included: boolean }[] }[] = [
+    {
+      tier: "starter",
+      name: "Starter",
+      monthly: 59,
+      annual: 49,
+      features: [
+        { label: "10 AI-optimized prompts", included: true },
+        { label: "1 brand", included: true },
+        { label: "Weekly citation scans", included: true },
+        { label: "Gap detection", included: true },
+        { label: "Email support", included: true },
+        { label: "Reddit execution engine", included: false },
+        { label: "AEO-optimized blog assist", included: false },
+      ],
+    },
+    {
+      tier: "growth",
+      name: "Growth",
+      monthly: 149,
+      annual: 124,
+      features: [
+        { label: "20 AI-optimized prompts", included: true },
+        { label: "3 brands", included: true },
+        { label: "Daily citation scans", included: true },
+        { label: "Gap detection + analysis", included: true },
+        { label: "Priority support", included: true },
+        { label: "Reddit execution engine", included: true },
+        { label: "AEO-optimized blog assist", included: false },
+      ],
+    },
+    {
+      tier: "scale",
+      name: "Scale",
+      monthly: 349,
+      annual: 290,
+      features: [
+        { label: "40 AI-optimized prompts", included: true },
+        { label: "10 brands", included: true },
+        { label: "Daily citation scans", included: true },
+        { label: "Full execution engine", included: true },
+        { label: "AEO-optimized blog assist", included: true },
+        { label: "API access", included: true },
+        { label: "Dedicated account manager", included: true },
+      ],
+    },
+  ];
+
+  // Annual toggle state — stored in URL hash for simplicity
+  const isAnnual = typeof window !== "undefined" && window.location.hash === "#annual";
+
+  function toggleBilling(annual: boolean) {
+    window.location.hash = annual ? "annual" : "";
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+  }
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -30,6 +201,7 @@ export function Settings() {
           </TabsTrigger>
         </TabsList>
 
+        {/* ── PROFILE ── */}
         <TabsContent value="profile" className="mt-4 space-y-4">
           <Card>
             <CardHeader>
@@ -84,8 +256,10 @@ export function Settings() {
           )}
         </TabsContent>
 
-        <TabsContent value="billing" className="mt-4 space-y-4">
-          {/* Current plan */}
+        {/* ── BILLING ── */}
+        <TabsContent value="billing" className="mt-4 space-y-5">
+
+          {/* Current plan summary */}
           <Card>
             <CardHeader>
               <CardTitle className="text-sm">Current Plan</CardTitle>
@@ -93,149 +267,87 @@ export function Settings() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">Free Trial</p>
-                  <p className="text-xs text-muted-foreground">14-day trial · upgrade anytime</p>
+                  <p className="font-medium">{getPlanLimits(plan.tier).label}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {plan.tier === "trial"
+                      ? "3-day trial · upgrade to keep access"
+                      : `$${plan.price}/mo · cancel anytime`}
+                  </p>
                 </div>
-                <Badge variant="outline" className="border-primary text-primary">Active</Badge>
+                <Badge
+                  variant="outline"
+                  className={plan.tier === "trial" ? "border-yellow-500/50 text-yellow-500" : "border-primary/50 text-primary"}
+                >
+                  {plan.tier === "trial" ? "Trial" : "Active"}
+                </Badge>
+              </div>
+
+              {/* Usage bar */}
+              <div className="mt-4 space-y-2">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Brands</span>
+                  <span>{brands.length} / {plan.maxBrands}</span>
+                </div>
+                <div className="h-1 rounded-full bg-secondary overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full"
+                    style={{ width: `${Math.min((brands.length / plan.maxBrands) * 100, 100)}%` }}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Upgrade plans */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {/* Starter */}
-            <Card className="relative flex flex-col border-border hover:border-primary/40 transition-colors">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="flex size-8 items-center justify-center rounded-md bg-secondary">
-                      <Zap className="size-4 text-primary" />
-                    </div>
-                    <CardTitle className="text-sm">Starter</CardTitle>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-lg font-semibold">$59</span>
-                    <span className="text-xs text-muted-foreground">/mo</span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex flex-col flex-1 gap-4">
-                <ul className="space-y-2 flex-1">
-                  {[
-                    "10 AI-optimized prompts",
-                    "1 brand",
-                    "Weekly citation scans",
-                    "Gap detection",
-                    "Email support",
-                  ].map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
-                      <Check className="size-3.5 mt-0.5 shrink-0 text-primary" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  disabled
-                  className="w-full rounded-md border border-border py-2 text-xs text-muted-foreground cursor-not-allowed"
-                >
-                  Coming soon
-                </button>
-              </CardContent>
-            </Card>
-
-            {/* Growth — most popular */}
-            <Card className="relative flex flex-col border-primary/30 hover:border-primary/60 transition-colors"
-              style={{ background: "rgba(200,245,60,0.03)" }}
+          {/* Monthly / Annual toggle */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => toggleBilling(false)}
+              className={cn(
+                "text-xs px-3 py-1.5 rounded-full border transition-colors",
+                !isAnnual ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground"
+              )}
             >
-              <div className="absolute -top-2.5 left-4">
-                <span className="bg-primary text-primary-foreground text-xs font-medium px-2 py-0.5 rounded-full">
-                  Most popular
-                </span>
-              </div>
-              <CardHeader className="pb-3 pt-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="flex size-8 items-center justify-center rounded-md bg-primary/10">
-                      <Building2 className="size-4 text-primary" />
-                    </div>
-                    <CardTitle className="text-sm">Growth</CardTitle>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-lg font-semibold">$149</span>
-                    <span className="text-xs text-muted-foreground">/mo</span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex flex-col flex-1 gap-4">
-                <ul className="space-y-2 flex-1">
-                  {[
-                    "20 AI-optimized prompts",
-                    "3 brands",
-                    "Daily citation scans",
-                    "Gap detection + analysis",
-                    "Reddit execution engine",
-                    "Priority support",
-                  ].map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
-                      <Check className="size-3.5 mt-0.5 shrink-0 text-primary" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  disabled
-                  className="w-full rounded-md border border-primary/30 py-2 text-xs text-primary/60 cursor-not-allowed"
-                >
-                  Coming soon
-                </button>
-              </CardContent>
-            </Card>
+              Monthly
+            </button>
+            <button
+              onClick={() => toggleBilling(true)}
+              className={cn(
+                "text-xs px-3 py-1.5 rounded-full border transition-colors flex items-center gap-1.5",
+                isAnnual ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground"
+              )}
+            >
+              Annual
+              <span className={cn(
+                "text-[10px] px-1.5 py-0.5 rounded",
+                isAnnual ? "bg-white/20" : "bg-primary/10 text-primary"
+              )}>
+                Save 17%
+              </span>
+            </button>
+          </div>
 
-            {/* Scale */}
-            <Card className="relative flex flex-col border-border hover:border-primary/40 transition-colors">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="flex size-8 items-center justify-center rounded-md bg-secondary">
-                      <Zap className="size-4 text-primary" />
-                    </div>
-                    <CardTitle className="text-sm">Scale</CardTitle>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-lg font-semibold">$349</span>
-                    <span className="text-xs text-muted-foreground">/mo</span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex flex-col flex-1 gap-4">
-                <ul className="space-y-2 flex-1">
-                  {[
-                    "40 AI-optimized prompts",
-                    "10 brands",
-                    "Real-time citation scans",
-                    "Full execution engine (Reddit + Blog)",
-                    "Blog post generation",
-                    "API access",
-                    "Dedicated account manager",
-                  ].map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
-                      <Check className="size-3.5 mt-0.5 shrink-0 text-primary" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  disabled
-                  className="w-full rounded-md border border-border py-2 text-xs text-muted-foreground cursor-not-allowed"
-                >
-                  Coming soon
-                </button>
-              </CardContent>
-            </Card>
+          {/* Plan cards */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {plans.map((p) => (
+              <PlanCard
+                key={p.tier}
+                tier={p.tier}
+                name={p.name}
+                monthlyPrice={p.monthly}
+                annualMonthlyPrice={p.annual}
+                features={p.features}
+                isPopular={p.tier === "growth"}
+                isCurrent={plan.tier === p.tier}
+                isAnnual={isAnnual}
+              />
+            ))}
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Payments launching soon. You'll be notified at {user?.email}.
+            Payments are processed securely by Dodo Payments. Questions?{" "}
+            <a href="mailto:support@covable.app" className="underline underline-offset-2 hover:text-foreground">
+              support@covable.app
+            </a>
           </p>
         </TabsContent>
       </Tabs>

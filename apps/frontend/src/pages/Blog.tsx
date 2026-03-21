@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useActiveBrand } from "@/hooks/useActiveBrand";
+import { usePlan } from "@/hooks/usePlan";
+import { UpgradeGate } from "@/components/UpgradeGate";
 import { useBlogPosts, useBlogPost, useGenerateBlog, useUpdateBlogPost, type BlogPost } from "@/hooks/useBlog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -188,6 +190,18 @@ function PostDetail({
 
 export function Blog() {
   const { activeBrand: brand } = useActiveBrand();
+  const plan = usePlan();
+
+  if (!plan.hasBlog) {
+    return (
+      <UpgradeGate
+        feature="Blog Generation"
+        requiredPlan="scale"
+        description="Generate AEO-optimized blog content engineered to get your brand cited by AI — not just ranked on Google. Available on the Scale plan."
+      />
+    );
+  }
+
   const { data: posts, isLoading, isError, error, refetch } = useBlogPosts(brand?.id);
   const generateBlog = useGenerateBlog(brand?.id || "");
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);

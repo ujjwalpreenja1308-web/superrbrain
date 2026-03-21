@@ -1,12 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { useGapQueue, useStartExecution } from "@/hooks/useExecution";
 import { useActiveBrand } from "@/hooks/useActiveBrand";
+import { usePlan } from "@/hooks/usePlan";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorCard } from "@/components/ErrorCard";
-import { ExternalLink, Loader2, Zap, MessageSquare } from "lucide-react";
+import { ExternalLink, Loader2, Zap, MessageSquare, Lock } from "lucide-react";
 import type { GapQueueItem } from "@covable/shared";
 
 function statusBadgeVariant(status: string | null): "default" | "secondary" | "outline" | "destructive" {
@@ -29,9 +30,11 @@ function contentStatusBadgeVariant(status: string | null): "default" | "secondar
 function GapCard({
   gap,
   brandId,
+  canExecute,
 }: {
   gap: GapQueueItem;
   brandId: string;
+  canExecute: boolean;
 }) {
   const navigate = useNavigate();
   const startExecution = useStartExecution(brandId);
@@ -85,7 +88,14 @@ function GapCard({
             )}
           </div>
           <div className="flex-shrink-0">
-            {!hasJob ? (
+            {!canExecute ? (
+              <Button size="sm" variant="outline" asChild>
+                <a href="/settings#billing" className="flex items-center gap-1.5">
+                  <Lock className="h-3.5 w-3.5" />
+                  Upgrade
+                </a>
+              </Button>
+            ) : !hasJob ? (
               <Button
                 size="sm"
                 onClick={handleGenerate}
@@ -117,7 +127,9 @@ function GapCard({
 
 export function GapQueue() {
   const { activeBrand: brand } = useActiveBrand();
+  const plan = usePlan();
   const { data: gaps, isLoading, isError, error, refetch } = useGapQueue(brand?.id);
+  const canExecute = plan.hasExecution;
 
   return (
     <>
@@ -128,6 +140,25 @@ export function GapQueue() {
             Reddit sources where competitors appear but your brand doesn't. Generate content to close the gap.
           </p>
         </div>
+
+        {!canExecute && (
+          <Card className="border-primary/20 bg-primary/[0.03]">
+            <CardContent className="py-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium">Execution engine locked</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Upgrade to Growth to generate Reddit content and close gaps automatically.
+                </p>
+              </div>
+              <a
+                href="/settings#billing"
+                className="shrink-0 text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                Upgrade
+              </a>
+            </CardContent>
+          </Card>
+        )}
 
         {isError ? (
           <ErrorCard message={error?.message} onRetry={() => refetch()} />
@@ -147,7 +178,7 @@ export function GapQueue() {
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">{gaps.length} gap{gaps.length !== 1 ? "s" : ""} found</p>
             {gaps.map((gap) => (
-              <GapCard key={gap.id} gap={gap} brandId={brand!.id} />
+              <GapCard key={gap.id} gap={gap} brandId={brand!.id} canExecute={canExecute} />
             ))}
           </div>
         )}
