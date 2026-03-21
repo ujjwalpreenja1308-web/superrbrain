@@ -9,15 +9,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, CreditCard, Globe, Check, X, Zap, Building2, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Dodo Payments checkout links — replace with real payment links from Dodo dashboard
-const DODO_LINKS: Record<string, string> = {
-  starter_monthly: "https://checkout.dodopayments.com/buy/starter-monthly",
-  starter_annual: "https://checkout.dodopayments.com/buy/starter-annual",
-  growth_monthly: "https://checkout.dodopayments.com/buy/growth-monthly",
-  growth_annual: "https://checkout.dodopayments.com/buy/growth-annual",
-  scale_monthly: "https://checkout.dodopayments.com/buy/scale-monthly",
-  scale_annual: "https://checkout.dodopayments.com/buy/scale-annual",
+// Dodo product IDs from env — set VITE_DODO_PRODUCT_* in Vercel/local env
+const DODO_PRODUCTS: Record<string, string> = {
+  starter_monthly: import.meta.env.VITE_DODO_PRODUCT_STARTER_MONTHLY ?? "",
+  starter_annual:  import.meta.env.VITE_DODO_PRODUCT_STARTER_ANNUAL  ?? "",
+  growth_monthly:  import.meta.env.VITE_DODO_PRODUCT_GROWTH_MONTHLY  ?? "",
+  growth_annual:   import.meta.env.VITE_DODO_PRODUCT_GROWTH_ANNUAL   ?? "",
+  scale_monthly:   import.meta.env.VITE_DODO_PRODUCT_SCALE_MONTHLY   ?? "",
+  scale_annual:    import.meta.env.VITE_DODO_PRODUCT_SCALE_ANNUAL    ?? "",
 };
+
+function buildCheckoutUrl(productKey: string, email: string): string {
+  const productId = DODO_PRODUCTS[productKey];
+  if (!productId) return "#";
+  const params = new URLSearchParams({ email });
+  return `https://checkout.dodopayments.com/buy/${productId}?${params.toString()}`;
+}
 
 interface PlanCardProps {
   tier: PlanTier;
@@ -28,12 +35,13 @@ interface PlanCardProps {
   isPopular?: boolean;
   isCurrent: boolean;
   isAnnual: boolean;
+  userEmail: string;
 }
 
-function PlanCard({ tier, name, monthlyPrice, annualMonthlyPrice, features, isPopular, isCurrent, isAnnual }: PlanCardProps) {
+function PlanCard({ tier, name, monthlyPrice, annualMonthlyPrice, features, isPopular, isCurrent, isAnnual, userEmail }: PlanCardProps) {
   const price = isAnnual ? annualMonthlyPrice : monthlyPrice;
   const linkKey = `${tier}_${isAnnual ? "annual" : "monthly"}`;
-  const checkoutUrl = DODO_LINKS[linkKey];
+  const checkoutUrl = buildCheckoutUrl(linkKey, userEmail);
 
   const isStarter = tier === "starter";
 
@@ -339,6 +347,7 @@ export function Settings() {
                 isPopular={p.tier === "growth"}
                 isCurrent={plan.tier === p.tier}
                 isAnnual={isAnnual}
+                userEmail={user?.email ?? ""}
               />
             ))}
           </div>
