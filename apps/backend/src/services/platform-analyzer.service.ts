@@ -85,7 +85,7 @@ Return a JSON object with these exact fields:
 }`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-4o-mini",
     messages: [
       { role: "system", content: systemPrompt },
       {

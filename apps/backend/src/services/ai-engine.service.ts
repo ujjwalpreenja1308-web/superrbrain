@@ -41,7 +41,7 @@ async function queryChatGPT(
   location?: LocationContext
 ): Promise<AiQueryResult> {
   const requestParams: any = {
-    model: "gpt-5.4-mini",
+    model: "gpt-4o-mini",
     tools: [{ type: "web_search_preview" }],
     input: promptText,
   };

@@ -19,7 +19,7 @@ export async function extractBrandsFromResponse(
 ): Promise<{ name: string; frequency: number }[]> {
   const { openai } = await import("../lib/openai.js");
   const response = await openai.chat.completions.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-4o-mini",
     response_format: { type: "json_object" },
     temperature: 0,
     messages: [

@@ -1,8 +1,22 @@
 import type { Context, Next } from "hono";
-
-const DEV_USER_ID = "00000000-0000-0000-0000-000000000001";
+import { supabaseAdmin } from "../lib/supabase.js";
 
 export async function authMiddleware(c: Context, next: Next) {
-  c.set("userId", DEV_USER_ID);
+  const authorization = c.req.header("Authorization");
+  if (!authorization?.startsWith("Bearer ")) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const token = authorization.slice(7);
+  const {
+    data: { user },
+    error,
+  } = await supabaseAdmin.auth.getUser(token);
+
+  if (error || !user) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  c.set("userId", user.id);
   await next();
 }

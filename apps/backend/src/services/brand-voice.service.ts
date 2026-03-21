@@ -34,7 +34,7 @@ export async function getBrandVoice(brandId: string): Promise<BrandVoiceProfile>
   }
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-4o-mini",
     messages: [
       {
         role: "system",

@@ -17,7 +17,7 @@ export async function extractBrandData(
   url: string
 ): Promise<BrandExtraction> {
   const response = await openai.chat.completions.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-4o-mini",
     response_format: { type: "json_object" },
     messages: [
       {
@@ -55,7 +55,7 @@ export async function generatePrompts(
   const currentMonth = new Date().toLocaleString("en-US", { month: "long" });
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-4o-mini",
     response_format: { type: "json_object" },
     messages: [
       {

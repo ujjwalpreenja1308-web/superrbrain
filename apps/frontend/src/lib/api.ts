@@ -1,6 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+import { supabase } from "@/lib/supabase";
 
-const headers = { "Content-Type": "application/json" };
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 const STATUS_MESSAGES: Record<number, string> = {
   401: "Session expired. Please sign in again.",
@@ -28,16 +28,25 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json();
 }
 
+async function getHeaders(): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.access_token) {
+    headers["Authorization"] = `Bearer ${session.access_token}`;
+  }
+  return headers;
+}
+
 export const api = {
   async get<T>(path: string): Promise<T> {
-    const res = await fetch(`${API_URL}${path}`, { headers });
+    const res = await fetch(`${API_URL}${path}`, { headers: await getHeaders() });
     return handleResponse<T>(res);
   },
 
   async post<T>(path: string, body?: unknown): Promise<T> {
     const res = await fetch(`${API_URL}${path}`, {
       method: "POST",
-      headers,
+      headers: await getHeaders(),
       body: body ? JSON.stringify(body) : undefined,
     });
     return handleResponse<T>(res);
@@ -46,7 +55,7 @@ export const api = {
   async put<T>(path: string, body: unknown): Promise<T> {
     const res = await fetch(`${API_URL}${path}`, {
       method: "PUT",
-      headers,
+      headers: await getHeaders(),
       body: JSON.stringify(body),
     });
     return handleResponse<T>(res);
@@ -55,7 +64,7 @@ export const api = {
   async patch<T>(path: string, body: unknown): Promise<T> {
     const res = await fetch(`${API_URL}${path}`, {
       method: "PATCH",
-      headers,
+      headers: await getHeaders(),
       body: JSON.stringify(body),
     });
     return handleResponse<T>(res);

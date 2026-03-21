@@ -46,7 +46,7 @@ export async function generateContentStrategy(
   const { gap, brandName, brandVoice, platformProfile, promptText } = input;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-4o-mini",
     messages: [
       {
         role: "system",
@@ -107,7 +107,7 @@ export async function generateContent(
   const sampleComments = platformProfile.sample_comments.slice(0, 2);
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-4o-mini",
     messages: [
       {
         role: "system",
@@ -192,7 +192,7 @@ export async function qualityCheck(
     .map(({ label }) => label);
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-4o-mini",
     messages: [
       {
         role: "system",

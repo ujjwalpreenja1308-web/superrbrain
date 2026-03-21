@@ -110,7 +110,7 @@ async function analyzeAeoPatterns(
     .join("\n\n");
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-4o-mini",
     messages: [
       {
         role: "system",
@@ -176,7 +176,7 @@ async function generateBlogPost(
   const primaryQuery = targetQueries[0] || `best ${industry} options`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-4o-mini",
     messages: [
       {
         role: "system",
