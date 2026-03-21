@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -15,6 +16,7 @@ import { Blog } from "@/pages/Blog";
 import { Prompts } from "@/pages/Prompts";
 import { Login } from "@/pages/Login";
 import { useAuth, isAuthDomain, isHomeDomain } from "@/hooks/useAuth";
+import { usePlan, useActivateTrial } from "@/hooks/usePlan";
 
 const AUTH_URL =
   import.meta.env.VITE_AUTH_URL ||
@@ -52,7 +54,10 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     if (import.meta.env.PROD) {
-      window.location.href = AUTH_URL;
+      // Preserve ?plan= param so we can redirect to checkout after login
+      const planParam = new URLSearchParams(window.location.search).get("plan");
+      const redirectTo = planParam ? `${AUTH_URL}?plan=${planParam}` : AUTH_URL;
+      window.location.href = redirectTo;
       return null;
     }
     return <Navigate to="/login" replace />;
@@ -61,7 +66,49 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-/** If already logged in on auth domain, redirect to home */
+/**
+ * Plan guard: activates trial on first load, blocks expired-trial users.
+ * Handles ?plan= param from landing page CTA → redirects to Dodo checkout after auth.
+ */
+function PlanGuard({ children }: { children: React.ReactNode }) {
+  useActivateTrial();
+  const plan = usePlan();
+  const { user } = useAuth();
+
+  // If came from landing page with ?plan=, redirect to settings billing
+  useEffect(() => {
+    const planParam = new URLSearchParams(window.location.search).get("plan");
+    if (planParam && user) {
+      // Remove param from URL, let user pick plan in billing tab
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [user]);
+
+  if (plan.trialExpired) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-6">
+        <div className="max-w-sm text-center space-y-4">
+          <div className="text-4xl">⏱</div>
+          <h2 className="text-xl font-semibold">Your trial has ended</h2>
+          <p className="text-sm text-muted-foreground">
+            Choose a plan to continue using Covable. Your data is safe and waiting for you.
+          </p>
+          <a
+            href="/settings"
+            className="inline-block w-full rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            View plans
+          </a>
+          <p className="text-xs text-muted-foreground">Cancel anytime · No hidden fees</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
+/** If already logged in on auth domain, redirect to home (preserving ?plan=) */
 function AuthPage() {
   const { user, loading } = useAuth();
 
@@ -75,10 +122,13 @@ function AuthPage() {
 
   if (user) {
     if (import.meta.env.PROD) {
-      window.location.href = HOME_URL;
+      const planParam = new URLSearchParams(window.location.search).get("plan");
+      const dest = planParam ? `${HOME_URL}/settings?plan=${planParam}` : HOME_URL;
+      window.location.href = dest;
       return null;
     }
-    return <Navigate to="/dashboard" replace />;
+    const planParam = new URLSearchParams(window.location.search).get("plan");
+    return <Navigate to={planParam ? `/settings?plan=${planParam}` : "/dashboard"} replace />;
   }
 
   return <Login />;
@@ -109,14 +159,18 @@ function AppRoutes() {
         path="/onboarding"
         element={
           <RequireAuth>
-            <Onboarding />
+            <PlanGuard>
+              <Onboarding />
+            </PlanGuard>
           </RequireAuth>
         }
       />
       <Route
         element={
           <RequireAuth>
-            <AppShell />
+            <PlanGuard>
+              <AppShell />
+            </PlanGuard>
           </RequireAuth>
         }
       >

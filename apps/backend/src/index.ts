@@ -9,6 +9,7 @@ import { citationRoutes } from "./routes/citations.js";
 import { gapRoutes } from "./routes/gaps.js";
 import { executionRoutes } from "./routes/execution.js";
 import blogRoutes from "./routes/blog.js";
+import meRoutes from "./routes/me.js";
 import webhookRoutes from "./routes/webhooks.js";
 import { authMiddleware } from "./middleware/auth.js";
 import { errorMiddleware } from "./middleware/error.js";
@@ -37,6 +38,7 @@ app.get("/health", (c) => c.json({ status: "ok" }));
 // Webhooks — no auth middleware, signature verified inside
 app.route("/webhooks", webhookRoutes);
 
+app.route("/api/me", meRoutes);
 app.route("/api/brands", brandRoutes);
 app.route("/api/brands", promptRoutes);
 app.route("/api/brands", citationRoutes);

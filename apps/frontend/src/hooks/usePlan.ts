@@ -1,4 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
+import { api } from "@/lib/api";
+import { useEffect } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export type PlanTier = "trial" | "starter" | "growth" | "scale";
 
@@ -7,14 +10,17 @@ export interface PlanLimits {
   maxBrands: number;
   maxPrompts: number;
   scanFrequency: "weekly" | "daily" | "realtime";
-  hasExecution: boolean;   // Reddit execution engine
-  hasBlog: boolean;        // Blog post generation
+  hasExecution: boolean;
+  hasBlog: boolean;
   hasApiAccess: boolean;
   label: string;
-  price: number | null;    // monthly price, null = trial
+  price: number | null;
+  trialExpired: boolean;
+  trialExpiresAt: Date | null;
+  hasAccess: boolean; // false = show hard paywall
 }
 
-const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
+const PLAN_CONFIG: Record<PlanTier, Omit<PlanLimits, "trialExpired" | "trialExpiresAt" | "hasAccess">> = {
   trial: {
     tier: "trial",
     maxBrands: 1,
@@ -64,13 +70,48 @@ const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
 export function usePlan(): PlanLimits {
   const { user } = useAuth();
 
-  // Plan is stored in user_metadata by the backend after Dodo webhook
   const rawTier = (user?.user_metadata?.plan as string | undefined) ?? "trial";
-  const tier = (rawTier in PLAN_LIMITS ? rawTier : "trial") as PlanTier;
+  const tier = (rawTier in PLAN_CONFIG ? rawTier : "trial") as PlanTier;
 
-  return PLAN_LIMITS[tier];
+  const trialExpiresAt = user?.user_metadata?.trial_expires_at
+    ? new Date(user.user_metadata.trial_expires_at as string)
+    : null;
+
+  const trialExpired = tier === "trial" && trialExpiresAt !== null && trialExpiresAt < new Date();
+
+  // Has access if: paid plan, or active trial (not expired)
+  const hasAccess = tier !== "trial" || !trialExpired;
+
+  return {
+    ...PLAN_CONFIG[tier],
+    trialExpired,
+    trialExpiresAt,
+    hasAccess,
+  };
 }
 
-export function getPlanLimits(tier: PlanTier): PlanLimits {
-  return PLAN_LIMITS[tier];
+export function getPlanLimits(tier: PlanTier) {
+  return PLAN_CONFIG[tier];
+}
+
+/** Call once on first dashboard load to set trial_expires_at on new users */
+export function useActivateTrial() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  const mutation = useMutation({
+    mutationFn: () => api.post<{ plan: string; trial_expires_at: string }>("/api/me/activate-trial"),
+    onSuccess: () => {
+      // Refresh auth session so user_metadata updates propagate
+      queryClient.invalidateQueries();
+    },
+  });
+
+  useEffect(() => {
+    // Only activate if user exists and has no plan yet
+    if (user && !user.user_metadata?.plan) {
+      mutation.mutate();
+    }
+  }, [user?.id]);
 }

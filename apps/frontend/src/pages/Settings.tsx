@@ -1,6 +1,7 @@
 import { useActiveBrand } from "@/hooks/useActiveBrand";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlan, getPlanLimits } from "@/hooks/usePlan";
+import { useSearchParams } from "react-router-dom";
 import type { PlanTier } from "@/hooks/usePlan";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -137,6 +138,10 @@ export function Settings() {
   const { activeBrand: brand, brands } = useActiveBrand();
   const plan = usePlan();
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? "U";
+  const [searchParams] = useSearchParams();
+  // ?plan= from landing page CTA — open billing tab automatically
+  const incomingPlan = searchParams.get("plan");
+  const defaultTab = incomingPlan ? "billing" : "profile";
 
   const plans: { tier: PlanTier; name: string; monthly: number; annual: number; features: { label: string; included: boolean }[] }[] = [
     {
@@ -201,7 +206,7 @@ export function Settings() {
         <p className="text-sm text-muted-foreground mt-1">Manage your account and billing</p>
       </div>
 
-      <Tabs defaultValue="profile">
+      <Tabs defaultValue={defaultTab}>
         <TabsList>
           <TabsTrigger value="profile">
             <User className="size-4" />
