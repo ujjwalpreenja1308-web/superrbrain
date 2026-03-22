@@ -120,15 +120,15 @@ nav {
   will-change: max-width;
 }
 nav.nav-collapsed {
-  max-width: 252px;
+  /* logo(26px) + padding(16+12px) + gap(8px) + CTA-icons(120px) = 182px */
+  max-width: 182px;
 }
 .nav-inner {
-  /* right padding clears the absolutely-positioned CTA (188px + 12px gap + 12px right) */
-  padding: 0 212px 0 16px;
+  position: relative;
+  padding: 0 16px;
   height: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 .nav-logo {
   font-size: 14px;
@@ -138,18 +138,25 @@ nav.nav-collapsed {
   letter-spacing: 0.02em;
   flex-shrink: 0;
 }
+/* links absolutely centered in the pill */
 .nav-links {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 24px;
   list-style: none;
   opacity: 1;
-  transition: opacity 200ms ease;
+  transition: opacity 100ms ease;
   will-change: opacity;
+  pointer-events: auto;
+  white-space: nowrap;
 }
 nav.nav-collapsed .nav-links {
   opacity: 0;
   pointer-events: none;
+  visibility: hidden;
 }
 .nav-links a {
   font-size: 13px;
