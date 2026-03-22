@@ -3,5 +3,11 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/([^.]+)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/ascii-snippet.html",
+      "headers": [{ "key": "Content-Type", "value": "text/html; charset=utf-8" }]
+    }
   ]
 }
