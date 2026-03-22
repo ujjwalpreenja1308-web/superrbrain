@@ -223,6 +223,7 @@ nav.nav-collapsed .nav-btn-icon {
   opacity: 1;
   width: 14px;
   height: 14px;
+  margin-left: -4px;
 }
 .nav-btn-signin,
 .nav-btn-start {
