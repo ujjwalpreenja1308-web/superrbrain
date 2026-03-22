@@ -120,8 +120,7 @@ nav {
   will-change: max-width;
 }
 nav.nav-collapsed {
-  /* logo(26px) + padding(16+12px) + gap(8px) + CTA-icons(120px) = 182px */
-  max-width: 182px;
+  max-width: 152px;
 }
 .nav-inner {
   position: relative;
@@ -207,13 +206,20 @@ nav.nav-collapsed .nav-btn-text {
 }
 nav.nav-collapsed .nav-btn-icon {
   opacity: 1;
-  width: 15px;
+  width: 12px;
+  height: 12px;
 }
 .nav-btn-signin,
 .nav-btn-start {
   transition: background 120ms ease, border-color 120ms ease,
-              color 120ms ease, transform 120ms ease !important;
+              color 120ms ease, transform 120ms ease,
+              height 200ms ease, padding 200ms ease !important;
   overflow: hidden;
+}
+nav.nav-collapsed .nav-btn-signin,
+nav.nav-collapsed .nav-btn-start {
+  height: 28px !important;
+  padding: 0 10px !important;
 }
 
 /* ── Pricing table ── */
