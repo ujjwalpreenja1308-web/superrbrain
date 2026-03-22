@@ -24,8 +24,8 @@
 .hero-ascii {
   height: 420px;
   position: relative;
-  will-change: transform;
   transform: translateZ(0);
+  contain: layout style;
   mask-image: linear-gradient(to bottom, transparent 0%, black 18%, black 78%, transparent 100%),
               linear-gradient(to right, transparent 0%, black 16%, black 84%, transparent 100%);
   mask-composite: intersect;
