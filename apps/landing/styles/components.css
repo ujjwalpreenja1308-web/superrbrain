@@ -120,7 +120,7 @@ nav {
   will-change: max-width;
 }
 nav.nav-collapsed {
-  max-width: 152px;
+  max-width: 138px;
 }
 .nav-inner {
   position: relative;
@@ -128,6 +128,10 @@ nav.nav-collapsed {
   height: 100%;
   display: flex;
   align-items: center;
+  transition: justify-content 0ms;
+}
+nav.nav-collapsed .nav-inner {
+  justify-content: center;
 }
 .nav-logo {
   font-size: 14px;
@@ -174,7 +178,14 @@ nav.nav-collapsed .nav-links {
   transform: translateY(-50%);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+}
+/* In collapsed state, flow CTA inline so it centers with logo */
+nav.nav-collapsed .nav-cta {
+  position: static;
+  transform: none;
+  margin-left: 4px;
+  gap: 4px;
 }
 .nav-cta .btn-primary,
 .nav-cta .btn-secondary {
@@ -183,6 +194,7 @@ nav.nav-collapsed .nav-links {
   padding: 0 16px !important;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   box-sizing: border-box;
 }
 
@@ -199,6 +211,9 @@ nav.nav-collapsed .nav-links {
   width: 0;
   overflow: hidden;
   transition: opacity 200ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 nav.nav-collapsed .nav-btn-text {
   opacity: 0;
@@ -206,20 +221,23 @@ nav.nav-collapsed .nav-btn-text {
 }
 nav.nav-collapsed .nav-btn-icon {
   opacity: 1;
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
 }
 .nav-btn-signin,
 .nav-btn-start {
   transition: background 120ms ease, border-color 120ms ease,
               color 120ms ease, transform 120ms ease,
-              height 200ms ease, padding 200ms ease !important;
+              height 200ms ease, padding 200ms ease,
+              width 200ms ease !important;
   overflow: hidden;
 }
 nav.nav-collapsed .nav-btn-signin,
 nav.nav-collapsed .nav-btn-start {
-  height: 28px !important;
-  padding: 0 10px !important;
+  height: 30px !important;
+  width: 30px !important;
+  padding: 0 !important;
+  justify-content: center;
 }
 
 /* ── Pricing table ── */
