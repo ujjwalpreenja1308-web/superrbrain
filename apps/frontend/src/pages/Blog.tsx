@@ -223,7 +223,7 @@ export function Blog() {
         {!selectedPostId && (
           <Button
             size="sm"
-            onClick={() => generateBlog.mutate()}
+            onClick={() => generateBlog.mutate(undefined)}
             disabled={generateBlog.isPending || !brand}
             className="h-8 text-xs"
           >
@@ -268,7 +268,7 @@ export function Blog() {
               </p>
               <Button
                 size="sm"
-                onClick={() => generateBlog.mutate()}
+                onClick={() => generateBlog.mutate(undefined)}
                 disabled={generateBlog.isPending || !brand}
               >
                 {generateBlog.isPending ? (

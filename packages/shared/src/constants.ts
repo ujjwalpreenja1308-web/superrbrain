@@ -1,4 +1,4 @@
-export const AI_ENGINES = ["chatgpt", "perplexity"] as const;
+export const AI_ENGINES = ["chatgpt"] as const;
 export type AiEngine = (typeof AI_ENGINES)[number];
 
 export const SOURCE_TYPES = [

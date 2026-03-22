@@ -43,6 +43,17 @@ webhookRoutes.post("/dodo", async (c) => {
     return c.json({ error: "Invalid signature" }, 401);
   }
 
+  // Replay protection: reject webhooks older than 5 minutes
+  const webhookTimestamp =
+    c.req.header("webhook-timestamp") ?? c.req.header("x-dodo-timestamp");
+  if (webhookTimestamp) {
+    const ts = parseInt(webhookTimestamp, 10);
+    if (!Number.isNaN(ts) && Math.abs(Date.now() / 1000 - ts) > 300) {
+      console.warn("[webhook] Stale timestamp, possible replay attack");
+      return c.json({ error: "Webhook timestamp too old" }, 400);
+    }
+  }
+
   let event: Record<string, unknown>;
   try {
     event = JSON.parse(rawBody);

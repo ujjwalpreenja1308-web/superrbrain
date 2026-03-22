@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -101,8 +102,9 @@ export function useActivateTrial() {
 
   const mutation = useMutation({
     mutationFn: () => api.post<{ plan: string; trial_expires_at: string }>("/api/me/activate-trial"),
-    onSuccess: () => {
-      // Refresh auth session so user_metadata updates propagate
+    onSuccess: async () => {
+      // Refresh Supabase session so user_metadata.plan propagates to useAuth
+      await supabase.auth.refreshSession();
       queryClient.invalidateQueries();
     },
   });

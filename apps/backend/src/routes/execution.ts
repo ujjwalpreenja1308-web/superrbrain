@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { tasks } from "@trigger.dev/sdk/v3";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { AppError } from "../middleware/error.js";
+import { checkPlan } from "../middleware/requirePlan.js";
 import { getGapQueue } from "../services/gap-query.service.js";
 import { startExecutionSchema, updateContentSchema, deployContentSchema } from "@covable/shared";
 import type { AppVariables } from "../types.js";
@@ -30,10 +31,12 @@ app.get("/:id/gap-queue", async (c) => {
   return c.json(queue);
 });
 
-// POST /:id/execution
+// POST /:id/execution — Growth/Scale only
 app.post("/:id/execution", async (c) => {
+  const user = c.get("user");
   const userId = c.get("userId") as string;
   const brandId = c.req.param("id");
+  checkPlan(user, "execution");
 
   await verifyBrandOwnership(brandId, userId);
 
@@ -142,10 +145,12 @@ app.get("/:id/content/:contentId", async (c) => {
   return c.json(content);
 });
 
-// PUT /:id/content/:contentId
+// PUT /:id/content/:contentId — Growth/Scale only
 app.put("/:id/content/:contentId", async (c) => {
+  const user = c.get("user");
   const userId = c.get("userId") as string;
   const brandId = c.req.param("id");
+  checkPlan(user, "execution");
   const contentId = c.req.param("contentId");
 
   await verifyBrandOwnership(brandId, userId);
@@ -176,10 +181,12 @@ app.put("/:id/content/:contentId", async (c) => {
   return c.json(updated);
 });
 
-// POST /:id/content/:contentId/deploy
+// POST /:id/content/:contentId/deploy — Growth/Scale only
 app.post("/:id/content/:contentId/deploy", async (c) => {
+  const user = c.get("user");
   const userId = c.get("userId") as string;
   const brandId = c.req.param("id");
+  checkPlan(user, "execution");
   const contentId = c.req.param("contentId");
 
   await verifyBrandOwnership(brandId, userId);

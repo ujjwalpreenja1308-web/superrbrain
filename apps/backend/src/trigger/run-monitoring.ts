@@ -39,17 +39,9 @@ export const runMonitoring = task({
         city: (brand as any).city || undefined,
       };
 
-      const activeEngines = AI_ENGINES.filter((engine) => {
-        if (engine === "perplexity")
-          return (
-            !!process.env.PERPLEXITY_API_KEY &&
-            process.env.PERPLEXITY_API_KEY !== "YOUR_PERPLEXITY_API_KEY_HERE"
-          );
-        if (engine === "chatgpt") return !!process.env.OPENAI_API_KEY;
-        return false;
-      });
+      if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
 
-      if (!activeEngines.length) throw new Error("No AI engine API keys configured");
+      const activeEngines = AI_ENGINES;
 
       logger.info(`Firing ${prompts.length} prompts across: ${activeEngines.join(", ")}`);
 

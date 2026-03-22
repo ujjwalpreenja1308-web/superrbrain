@@ -17,6 +17,7 @@ export async function authMiddleware(c: Context, next: Next) {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
+  c.set("user", user);
   c.set("userId", user.id);
   await next();
 }

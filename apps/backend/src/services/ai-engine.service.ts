@@ -1,4 +1,4 @@
-import { openai, perplexity } from "../lib/openai.js";
+import { openai } from "../lib/openai.js";
 import { scrapeChatGPT } from "./chatgpt-scraper.service.js";
 import type { AiEngine } from "@covable/shared";
 
@@ -23,15 +23,11 @@ export async function firePrompt(
   engine: AiEngine,
   location?: LocationContext
 ): Promise<AiQueryResult> {
-  if (engine === "chatgpt") {
-    // Use self-hosted Chromium scraper if BROWSER_WS_ENDPOINT is set, else OpenAI API
-    if (process.env.BROWSER_WS_ENDPOINT) {
-      const result = await scrapeChatGPT(promptText);
-      return parseResponse(result.text, brandName, competitors, "chatgpt", result.citations);
-    }
-    return await queryChatGPT(promptText, brandName, competitors, location);
+  if (process.env.BROWSER_WS_ENDPOINT) {
+    const result = await scrapeChatGPT(promptText);
+    return parseResponse(result.text, brandName, competitors, "chatgpt", result.citations);
   }
-  return await queryPerplexity(promptText, brandName, competitors);
+  return await queryChatGPT(promptText, brandName, competitors, location);
 }
 
 async function queryChatGPT(
@@ -87,32 +83,6 @@ async function queryChatGPT(
   return parseResponse(text, brandName, competitors, "chatgpt", citations);
 }
 
-async function queryPerplexity(
-  promptText: string,
-  brandName: string,
-  competitors: { name: string }[]
-): Promise<AiQueryResult> {
-  const response = await perplexity.chat.completions.create({
-    model: "sonar",
-    messages: [{ role: "user", content: promptText }],
-  });
-
-  const text = response.choices[0].message.content || "";
-
-  const citations: string[] = [];
-  const raw = response as any;
-  if (raw.citations && Array.isArray(raw.citations)) {
-    citations.push(...raw.citations);
-  }
-
-  const urlRegex = /https?:\/\/[^\s\])"',]+/g;
-  const textUrls = text.match(urlRegex) || [];
-  for (const url of textUrls) {
-    if (!citations.includes(url)) citations.push(url);
-  }
-
-  return parseResponse(text, brandName, competitors, "perplexity", citations);
-}
 
 function parseResponse(
   text: string,

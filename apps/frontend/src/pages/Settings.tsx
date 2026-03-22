@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useActiveBrand } from "@/hooks/useActiveBrand";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlan, getPlanLimits } from "@/hooks/usePlan";
@@ -191,12 +192,10 @@ export function Settings() {
     },
   ];
 
-  // Annual toggle state — stored in URL hash for simplicity
-  const isAnnual = typeof window !== "undefined" && window.location.hash === "#annual";
+  const [isAnnual, setIsAnnual] = useState(false);
 
   function toggleBilling(annual: boolean) {
-    window.location.hash = annual ? "annual" : "";
-    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    setIsAnnual(annual);
   }
 
   return (

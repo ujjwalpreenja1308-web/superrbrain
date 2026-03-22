@@ -9,4 +9,7 @@ export default defineConfig({
       maxAttempts: 3,
     },
   },
+  build: {
+    external: ["playwright-core"],
+  },
 });

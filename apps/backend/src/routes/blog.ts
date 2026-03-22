@@ -1,16 +1,20 @@
 import { Hono } from "hono";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { AppError } from "../middleware/error.js";
+import { checkPlan } from "../middleware/requirePlan.js";
 import { tasks } from "@trigger.dev/sdk/v3";
 import type { AppVariables } from "../types.js";
 
 const app = new Hono<{ Variables: AppVariables }>();
 
-// POST /api/blog/:brandId/generate — trigger blog generation job
+// POST /api/blog/:brandId/generate — trigger blog generation job (Scale only)
 app.post("/:brandId/generate", async (c) => {
+  const user = c.get("user");
   const brandId = c.req.param("brandId");
   const userId = c.get("userId") as string;
   const body = await c.req.json().catch(() => ({}));
+
+  checkPlan(user, "blog");
 
   // Verify brand belongs to user
   const { data: brand } = await supabaseAdmin
@@ -82,12 +86,15 @@ app.get("/:brandId/:postId", async (c) => {
   return c.json({ post });
 });
 
-// PATCH /api/blog/:brandId/:postId — update status or content
+// PATCH /api/blog/:brandId/:postId — update status or content (Scale only)
 app.patch("/:brandId/:postId", async (c) => {
+  const user = c.get("user");
   const brandId = c.req.param("brandId");
   const postId = c.req.param("postId");
   const userId = c.get("userId") as string;
   const body = await c.req.json();
+
+  checkPlan(user, "blog");
 
   const { data: brand } = await supabaseAdmin
     .from("brands")

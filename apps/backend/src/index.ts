@@ -13,15 +13,19 @@ import meRoutes from "./routes/me.js";
 import webhookRoutes from "./routes/webhooks.js";
 import { authMiddleware } from "./middleware/auth.js";
 import { errorMiddleware } from "./middleware/error.js";
+import { rateLimitMiddleware } from "./middleware/rateLimit.js";
 import type { AppVariables } from "./types.js";
 import { closeBrowser } from "./services/chatgpt-scraper.service.js";
 
 const app = new Hono<{ Variables: AppVariables }>();
 
 app.use("*", logger());
-const allowedOrigins = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL.split(",").map((u) => u.trim())
-  : ["http://localhost:5173"];
+app.use("*", rateLimitMiddleware());
+
+if (!process.env.FRONTEND_URL) {
+  throw new Error("FRONTEND_URL environment variable is required");
+}
+const allowedOrigins = process.env.FRONTEND_URL.split(",").map((u) => u.trim());
 
 app.use(
   "*",
