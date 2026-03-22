@@ -62,7 +62,12 @@
       </div>
       <!-- Right: ASCII art -->
       <div class="hero-ascii" style="animation: fadeUp 600ms 500ms both ease-out;">
-        <div id="ascii-mount"></div>
+        <iframe
+          src="https://rwqxpfmktpzsnujnmyca.supabase.co/storage/v1/object/public/assets/yourascii-animated-1773970477941.html"
+          style="width:100%;height:100%;border:none;background:transparent;"
+          scrolling="no"
+          title="ASCII art"
+        ></iframe>
       </div>
     </div>
 
@@ -583,26 +588,8 @@ function setPricing(mode) {
 }
 </style>
 
-<style>
-#ascii-mount {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-#ascii-mount .ln {
-  font: bold 5.5px/1.15 'Courier New', monospace;
-  white-space: pre;
-  opacity: 0;
-  animation: asciiFadeIn .3s forwards;
-}
-@keyframes asciiFadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-</style>
 <script type="module" src="/scripts/reveal.js"></script>
 <script type="module" src="/scripts/navbar.js"></script>
 <script type="module" src="/scripts/countup.js"></script>
-<script type="module" src="/scripts/ascii.js"></script>
 </body>
 </html>
