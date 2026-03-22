@@ -115,7 +115,8 @@ nav {
   height: 50px;
   z-index: 100;
   overflow: hidden;
-  transition: max-width 500ms cubic-bezier(0.76, 0, 0.24, 1);
+  transition: max-width 500ms cubic-bezier(0.76, 0, 0.24, 1),
+              width 500ms cubic-bezier(0.76, 0, 0.24, 1);
   will-change: max-width;
 }
 nav.nav-collapsed {
@@ -128,9 +129,7 @@ nav.nav-collapsed {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-}
-nav.nav-collapsed .nav-inner {
-  padding: 0 12px;
+  min-width: 760px;
 }
 .nav-logo {
   font-size: 14px;
@@ -145,9 +144,8 @@ nav.nav-collapsed .nav-inner {
   align-items: center;
   gap: 24px;
   list-style: none;
-  overflow: hidden;
   opacity: 1;
-  transition: opacity 150ms ease;
+  transition: opacity 200ms ease;
   will-change: opacity;
 }
 nav.nav-collapsed .nav-links {
@@ -185,14 +183,14 @@ nav.nav-collapsed .nav-links {
   white-space: nowrap;
   overflow: hidden;
   opacity: 1;
-  transition: opacity 150ms ease;
+  transition: opacity 200ms ease;
 }
 .nav-btn-icon {
   flex-shrink: 0;
   opacity: 0;
   width: 0;
   overflow: hidden;
-  transition: opacity 150ms ease;
+  transition: opacity 200ms ease;
 }
 nav.nav-collapsed .nav-btn-text {
   opacity: 0;
@@ -207,16 +205,6 @@ nav.nav-collapsed .nav-btn-icon {
   transition: background 120ms ease, border-color 120ms ease,
               color 120ms ease, transform 120ms ease !important;
   overflow: hidden;
-}
-nav.nav-collapsed .nav-btn-signin,
-nav.nav-collapsed .nav-btn-start {
-  padding: 0 !important;
-  width: 34px;
-  height: 34px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0 !important;
 }
 
 /* ── Pricing table ── */
