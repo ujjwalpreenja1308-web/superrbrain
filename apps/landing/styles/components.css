@@ -115,21 +115,20 @@ nav {
   height: 50px;
   z-index: 100;
   overflow: hidden;
-  transition: max-width 500ms cubic-bezier(0.76, 0, 0.24, 1),
-              width 500ms cubic-bezier(0.76, 0, 0.24, 1);
+  /* animating max-width on a left:50%+translateX(-50%) element collapses from center */
+  transition: max-width 500ms cubic-bezier(0.76, 0, 0.24, 1);
   will-change: max-width;
 }
 nav.nav-collapsed {
-  max-width: 140px;
+  max-width: 252px;
 }
 .nav-inner {
-  padding: 0 16px 0 20px;
+  /* right padding clears the absolutely-positioned CTA (188px + 12px gap + 12px right) */
+  padding: 0 212px 0 16px;
   height: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-width: 760px;
+  gap: 8px;
 }
 .nav-logo {
   font-size: 14px;
@@ -163,10 +162,13 @@ nav.nav-collapsed .nav-links {
   color: var(--text-primary);
 }
 .nav-cta {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0;
 }
 .nav-cta .btn-primary,
 .nav-cta .btn-secondary {
