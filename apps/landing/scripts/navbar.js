@@ -31,26 +31,23 @@
     });
   });
 
-  // ── Auth state: read Supabase session from localStorage ───────────
+  // ── Auth state: read Supabase session from shared .covable.app cookie ───
   function getSession() {
     try {
-      var raw = localStorage.getItem('covable-auth');
-      if (!raw) return null;
+      var match = document.cookie.match(/(?:^|; )covable-auth=([^;]*)/);
+      if (!match) return null;
+      var raw = decodeURIComponent(match[1]);
       var parsed = JSON.parse(raw);
-      // Supabase stores { currentSession: { user, access_token, expires_at, ... } }
       var session = parsed.currentSession || parsed;
       if (!session || !session.user) return null;
-      // Check not expired
       if (session.expires_at && session.expires_at * 1000 < Date.now()) return null;
       return session;
     } catch (e) { return null; }
   }
 
   function signOut() {
-    // Clear all covable-auth keys from localStorage
-    Object.keys(localStorage).forEach(function (key) {
-      if (key.startsWith('covable-auth') || key.startsWith('sb-')) localStorage.removeItem(key);
-    });
+    // Clear the shared cookie on parent domain
+    document.cookie = 'covable-auth=; domain=.covable.app; path=/; max-age=0';
     window.location.reload();
   }
 
