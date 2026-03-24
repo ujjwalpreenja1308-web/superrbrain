@@ -1,6 +1,6 @@
 {
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
-  "installCommand": "pnpm install",
-  "buildCommand": "pnpm --filter @covable/shared build && pnpm --filter @covable/frontend build",
-  "outputDirectory": "apps/frontend/dist"
+  "installCommand": "cd ../.. && pnpm install",
+  "buildCommand": "cd ../.. && pnpm --filter @covable/shared build && pnpm --filter @covable/frontend build",
+  "outputDirectory": "dist"
 }
