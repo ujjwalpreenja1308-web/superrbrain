@@ -32,21 +32,27 @@ export function useAuth() {
   async function signIn(email: string, password: string) {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
-    if (import.meta.env.PROD) window.location.href = HOME_URL;
+    if (import.meta.env.PROD) {
+      const planParam = new URLSearchParams(window.location.search).get("plan");
+      window.location.href = planParam ? `${HOME_URL}/settings?plan=${planParam}` : HOME_URL;
+    }
   }
 
   async function signUp(email: string, password: string) {
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) throw new Error(error.message);
-    if (import.meta.env.PROD) window.location.href = HOME_URL;
+    if (import.meta.env.PROD) {
+      const planParam = new URLSearchParams(window.location.search).get("plan");
+      window.location.href = planParam ? `${HOME_URL}/settings?plan=${planParam}` : HOME_URL;
+    }
   }
 
   async function signInWithGoogle() {
+    const planParam = new URLSearchParams(window.location.search).get("plan");
+    const redirectTo = planParam ? `${HOME_URL}/settings?plan=${planParam}` : HOME_URL;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: HOME_URL,
-      },
+      options: { redirectTo },
     });
     if (error) throw new Error(error.message);
   }

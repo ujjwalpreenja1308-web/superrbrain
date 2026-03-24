@@ -66,6 +66,12 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+const DODO_PRODUCTS: Record<string, string> = {
+  starter: import.meta.env.VITE_DODO_PRODUCT_STARTER_MONTHLY ?? "",
+  growth:  import.meta.env.VITE_DODO_PRODUCT_GROWTH_MONTHLY  ?? "",
+  scale:   import.meta.env.VITE_DODO_PRODUCT_SCALE_MONTHLY   ?? "",
+};
+
 /**
  * Plan guard: activates trial on first load, blocks expired-trial users.
  * Handles ?plan= param from landing page CTA → redirects to Dodo checkout after auth.
@@ -75,11 +81,20 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
   const plan = usePlan();
   const { user } = useAuth();
 
-  // If came from landing page with ?plan=, redirect to settings billing
+  // If came from landing page with ?plan=, redirect straight to Dodo checkout
   useEffect(() => {
     const planParam = new URLSearchParams(window.location.search).get("plan");
     if (planParam && user) {
-      // Remove param from URL, let user pick plan in billing tab
+      const productId = DODO_PRODUCTS[planParam];
+      if (productId) {
+        const params = new URLSearchParams({
+          email: user.email ?? "",
+          "metadata[user_id]": user.id,
+        });
+        window.history.replaceState({}, "", window.location.pathname);
+        window.location.href = `https://checkout.dodopayments.com/buy/${productId}?${params.toString()}`;
+        return;
+      }
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, [user]);
