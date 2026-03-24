@@ -38,6 +38,16 @@ const queryClient = new QueryClient({
 /** Auth guard: if not logged in, redirect to auth.covable.app */
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const redirectedRef = useRef(false);
+
+  useEffect(() => {
+    if (!import.meta.env.PROD) return;
+    if (loading || user || redirectedRef.current) return;
+    redirectedRef.current = true;
+    const planParam = new URLSearchParams(window.location.search).get("plan");
+    const redirectTo = planParam ? `${AUTH_URL}?plan=${planParam}` : AUTH_URL;
+    window.location.replace(redirectTo);
+  }, [user, loading]);
 
   if (loading) {
     return (
@@ -49,11 +59,12 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     if (import.meta.env.PROD) {
-      // Preserve ?plan= param so we can redirect to checkout after login
-      const planParam = new URLSearchParams(window.location.search).get("plan");
-      const redirectTo = planParam ? `${AUTH_URL}?plan=${planParam}` : AUTH_URL;
-      window.location.href = redirectTo;
-      return null;
+      // Show spinner while useEffect fires the redirect
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      );
     }
     return <Navigate to="/login" replace />;
   }
@@ -140,6 +151,25 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
 /** If already logged in on auth domain, redirect to home (preserving ?plan=) */
 function AuthPage() {
   const { user, loading } = useAuth();
+  const redirectedRef = useRef(false);
+
+  useEffect(() => {
+    if (!import.meta.env.PROD) return;
+    if (loading || !user || redirectedRef.current) return;
+    redirectedRef.current = true;
+
+    const planParam = new URLSearchParams(window.location.search).get("plan");
+    const base = planParam ? `${HOME_URL}?plan=${planParam}` : HOME_URL;
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        const hash = `access_token=${session.access_token}&refresh_token=${session.refresh_token}&type=magiclink`;
+        window.location.replace(`${base}#${hash}`);
+      } else {
+        window.location.replace(base);
+      }
+    });
+  }, [user, loading]);
 
   if (loading) {
     return (
@@ -149,21 +179,16 @@ function AuthPage() {
     );
   }
 
+  if (user && import.meta.env.PROD) {
+    // Show spinner while the useEffect redirect fires
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
   if (user) {
-    if (import.meta.env.PROD) {
-      const planParam = new URLSearchParams(window.location.search).get("plan");
-      const base = planParam ? `${HOME_URL}?plan=${planParam}` : HOME_URL;
-      // Pass session tokens so home.covable.app can hydrate from a different domain
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          const hash = `access_token=${session.access_token}&refresh_token=${session.refresh_token}&type=magiclink`;
-          window.location.href = `${base}#${hash}`;
-        } else {
-          window.location.href = base;
-        }
-      });
-      return null;
-    }
     const planParam = new URLSearchParams(window.location.search).get("plan");
     return <Navigate to={planParam ? `/?plan=${planParam}` : "/dashboard"} replace />;
   }
