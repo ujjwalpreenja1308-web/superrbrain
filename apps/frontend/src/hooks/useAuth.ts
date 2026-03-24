@@ -49,7 +49,11 @@ export function useAuth() {
 
   async function signInWithGoogle() {
     const planParam = new URLSearchParams(window.location.search).get("plan");
-    const redirectTo = planParam ? `${HOME_URL}/settings?plan=${planParam}` : HOME_URL;
+    // Always redirect back to auth domain — detectSessionInUrl picks up the token,
+    // then AuthPage forwards to home.covable.app (preserving ?plan= if present)
+    const redirectTo = planParam
+      ? `${AUTH_URL}/get-started?plan=${planParam}`
+      : AUTH_URL;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo },
