@@ -155,12 +155,13 @@ function AuthPage() {
   if (user) {
     if (import.meta.env.PROD) {
       const planParam = new URLSearchParams(window.location.search).get("plan");
-      const dest = planParam ? `${HOME_URL}/settings?plan=${planParam}` : HOME_URL;
+      // Always send to home root — PlanGuard will handle ?plan= → Dodo checkout
+      const dest = planParam ? `${HOME_URL}?plan=${planParam}` : HOME_URL;
       window.location.href = dest;
       return null;
     }
     const planParam = new URLSearchParams(window.location.search).get("plan");
-    return <Navigate to={planParam ? `/settings?plan=${planParam}` : "/dashboard"} replace />;
+    return <Navigate to={planParam ? `/?plan=${planParam}` : "/dashboard"} replace />;
   }
 
   return <Login />;
@@ -198,6 +199,18 @@ function AppRoutes() {
           </RequireAuth>
         }
       />
+      {/* Root route: RequireAuth + PlanGuard handles ?plan= → Dodo redirect */}
+      <Route
+        path="/"
+        element={
+          <RequireAuth>
+            <PlanGuard>
+              <Navigate to="/dashboard" replace />
+            </PlanGuard>
+          </RequireAuth>
+        }
+      />
+
       <Route
         element={
           <RequireAuth>

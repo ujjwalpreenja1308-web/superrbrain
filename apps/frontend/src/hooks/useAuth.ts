@@ -34,7 +34,8 @@ export function useAuth() {
     if (error) throw new Error(error.message);
     if (import.meta.env.PROD) {
       const planParam = new URLSearchParams(window.location.search).get("plan");
-      window.location.href = planParam ? `${HOME_URL}/settings?plan=${planParam}` : HOME_URL;
+      // Send to home root with ?plan= so PlanGuard can intercept and redirect to checkout
+      window.location.href = planParam ? `${HOME_URL}?plan=${planParam}` : HOME_URL;
     }
   }
 
@@ -43,7 +44,7 @@ export function useAuth() {
     if (error) throw new Error(error.message);
     if (import.meta.env.PROD) {
       const planParam = new URLSearchParams(window.location.search).get("plan");
-      window.location.href = planParam ? `${HOME_URL}/settings?plan=${planParam}` : HOME_URL;
+      window.location.href = planParam ? `${HOME_URL}?plan=${planParam}` : HOME_URL;
     }
   }
 
