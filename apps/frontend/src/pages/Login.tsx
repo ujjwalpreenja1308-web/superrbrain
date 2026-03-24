@@ -3,7 +3,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { AsciiVideoBackground } from "@/components/AsciiVideoBackground";
 
 function GoogleIcon() {
   return (
@@ -69,11 +68,15 @@ export function Login() {
 
   return (
     <div className="relative flex min-h-screen w-full overflow-hidden bg-black">
-      {/* ASCII video background — full screen, locked */}
-      <AsciiVideoBackground src="https://rwqxpfmktpzsnujnmyca.supabase.co/storage/v1/object/public/assets/bg-148.mp4" />
-
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/10 to-black/65" />
+      {/* Video background */}
+      <video
+        src="https://rwqxpfmktpzsnujnmyca.supabase.co/storage/v1/object/public/assets/asciiii.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 h-full w-full object-cover"
+      />
 
       {/* Top-left wordmark */}
       <a
