@@ -81,6 +81,21 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
   const plan = usePlan();
   const { user } = useAuth();
 
+  // Handle return from Dodo checkout
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+    if (payment === "success") {
+      window.history.replaceState({}, "", window.location.pathname);
+      window.location.href = `${HOME_URL}/onboarding`;
+      return;
+    }
+    if (payment === "cancelled") {
+      window.history.replaceState({}, "", window.location.pathname);
+      // stays on current page — paywall below handles it
+    }
+  }, []);
+
   // If came from landing page with ?plan=, redirect straight to Dodo checkout
   useEffect(() => {
     const planParam = new URLSearchParams(window.location.search).get("plan");
@@ -90,6 +105,8 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
         const params = new URLSearchParams({
           email: user.email ?? "",
           "metadata[user_id]": user.id,
+          redirect_url: `${HOME_URL}?payment=success`,
+          cancel_url: `${HOME_URL}?payment=cancelled`,
         });
         window.history.replaceState({}, "", window.location.pathname);
         window.location.href = `https://checkout.dodopayments.com/buy/${productId}?${params.toString()}`;

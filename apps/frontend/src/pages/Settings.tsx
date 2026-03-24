@@ -21,12 +21,18 @@ const DODO_PRODUCTS: Record<string, string> = {
   scale_annual:    import.meta.env.VITE_DODO_PRODUCT_SCALE_ANNUAL    ?? "",
 };
 
+const HOME_URL =
+  import.meta.env.VITE_HOME_URL ||
+  (import.meta.env.PROD ? "https://home.covable.app" : "http://localhost:5173");
+
 function buildCheckoutUrl(productKey: string, email: string, userId: string): string {
   const productId = DODO_PRODUCTS[productKey];
   if (!productId) return "#";
   const params = new URLSearchParams({
     email,
     "metadata[user_id]": userId,
+    redirect_url: `${HOME_URL}?payment=success`,
+    cancel_url: `${HOME_URL}?payment=cancelled`,
   });
   return `https://checkout.dodopayments.com/buy/${productId}?${params.toString()}`;
 }
