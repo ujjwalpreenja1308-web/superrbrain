@@ -1,8 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
-import { api } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export type PlanTier = "trial" | "starter" | "growth" | "scale";
 
@@ -18,7 +17,7 @@ export interface PlanLimits {
   price: number | null;
   trialExpired: boolean;
   trialExpiresAt: Date | null;
-  hasAccess: boolean; // false = show hard paywall
+  hasAccess: boolean;
 }
 
 const PLAN_CONFIG: Record<PlanTier, Omit<PlanLimits, "trialExpired" | "trialExpiresAt" | "hasAccess">> = {
@@ -68,19 +67,43 @@ const PLAN_CONFIG: Record<PlanTier, Omit<PlanLimits, "trialExpired" | "trialExpi
   },
 };
 
+interface Subscription {
+  plan: PlanTier;
+  status: string;
+  trial_expires_at: string | null;
+  current_period_end: string | null;
+}
+
+/** Fetch subscription from the subscriptions table */
+async function fetchSubscription(userId: string): Promise<Subscription | null> {
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("plan, status, trial_expires_at, current_period_end")
+    .eq("user_id", userId)
+    .single();
+
+  if (error) return null;
+  return data as Subscription;
+}
+
 export function usePlan(): PlanLimits {
   const { user } = useAuth();
 
-  const rawTier = (user?.user_metadata?.plan as string | undefined) ?? "trial";
+  const { data: subscription } = useQuery({
+    queryKey: ["subscription", user?.id],
+    queryFn: () => fetchSubscription(user!.id),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+
+  const rawTier = subscription?.plan ?? "trial";
   const tier = (rawTier in PLAN_CONFIG ? rawTier : "trial") as PlanTier;
 
-  const trialExpiresAt = user?.user_metadata?.trial_expires_at
-    ? new Date(user.user_metadata.trial_expires_at as string)
+  const trialExpiresAt = subscription?.trial_expires_at
+    ? new Date(subscription.trial_expires_at)
     : null;
 
   const trialExpired = tier === "trial" && trialExpiresAt !== null && trialExpiresAt < new Date();
-
-  // Has access if: paid plan, or active trial (not expired)
   const hasAccess = tier !== "trial" || !trialExpired;
 
   return {
@@ -95,26 +118,40 @@ export function getPlanLimits(tier: PlanTier) {
   return PLAN_CONFIG[tier];
 }
 
-/** Call once on first dashboard load to set trial_expires_at on new users */
+/** Create a trial subscription row if the user doesn't have one yet */
 export function useActivateTrial() {
-  const queryClient = useQueryClient();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: () => api.post<{ plan: string; trial_expires_at: string }>("/api/me/activate-trial"),
-    onSuccess: async () => {
-      await supabase.auth.refreshSession();
-      queryClient.invalidateQueries();
+    mutationFn: async () => {
+      const { error } = await supabase.from("subscriptions").insert({
+        user_id: user!.id,
+        plan: "trial",
+        status: "active",
+        trial_expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      });
+      if (error && error.code !== "23505") throw error; // 23505 = unique violation (already exists)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subscription", user?.id] });
     },
     onError: () => {
-      // Silently fail — don't toast, don't retry, don't cause re-renders
+      // Silently fail
     },
   });
 
   useEffect(() => {
-    // Only activate once: user exists, has no plan, and mutation hasn't fired yet
-    if (user && !user.user_metadata?.plan && mutation.status === "idle") {
-      mutation.mutate();
+    if (user && mutation.status === "idle") {
+      // Check if subscription exists first
+      supabase
+        .from("subscriptions")
+        .select("id")
+        .eq("user_id", user.id)
+        .single()
+        .then(({ data }) => {
+          if (!data) mutation.mutate();
+        });
     }
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 }
