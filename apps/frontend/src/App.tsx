@@ -140,10 +140,11 @@ function AppRoutes() {
   const authDomain = isAuthDomain();
   const homeDomain = isHomeDomain();
 
-  // On auth subdomain in production: only render login
+  // On auth subdomain in production: only render login/get-started
   if (import.meta.env.PROD && authDomain && !homeDomain) {
     return (
       <Routes>
+        <Route path="/get-started" element={<AuthPage />} />
         <Route path="*" element={<AuthPage />} />
       </Routes>
     );
