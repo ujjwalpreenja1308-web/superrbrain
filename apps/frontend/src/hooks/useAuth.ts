@@ -30,21 +30,26 @@ export function useAuth() {
   }, []);
 
   async function signIn(email: string, password: string) {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
     if (import.meta.env.PROD) {
       const planParam = new URLSearchParams(window.location.search).get("plan");
-      // Send to home root with ?plan= so PlanGuard can intercept and redirect to checkout
-      window.location.href = planParam ? `${HOME_URL}?plan=${planParam}` : HOME_URL;
+      const session = data.session!;
+      const hash = `access_token=${session.access_token}&refresh_token=${session.refresh_token}&type=magiclink`;
+      const base = planParam ? `${HOME_URL}?plan=${planParam}` : HOME_URL;
+      window.location.href = `${base}#${hash}`;
     }
   }
 
   async function signUp(email: string, password: string) {
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw new Error(error.message);
-    if (import.meta.env.PROD) {
+    if (import.meta.env.PROD && data.session) {
       const planParam = new URLSearchParams(window.location.search).get("plan");
-      window.location.href = planParam ? `${HOME_URL}?plan=${planParam}` : HOME_URL;
+      const session = data.session;
+      const hash = `access_token=${session.access_token}&refresh_token=${session.refresh_token}&type=magiclink`;
+      const base = planParam ? `${HOME_URL}?plan=${planParam}` : HOME_URL;
+      window.location.href = `${base}#${hash}`;
     }
   }
 

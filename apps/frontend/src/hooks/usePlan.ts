@@ -103,16 +103,18 @@ export function useActivateTrial() {
   const mutation = useMutation({
     mutationFn: () => api.post<{ plan: string; trial_expires_at: string }>("/api/me/activate-trial"),
     onSuccess: async () => {
-      // Refresh Supabase session so user_metadata.plan propagates to useAuth
       await supabase.auth.refreshSession();
       queryClient.invalidateQueries();
+    },
+    onError: () => {
+      // Silently fail — don't toast, don't retry, don't cause re-renders
     },
   });
 
   useEffect(() => {
-    // Only activate if user exists and has no plan yet
-    if (user && !user.user_metadata?.plan) {
+    // Only activate once: user exists, has no plan, and mutation hasn't fired yet
+    if (user && !user.user_metadata?.plan && mutation.status === "idle") {
       mutation.mutate();
     }
-  }, [user?.id]);
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 }

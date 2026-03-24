@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { AppShell } from "@/components/AppShell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -16,6 +15,7 @@ import { Blog } from "@/pages/Blog";
 import { Prompts } from "@/pages/Prompts";
 import { Login } from "@/pages/Login";
 import { useAuth, isAuthDomain, isHomeDomain } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
 import { usePlan, useActivateTrial } from "@/hooks/usePlan";
 
 const AUTH_URL =
@@ -31,11 +31,6 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 30_000,
       retry: 1,
-    },
-    mutations: {
-      onError: (error) => {
-        toast.error(error.message || "Something went wrong. Please try again.");
-      },
     },
   },
 });
@@ -157,9 +152,16 @@ function AuthPage() {
   if (user) {
     if (import.meta.env.PROD) {
       const planParam = new URLSearchParams(window.location.search).get("plan");
-      // Always send to home root — PlanGuard will handle ?plan= → Dodo checkout
-      const dest = planParam ? `${HOME_URL}?plan=${planParam}` : HOME_URL;
-      window.location.href = dest;
+      const base = planParam ? `${HOME_URL}?plan=${planParam}` : HOME_URL;
+      // Pass session tokens so home.covable.app can hydrate from a different domain
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          const hash = `access_token=${session.access_token}&refresh_token=${session.refresh_token}&type=magiclink`;
+          window.location.href = `${base}#${hash}`;
+        } else {
+          window.location.href = base;
+        }
+      });
       return null;
     }
     const planParam = new URLSearchParams(window.location.search).get("plan");
