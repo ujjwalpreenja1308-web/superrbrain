@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -80,9 +80,13 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
   useActivateTrial();
   const plan = usePlan();
   const { user } = useAuth();
+  const didHandleParams = useRef(false);
 
-  // Handle return from Dodo checkout
+  // Handle return from Dodo checkout OR ?plan= redirect — run once only
   useEffect(() => {
+    if (didHandleParams.current) return;
+    didHandleParams.current = true;
+
     const params = new URLSearchParams(window.location.search);
     const payment = params.get("payment");
     if (payment === "success") {
@@ -92,24 +96,22 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
     }
     if (payment === "cancelled") {
       window.history.replaceState({}, "", window.location.pathname);
-      // stays on current page — paywall below handles it
+      return;
     }
-  }, []);
 
-  // If came from landing page with ?plan=, redirect straight to Dodo checkout
-  useEffect(() => {
-    const planParam = new URLSearchParams(window.location.search).get("plan");
+    // If came from landing page with ?plan=, redirect straight to Dodo checkout
+    const planParam = params.get("plan");
     if (planParam && user) {
       const productId = DODO_PRODUCTS[planParam];
       if (productId) {
-        const params = new URLSearchParams({
+        const checkoutParams = new URLSearchParams({
           email: user.email ?? "",
           "metadata[user_id]": user.id,
           redirect_url: `${HOME_URL}?payment=success`,
           cancel_url: `${HOME_URL}?payment=cancelled`,
         });
         window.history.replaceState({}, "", window.location.pathname);
-        window.location.href = `https://checkout.dodopayments.com/buy/${productId}?${params.toString()}`;
+        window.location.href = `https://checkout.dodopayments.com/buy/${productId}?${checkoutParams.toString()}`;
         return;
       }
       window.history.replaceState({}, "", window.location.pathname);
@@ -199,18 +201,6 @@ function AppRoutes() {
           </RequireAuth>
         }
       />
-      {/* Root route: RequireAuth + PlanGuard handles ?plan= → Dodo redirect */}
-      <Route
-        path="/"
-        element={
-          <RequireAuth>
-            <PlanGuard>
-              <Navigate to="/dashboard" replace />
-            </PlanGuard>
-          </RequireAuth>
-        }
-      />
-
       <Route
         element={
           <RequireAuth>
