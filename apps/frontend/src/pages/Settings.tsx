@@ -146,9 +146,10 @@ export function Settings() {
   const plan = usePlan();
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? "U";
   const [searchParams] = useSearchParams();
-  // ?plan= from landing page CTA — open billing tab automatically
+  // ?plan= from landing page CTA or ?tab=billing from trial-expired paywall → open billing tab automatically
   const incomingPlan = searchParams.get("plan");
-  const defaultTab = incomingPlan ? "billing" : "profile";
+  const tabParam = searchParams.get("tab");
+  const defaultTab = (incomingPlan || tabParam === "billing") ? "billing" : "profile";
 
   const plans: { tier: PlanTier; name: string; monthly: number; annual: number; features: { label: string; included: boolean }[] }[] = [
     {

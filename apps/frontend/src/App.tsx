@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
@@ -87,27 +87,32 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
   const plan = usePlan();
   const { user } = useAuth();
   const didHandleParams = useRef(false);
+  const location = useLocation();
 
   // Handle return from Dodo checkout OR ?plan= redirect — run once only
   useEffect(() => {
     if (didHandleParams.current) return;
-    didHandleParams.current = true;
 
     const params = new URLSearchParams(window.location.search);
     const payment = params.get("payment");
     if (payment === "success") {
+      didHandleParams.current = true;
       window.history.replaceState({}, "", window.location.pathname);
       window.location.href = `${HOME_URL}/onboarding`;
       return;
     }
     if (payment === "cancelled") {
+      didHandleParams.current = true;
       window.history.replaceState({}, "", window.location.pathname);
       return;
     }
 
-    // If came from landing page with ?plan=, redirect straight to Dodo checkout
+    // If came from landing page with ?plan=, redirect straight to Dodo checkout.
+    // Wait for user to be loaded before handling — don't mark done if user isn't ready yet.
     const planParam = params.get("plan");
-    if (planParam && user) {
+    if (planParam) {
+      if (!user) return; // wait for auth to resolve, effect will re-run
+      didHandleParams.current = true;
       const productId = DODO_PRODUCTS[planParam];
       if (productId) {
         const checkoutParams = new URLSearchParams({
@@ -121,10 +126,15 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
         return;
       }
       window.history.replaceState({}, "", window.location.pathname);
+      return;
     }
+
+    // No relevant params — mark done
+    didHandleParams.current = true;
   }, [user]);
 
-  if (plan.trialExpired) {
+  // Allow /settings through even when trial has expired so the user can upgrade
+  if (plan.trialExpired && location.pathname !== "/settings") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-6">
         <div className="max-w-sm text-center space-y-4">
@@ -134,7 +144,7 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
             Choose a plan to continue using Covable. Your data is safe and waiting for you.
           </p>
           <a
-            href="/settings"
+            href="/settings?tab=billing"
             className="inline-block w-full rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             View plans
