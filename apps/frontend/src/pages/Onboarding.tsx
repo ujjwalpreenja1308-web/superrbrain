@@ -1,15 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { PromptEditor } from "@/components/PromptEditor";
 import { useCreateBrand, useBrand, usePrompts, useUpdatePrompts, useRunMonitoring } from "@/hooks/useBrand";
 import { Globe, Loader2, ArrowRight, Sparkles, Search, BarChart3, CheckCircle2 } from "lucide-react";
+import { api } from "@/lib/api";
 
 export function Onboarding() {
   const navigate = useNavigate();
   const [url, setUrl] = useState("");
   const [country, setCountry] = useState("");
-  const [city, setCity] = useState("");
   const [brandId, setBrandId] = useState<string | null>(null);
+
+  const { data: regionsData } = useQuery({
+    queryKey: ["regions"],
+    queryFn: () => api.get<{ regions: { code: string; label: string }[] }>("/api/regions"),
+  });
+
   const [step, setStep] = useState<"url" | "analyzing" | "prompts" | "running">("url");
   const [urlFocused, setUrlFocused] = useState(false);
   const [analyzePhase, setAnalyzePhase] = useState(0);
@@ -50,7 +57,7 @@ export function Onboarding() {
   const handleSubmitUrl = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const result = await createBrand.mutateAsync({ url: normalizeUrl(url), country: country || undefined, city: city || undefined });
+      const result = await createBrand.mutateAsync({ url: normalizeUrl(url), country: country || undefined });
       localStorage.setItem("covable_brand_id", result.id);
       setBrandId(result.id);
       setStep("analyzing");
@@ -126,27 +133,25 @@ export function Onboarding() {
                 />
               </div>
 
-              {/* Country + City */}
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  placeholder="Country (IN, US, GB)"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value.toUpperCase().slice(0, 2))}
-                  maxLength={2}
-                  className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm placeholder:text-muted-foreground/50 outline-none transition-colors duration-200 focus:border-primary/50"
-                />
-                <input
-                  type="text"
-                  placeholder="City (optional)"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm placeholder:text-muted-foreground/50 outline-none transition-colors duration-200 focus:border-primary/50"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground/60 px-0.5">
-                Location helps AI search show region-specific results
-              </p>
+              {/* Region selector */}
+              {regionsData?.regions && regionsData.regions.length > 0 && (
+                <div className="space-y-1.5">
+                  <select
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    required
+                    className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm text-foreground outline-none transition-colors duration-200 focus:border-primary/50"
+                  >
+                    <option value="" disabled>Select search region</option>
+                    {regionsData.regions.map((r) => (
+                      <option key={r.code} value={r.code}>{r.label}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground/60 px-0.5">
+                    AI searches will use the static IP for this region
+                  </p>
+                </div>
+              )}
 
               {createBrand.error && (
                 <p className="text-sm text-destructive px-0.5">

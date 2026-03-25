@@ -6,7 +6,8 @@
     "dev:frontend": "pnpm --filter @covable/frontend dev",
     "dev:landing": "pnpm --filter @covable/landing dev",
     "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "test:e2e": "pnpm --filter @covable/backend test:e2e"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

@@ -22,6 +22,7 @@
  */
 
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright-core";
+import { getProxyForCountry, type ProxyConfig } from "../lib/proxy.js";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -51,9 +52,10 @@ const SKIP_DOMAINS = ["openai.com", "chatgpt.com", "help.openai.com"];
 // ── Singleton browser state ────────────────────────────────────────────────────
 
 let _browser: Browser | null = null;
-let _context: BrowserContext | null = null;
+/** Context pool: proxy server URL (or "default") → BrowserContext */
+const _contexts = new Map<string, BrowserContext>();
 let _connecting = false;
-let _connectPromise: Promise<{ browser: Browser; context: BrowserContext }> | null = null;
+let _connectPromise: Promise<Browser> | null = null;
 
 /** Active tab count — used as a counting semaphore */
 let _activeTabs = 0;
@@ -99,29 +101,27 @@ function isExternalCitation(url: string): boolean {
 
 // ── Browser lifecycle (singleton) ──────────────────────────────────────────────
 
+function _proxyKey(proxy?: ProxyConfig): string {
+  return proxy?.server ?? "default";
+}
+
 /**
- * Get (or lazily create) the singleton browser + context.
+ * Get (or lazily connect) the singleton browser.
  * Safe to call concurrently — only one connection attempt runs at a time.
  */
-export async function getBrowser(): Promise<{ browser: Browser; context: BrowserContext }> {
-  // Already healthy
-  if (_browser && _context && _browser.isConnected()) {
-    return { browser: _browser, context: _context };
-  }
+async function _getBrowser(): Promise<Browser> {
+  if (_browser && _browser.isConnected()) return _browser;
 
-  // Another call is already connecting — wait for it
-  if (_connecting && _connectPromise) {
-    return _connectPromise;
-  }
+  if (_connecting && _connectPromise) return _connectPromise;
 
   _connecting = true;
   _connectPromise = (async () => {
     try {
       // Clean up stale instances
-      await _context?.close().catch(() => {});
+      for (const ctx of _contexts.values()) await ctx.close().catch(() => {});
+      _contexts.clear();
       await _browser?.close().catch(() => {});
       _browser = null;
-      _context = null;
       _quotaMap.clear();
 
       const wsEndpoint = process.env.BROWSER_WS_ENDPOINT;
@@ -148,42 +148,18 @@ export async function getBrowser(): Promise<{ browser: Browser; context: Browser
         });
       }
 
-      // Attach disconnect handler to allow reconnection
       _browser.on("disconnected", () => {
         console.warn("[ChatGPT] Browser disconnected — will reconnect on next request");
         _browser = null;
-        _context = null;
+        _contexts.clear();
         _connecting = false;
         _connectPromise = null;
         _activeTabs = 0;
         _quotaMap.clear();
       });
 
-      const proxyServer = process.env.PROXY_SERVER;
-      const proxyConfig = proxyServer
-        ? {
-            server: proxyServer,
-            username: process.env.PROXY_USERNAME,
-            password: process.env.PROXY_PASSWORD,
-          }
-        : undefined;
-
-      if (proxyConfig) {
-        console.log(`[ChatGPT] Using proxy: ${proxyConfig.server}`);
-      }
-
-      // Always create a fresh context so proxy + UA settings are applied cleanly
-      // (reusing contexts[0] from CDP would skip proxy)
-      _context = await _browser.newContext({
-        viewport: { width: 1280, height: 800 },
-        serviceWorkers: "block",
-        userAgent:
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        ...(proxyConfig && { proxy: proxyConfig }),
-      });
-
       console.log("[ChatGPT] Browser ready");
-      return { browser: _browser, context: _context };
+      return _browser;
     } finally {
       _connecting = false;
     }
@@ -192,12 +168,46 @@ export async function getBrowser(): Promise<{ browser: Browser; context: Browser
   return _connectPromise;
 }
 
+/**
+ * Get (or lazily create) a BrowserContext for the given proxy config.
+ * Each unique proxy gets its own context so cookies/sessions are isolated.
+ */
+async function _getContext(proxy?: ProxyConfig): Promise<BrowserContext> {
+  const key = _proxyKey(proxy);
+  const existing = _contexts.get(key);
+  if (existing) return existing;
+
+  const browser = await _getBrowser();
+
+  if (proxy) {
+    console.log(`[ChatGPT] Creating context with proxy: ${proxy.server}`);
+  }
+
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 800 },
+    serviceWorkers: "block",
+    userAgent:
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    ...(proxy && { proxy }),
+  });
+
+  _contexts.set(key, context);
+  return context;
+}
+
+/** @deprecated Use scrapeChatGPT / scrapeChatGPTBatch directly */
+export async function getBrowser(): Promise<{ browser: Browser; context: BrowserContext }> {
+  const browser = await _getBrowser();
+  const context = await _getContext(getProxyForCountry());
+  return { browser, context };
+}
+
 /** Explicitly close the browser (e.g., on server shutdown) */
 export async function closeBrowser(): Promise<void> {
-  await _context?.close().catch(() => {});
+  for (const ctx of _contexts.values()) await ctx.close().catch(() => {});
+  _contexts.clear();
   await _browser?.close().catch(() => {});
   _browser = null;
-  _context = null;
   _connecting = false;
   _connectPromise = null;
   _activeTabs = 0;
@@ -405,11 +415,13 @@ function enforceQuota(
  *
  * @param prompts   Array of search prompts (max 10 recommended)
  * @param userId    Optional user ID for quota tracking
+ * @param country   ISO country code — routes to the static IP for that region
  * @param options   { quotaPerUser: number } — default 10
  */
 export async function scrapeChatGPTBatch(
   prompts: string[],
   userId = "anonymous",
+  country?: string,
   options: ScraperOptions = {}
 ): Promise<ChatGPTScrapeResult[]> {
   if (prompts.length === 0) return [];
@@ -431,7 +443,8 @@ export async function scrapeChatGPTBatch(
   const allowedPrompts = prompts.slice(0, allowed);
   const skipped = prompts.slice(allowed).map((p) => ({ prompt: p, text: "", citations: [] }));
 
-  const { context } = await getBrowser();
+  const proxy = getProxyForCountry(country);
+  const context = await _getContext(proxy);
 
   // Process in chunks of CONCURRENCY (semaphore handles actual parallelism)
   const results: ChatGPTScrapeResult[] = [];
@@ -463,9 +476,10 @@ export async function scrapeChatGPTBatch(
 
 export async function scrapeChatGPT(
   prompt: string,
-  userId = "anonymous"
+  userId = "anonymous",
+  country?: string
 ): Promise<{ text: string; citations: string[] }> {
-  const [result] = await scrapeChatGPTBatch([prompt], userId);
+  const [result] = await scrapeChatGPTBatch([prompt], userId, country);
   return { text: result.text, citations: result.citations };
 }
 
@@ -489,10 +503,12 @@ export function getBrowserHealth(): {
   connected: boolean;
   activeTabs: number;
   quotaEntries: number;
+  activeContexts: number;
 } {
   return {
     connected: !!_browser?.isConnected(),
     activeTabs: _activeTabs,
     quotaEntries: _quotaMap.size,
+    activeContexts: _contexts.size,
   };
 }

@@ -16,6 +16,7 @@ import { errorMiddleware } from "./middleware/error.js";
 import { rateLimitMiddleware } from "./middleware/rateLimit.js";
 import type { AppVariables } from "./types.js";
 import { closeBrowser } from "./services/chatgpt-scraper.service.js";
+import { getConfiguredProxies } from "./lib/proxy.js";
 
 const app = new Hono<{ Variables: AppVariables }>();
 
@@ -37,7 +38,30 @@ app.use(
 app.use("*", errorMiddleware);
 app.use("/api/*", authMiddleware);
 
+const REGION_LABELS: Record<string, string> = {
+  IN: "India",
+  US: "United States",
+  GB: "United Kingdom",
+  AU: "Australia",
+  SG: "Singapore",
+  AE: "UAE",
+  CA: "Canada",
+  DE: "Germany",
+  FR: "France",
+  JP: "Japan",
+};
+
 app.get("/health", (c) => c.json({ status: "ok" }));
+
+// Returns only the regions that have a proxy configured — used to populate onboarding dropdown
+app.get("/api/regions", (c) => {
+  const configured = getConfiguredProxies().filter((k) => k !== "default");
+  const regions = configured.map((code) => ({
+    code,
+    label: REGION_LABELS[code] ?? code,
+  }));
+  return c.json({ regions });
+});
 
 // Webhooks — no auth middleware, signature verified inside
 app.route("/webhooks", webhookRoutes);

@@ -24,7 +24,7 @@ export async function firePrompt(
   location?: LocationContext
 ): Promise<AiQueryResult> {
   if (process.env.BROWSER_WS_ENDPOINT) {
-    const result = await scrapeChatGPT(promptText);
+    const result = await scrapeChatGPT(promptText, "anonymous", location?.country);
     return parseResponse(result.text, brandName, competitors, "chatgpt", result.citations);
   }
   return await queryChatGPT(promptText, brandName, competitors, location);
