@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: covable-backend
+    runtime: node
+    buildCommand: pnpm install && pnpm --filter @covable/shared build && pnpm --filter @covable/backend build
+    startCommand: node apps/backend/dist/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: FRONTEND_URL
+        value: https://home.covable.app
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PERPLEXITY_API_KEY
+        sync: false
+      - key: FIRECRAWL_API_KEY
+        sync: false
+      - key: TRIGGER_SECRET_KEY
+        sync: false
+      - key: DODO_PAYMENTS_API_KEY
+        sync: false
+      - key: DODO_WEBHOOK_SECRET
+        sync: false
+      - key: DODO_PRODUCT_STARTER_MONTHLY
+        sync: false
+      - key: DODO_PRODUCT_GROWTH_MONTHLY
+        sync: false
+      - key: DODO_PRODUCT_PRO_MONTHLY
+        sync: false
