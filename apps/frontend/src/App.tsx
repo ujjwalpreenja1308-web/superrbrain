@@ -27,6 +27,21 @@ const HOME_URL =
   import.meta.env.VITE_HOME_URL ||
   (import.meta.env.PROD ? "https://home.covable.app" : "http://localhost:5173");
 
+const MARKETING_URL =
+  import.meta.env.VITE_MARKETING_URL ||
+  (import.meta.env.PROD ? "https://covable.app" : "http://localhost:5173");
+
+function ExternalRedirect({ to }: { to: string }) {
+  useEffect(() => {
+    window.location.replace(`${MARKETING_URL}${to}`);
+  }, [to]);
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+    </div>
+  );
+}
+
 const SIGN_IN_PATH = "/auth/sign-in";
 const SIGN_UP_PATH = "/auth/sign-up";
 const LEGACY_SIGN_IN_PATH = "/sign-in";
@@ -235,13 +250,13 @@ function AppRoutes() {
 
   return (
     <Routes>
-      {/* Auth routes */}
-      <Route path={SIGN_IN_PATH} element={<AuthPage />} />
-      <Route path={SIGN_UP_PATH} element={<AuthPage />} />
-      <Route path={LEGACY_SIGN_IN_PATH} element={<Navigate to={SIGN_IN_PATH} replace />} />
-      <Route path={LEGACY_SIGN_UP_PATH} element={<Navigate to={SIGN_UP_PATH} replace />} />
-      <Route path={LEGACY_GET_STARTED_PATH} element={<Navigate to={SIGN_UP_PATH} replace />} />
-      <Route path={LEGACY_LOGIN_PATH} element={<Navigate to={SIGN_IN_PATH} replace />} />
+      {/* Auth routes — on home domain, redirect to covable.app/auth */}
+      <Route path={SIGN_IN_PATH} element={<ExternalRedirect to={SIGN_IN_PATH} />} />
+      <Route path={SIGN_UP_PATH} element={<ExternalRedirect to={SIGN_UP_PATH} />} />
+      <Route path={LEGACY_SIGN_IN_PATH} element={<ExternalRedirect to={SIGN_IN_PATH} />} />
+      <Route path={LEGACY_SIGN_UP_PATH} element={<ExternalRedirect to={SIGN_UP_PATH} />} />
+      <Route path={LEGACY_GET_STARTED_PATH} element={<ExternalRedirect to={SIGN_UP_PATH} />} />
+      <Route path={LEGACY_LOGIN_PATH} element={<ExternalRedirect to={SIGN_IN_PATH} />} />
 
       {/* Protected app routes */}
       <Route
