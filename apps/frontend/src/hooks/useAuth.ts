@@ -21,19 +21,62 @@ const SIGN_UP_URL =
 const MARKETING_HOSTNAME = new URL(MARKETING_URL).hostname;
 const HOME_HOSTNAME = new URL(HOME_URL).hostname;
 
+function hasPendingAuthRedirect(): boolean {
+  if (typeof window === "undefined") return false;
+
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const searchParams = new URLSearchParams(window.location.search);
+
+  return (
+    hashParams.has("access_token") ||
+    hashParams.has("refresh_token") ||
+    hashParams.has("error") ||
+    searchParams.has("code") ||
+    searchParams.has("error") ||
+    searchParams.has("error_code") ||
+    searchParams.has("error_description")
+  );
+}
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // onAuthStateChange fires INITIAL_SESSION first — use it as the source of truth
-    // so we never have two async calls racing each other
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    let active = true;
+    const pendingAuthRedirect = hasPendingAuthRedirect();
+
+    const applySession = (nextUser: User | null) => {
+      if (!active) return;
+      setUser(nextUser);
       setLoading(false);
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      // During an auth callback, Supabase can briefly emit an empty initial session
+      // before it finishes parsing the URL tokens/code. Ignoring that first null
+      // prevents a redirect loop back to the sign-in/sign-up page.
+      if (pendingAuthRedirect && _event === "INITIAL_SESSION" && !session) {
+        return;
+      }
+
+      applySession(session?.user ?? null);
     });
 
-    return () => subscription.unsubscribe();
+    const syncSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      applySession(session?.user ?? null);
+    };
+
+    const timer = window.setTimeout(() => {
+      void syncSession();
+    }, pendingAuthRedirect ? 150 : 0);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function signIn(email: string, password: string) {
