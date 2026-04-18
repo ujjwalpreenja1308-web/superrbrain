@@ -3,14 +3,14 @@ import { cn } from "@/lib/utils";
 
 interface UpgradeGateProps {
   feature: string;
-  requiredPlan: "growth" | "scale";
+  requiredPlan: "growth" | "pro";
   description?: string;
   className?: string;
 }
 
 const PLAN_LABELS: Record<string, string> = {
-  growth: "Growth ($149/mo)",
-  scale: "Scale ($349/mo)",
+  growth: "Growth ($29/mo)",
+  pro: "Pro ($79/mo)",
 };
 
 export function UpgradeGate({ feature, requiredPlan, description, className }: UpgradeGateProps) {

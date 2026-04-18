@@ -81,7 +81,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 const DODO_PRODUCTS: Record<string, string> = {
   starter: import.meta.env.VITE_DODO_PRODUCT_STARTER_MONTHLY ?? "",
   growth:  import.meta.env.VITE_DODO_PRODUCT_GROWTH_MONTHLY  ?? "",
-  scale:   import.meta.env.VITE_DODO_PRODUCT_SCALE_MONTHLY   ?? "",
+  pro:     import.meta.env.VITE_DODO_PRODUCT_PRO_MONTHLY     ?? "",
 };
 
 /**

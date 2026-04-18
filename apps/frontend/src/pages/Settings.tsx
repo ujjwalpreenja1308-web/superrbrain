@@ -14,11 +14,8 @@ import { cn } from "@/lib/utils";
 // Dodo product IDs from env — set VITE_DODO_PRODUCT_* in Vercel/local env
 const DODO_PRODUCTS: Record<string, string> = {
   starter_monthly: import.meta.env.VITE_DODO_PRODUCT_STARTER_MONTHLY ?? "",
-  starter_annual:  import.meta.env.VITE_DODO_PRODUCT_STARTER_ANNUAL  ?? "",
   growth_monthly:  import.meta.env.VITE_DODO_PRODUCT_GROWTH_MONTHLY  ?? "",
-  growth_annual:   import.meta.env.VITE_DODO_PRODUCT_GROWTH_ANNUAL   ?? "",
-  scale_monthly:   import.meta.env.VITE_DODO_PRODUCT_SCALE_MONTHLY   ?? "",
-  scale_annual:    import.meta.env.VITE_DODO_PRODUCT_SCALE_ANNUAL    ?? "",
+  pro_monthly:     import.meta.env.VITE_DODO_PRODUCT_PRO_MONTHLY     ?? "",
 };
 
 const HOME_URL =
@@ -80,7 +77,7 @@ function PlanCard({ tier, name, monthlyPrice, annualMonthlyPrice, features, isPo
             )}>
               {tier === "starter" && <Zap className="size-3.5 text-primary" />}
               {tier === "growth" && <Building2 className="size-3.5 text-primary" />}
-              {tier === "scale" && <Layers className="size-3.5 text-primary" />}
+              {tier === "pro" && <Layers className="size-3.5 text-primary" />}
             </div>
             <CardTitle className="text-sm">{name}</CardTitle>
           </div>
@@ -155,46 +152,43 @@ export function Settings() {
     {
       tier: "starter",
       name: "Starter",
-      monthly: 59,
-      annual: 49,
+      monthly: 9,
+      annual: 9,
       features: [
-        { label: "10 AI-optimized prompts", included: true },
+        { label: "10 AI prompts / month", included: true },
+        { label: "ChatGPT response analysis", included: true },
         { label: "1 brand", included: true },
-        { label: "Weekly citation scans", included: true },
         { label: "Gap detection", included: true },
         { label: "Email support", included: true },
-        { label: "Reddit execution engine", included: false },
-        { label: "AEO-optimized blog assist", included: false },
+        { label: "Reddit tracking", included: false },
       ],
     },
     {
       tier: "growth",
       name: "Growth",
-      monthly: 149,
-      annual: 124,
+      monthly: 29,
+      annual: 29,
       features: [
-        { label: "20 AI-optimized prompts", included: true },
-        { label: "3 brands", included: true },
-        { label: "Daily citation scans", included: true },
-        { label: "Gap detection + analysis", included: true },
+        { label: "30 AI prompts / month", included: true },
+        { label: "ChatGPT response analysis", included: true },
+        { label: "Reddit tracking (5 keywords, 2 subreddits)", included: true },
+        { label: "~200 posts tracked / month", included: true },
         { label: "Priority support", included: true },
-        { label: "Reddit execution engine", included: true },
-        { label: "AEO-optimized blog assist", included: false },
+        { label: "Competitor tracking", included: false },
       ],
     },
     {
-      tier: "scale",
-      name: "Scale",
-      monthly: 349,
-      annual: 290,
+      tier: "pro",
+      name: "Pro",
+      monthly: 79,
+      annual: 79,
       features: [
-        { label: "40 AI-optimized prompts", included: true },
-        { label: "10 brands", included: true },
-        { label: "Daily citation scans", included: true },
-        { label: "Full execution engine", included: true },
-        { label: "AEO-optimized blog assist", included: true },
-        { label: "API access", included: true },
-        { label: "Dedicated account manager", included: true },
+        { label: "60 AI prompts / month", included: true },
+        { label: "ChatGPT response analysis", included: true },
+        { label: "Reddit tracking (10 keywords, 4 subreddits)", included: true },
+        { label: "800+ posts tracked / month", included: true },
+        { label: "Competitor tracking", included: true },
+        { label: "Dedicated support", included: true },
       ],
     },
   ];

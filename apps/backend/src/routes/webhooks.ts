@@ -8,11 +8,8 @@ const webhookRoutes = new Hono();
 // Set these env vars to your actual Dodo product IDs
 const PRODUCT_PLAN_MAP: Record<string, string> = {
   [process.env.DODO_PRODUCT_STARTER_MONTHLY ?? "starter_monthly"]: "starter",
-  [process.env.DODO_PRODUCT_STARTER_ANNUAL ?? "starter_annual"]: "starter",
   [process.env.DODO_PRODUCT_GROWTH_MONTHLY ?? "growth_monthly"]: "growth",
-  [process.env.DODO_PRODUCT_GROWTH_ANNUAL ?? "growth_annual"]: "growth",
-  [process.env.DODO_PRODUCT_SCALE_MONTHLY ?? "scale_monthly"]: "scale",
-  [process.env.DODO_PRODUCT_SCALE_ANNUAL ?? "scale_annual"]: "scale",
+  [process.env.DODO_PRODUCT_PRO_MONTHLY ?? "pro_monthly"]: "pro",
 };
 
 function verifyDodoSignature(body: string, signature: string, secret: string): boolean {

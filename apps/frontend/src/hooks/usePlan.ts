@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-export type PlanTier = "trial" | "starter" | "growth" | "scale";
+export type PlanTier = "trial" | "starter" | "growth" | "pro";
 
 export interface PlanLimits {
   tier: PlanTier;
@@ -41,29 +41,29 @@ const PLAN_CONFIG: Record<PlanTier, Omit<PlanLimits, "trialExpired" | "trialExpi
     hasBlog: false,
     hasApiAccess: false,
     label: "Starter",
-    price: 59,
+    price: 9,
   },
   growth: {
     tier: "growth",
     maxBrands: 3,
-    maxPrompts: 20,
-    scanFrequency: "daily",
+    maxPrompts: 30,
+    scanFrequency: "weekly",
     hasExecution: true,
     hasBlog: false,
     hasApiAccess: false,
     label: "Growth",
-    price: 149,
+    price: 29,
   },
-  scale: {
-    tier: "scale",
+  pro: {
+    tier: "pro",
     maxBrands: 10,
-    maxPrompts: 40,
+    maxPrompts: 60,
     scanFrequency: "daily",
     hasExecution: true,
-    hasBlog: true,
+    hasBlog: false,
     hasApiAccess: true,
-    label: "Scale",
-    price: 349,
+    label: "Pro",
+    price: 79,
   },
 };
 
