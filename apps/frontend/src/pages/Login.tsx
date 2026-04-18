@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-const SIGN_UP_PATHS = new Set(["/sign-up", "/get-started"]);
+const SIGN_UP_PATHS = new Set(["/auth/sign-up", "/sign-up", "/get-started"]);
 
 function GoogleIcon() {
   return (
@@ -39,7 +39,7 @@ export function Login() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const isSignUp = SIGN_UP_PATHS.has(location.pathname);
-  const toggleHref = `${isSignUp ? "/sign-in" : "/sign-up"}${location.search}`;
+  const toggleHref = `${isSignUp ? "/auth/sign-in" : "/auth/sign-up"}${location.search}`;
 
   useEffect(() => {
     setError("");

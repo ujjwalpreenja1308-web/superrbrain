@@ -27,9 +27,11 @@ const HOME_URL =
   import.meta.env.VITE_HOME_URL ||
   (import.meta.env.PROD ? "https://home.covable.app" : "http://localhost:5173");
 
-const SIGN_IN_PATH = "/sign-in";
-const SIGN_UP_PATH = "/sign-up";
-const LEGACY_SIGN_UP_PATH = "/get-started";
+const SIGN_IN_PATH = "/auth/sign-in";
+const SIGN_UP_PATH = "/auth/sign-up";
+const LEGACY_SIGN_IN_PATH = "/sign-in";
+const LEGACY_SIGN_UP_PATH = "/sign-up";
+const LEGACY_GET_STARTED_PATH = "/get-started";
 const LEGACY_LOGIN_PATH = "/login";
 
 const queryClient = new QueryClient({
@@ -222,8 +224,10 @@ function AppRoutes() {
       <Routes>
         <Route path={SIGN_IN_PATH} element={<AuthPage />} />
         <Route path={SIGN_UP_PATH} element={<AuthPage />} />
-        <Route path={LEGACY_SIGN_UP_PATH} element={<AuthPage />} />
-        <Route path={LEGACY_LOGIN_PATH} element={<AuthPage />} />
+        <Route path={LEGACY_SIGN_IN_PATH} element={<Navigate to={SIGN_IN_PATH} replace />} />
+        <Route path={LEGACY_SIGN_UP_PATH} element={<Navigate to={SIGN_UP_PATH} replace />} />
+        <Route path={LEGACY_GET_STARTED_PATH} element={<Navigate to={SIGN_UP_PATH} replace />} />
+        <Route path={LEGACY_LOGIN_PATH} element={<Navigate to={SIGN_IN_PATH} replace />} />
         <Route path="*" element={<Navigate to={SIGN_IN_PATH} replace />} />
       </Routes>
     );
@@ -234,8 +238,10 @@ function AppRoutes() {
       {/* Auth routes */}
       <Route path={SIGN_IN_PATH} element={<AuthPage />} />
       <Route path={SIGN_UP_PATH} element={<AuthPage />} />
-      <Route path={LEGACY_SIGN_UP_PATH} element={<AuthPage />} />
-      <Route path={LEGACY_LOGIN_PATH} element={<AuthPage />} />
+      <Route path={LEGACY_SIGN_IN_PATH} element={<Navigate to={SIGN_IN_PATH} replace />} />
+      <Route path={LEGACY_SIGN_UP_PATH} element={<Navigate to={SIGN_UP_PATH} replace />} />
+      <Route path={LEGACY_GET_STARTED_PATH} element={<Navigate to={SIGN_UP_PATH} replace />} />
+      <Route path={LEGACY_LOGIN_PATH} element={<Navigate to={SIGN_IN_PATH} replace />} />
 
       {/* Protected app routes */}
       <Route

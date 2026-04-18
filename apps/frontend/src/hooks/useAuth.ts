@@ -12,12 +12,11 @@ const HOME_URL =
 
 const SIGN_IN_URL =
   import.meta.env.VITE_SIGN_IN_URL ||
-  import.meta.env.VITE_AUTH_URL ||
-  `${MARKETING_URL}/sign-in`;
+  `${MARKETING_URL}/auth/sign-in`;
 
 const SIGN_UP_URL =
   import.meta.env.VITE_SIGN_UP_URL ||
-  `${MARKETING_URL}/sign-up`;
+  `${MARKETING_URL}/auth/sign-up`;
 
 const MARKETING_HOSTNAME = new URL(MARKETING_URL).hostname;
 const HOME_HOSTNAME = new URL(HOME_URL).hostname;
@@ -65,7 +64,7 @@ export function useAuth() {
     // Always redirect back to the current auth route so detectSessionInUrl can
     // pick up the token before forwarding the user to home.covable.app.
     const redirectTo = import.meta.env.PROD
-      ? `${MARKETING_URL}${window.location.pathname}${window.location.search}`
+      ? `${MARKETING_URL}/auth${window.location.search}`
       : `${window.location.origin}${window.location.pathname}${window.location.search}`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",

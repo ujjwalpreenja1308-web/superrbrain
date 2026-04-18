@@ -5,6 +5,11 @@
     { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/terms", "destination": "/terms.html" },
     { "source": "/ascii", "destination": "/ascii.html" },
+    { "source": "/auth", "destination": "/auth.html" },
+    { "source": "/auth/sign-in", "destination": "/auth.html" },
+    { "source": "/auth/sign-up", "destination": "/auth.html" },
+    { "source": "/sign-in", "destination": "/auth.html" },
+    { "source": "/sign-up", "destination": "/auth.html" },
     { "source": "/([^.]+)", "destination": "/index.html" }
   ],
   "headers": [
