@@ -5,7 +5,7 @@
     "dev:backend": "pnpm --filter @covable/backend dev",
     "dev:frontend": "pnpm --filter @covable/frontend dev",
     "dev:landing": "pnpm --filter @covable/landing dev",
-    "build:all": "pnpm -r build",
+    "build": "pnpm -r build",
     "build:deploy": "pnpm --filter @covable/shared build && pnpm --filter @covable/frontend build && pnpm --filter @covable/landing build && node scripts/build-static.mjs",
     "typecheck": "pnpm -r typecheck",
     "test:e2e": "pnpm --filter @covable/backend test:e2e"
