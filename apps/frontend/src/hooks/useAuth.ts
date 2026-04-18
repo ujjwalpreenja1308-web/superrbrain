@@ -21,21 +21,53 @@ const SIGN_UP_URL =
 const MARKETING_HOSTNAME = new URL(MARKETING_URL).hostname;
 const HOME_HOSTNAME = new URL(HOME_URL).hostname;
 
+interface AuthRedirectPayload {
+  accessToken: string | null;
+  refreshToken: string | null;
+  authCode: string | null;
+}
+
+function getAuthRedirectPayload(): AuthRedirectPayload {
+  if (typeof window === "undefined") {
+    return { accessToken: null, refreshToken: null, authCode: null };
+  }
+
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const searchParams = new URLSearchParams(window.location.search);
+
+  return {
+    accessToken: hashParams.get("access_token"),
+    refreshToken: hashParams.get("refresh_token"),
+    authCode: searchParams.get("code"),
+  };
+}
+
 function hasPendingAuthRedirect(): boolean {
+  const { accessToken, refreshToken, authCode } = getAuthRedirectPayload();
+  if (accessToken || refreshToken || authCode) return true;
   if (typeof window === "undefined") return false;
 
   const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
   const searchParams = new URLSearchParams(window.location.search);
 
   return (
-    hashParams.has("access_token") ||
-    hashParams.has("refresh_token") ||
     hashParams.has("error") ||
-    searchParams.has("code") ||
     searchParams.has("error") ||
     searchParams.has("error_code") ||
     searchParams.has("error_description")
   );
+}
+
+function clearAuthRedirectParams() {
+  if (typeof window === "undefined") return;
+
+  const url = new URL(window.location.href);
+  url.hash = "";
+  url.searchParams.delete("code");
+  url.searchParams.delete("error");
+  url.searchParams.delete("error_code");
+  url.searchParams.delete("error_description");
+  window.history.replaceState({}, "", url.toString());
 }
 
 export function useAuth() {
@@ -45,6 +77,7 @@ export function useAuth() {
   useEffect(() => {
     let active = true;
     const pendingAuthRedirect = hasPendingAuthRedirect();
+    const { accessToken, refreshToken, authCode } = getAuthRedirectPayload();
 
     const applySession = (nextUser: User | null) => {
       if (!active) return;
@@ -64,8 +97,23 @@ export function useAuth() {
     });
 
     const syncSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      applySession(session?.user ?? null);
+      try {
+        if (authCode) {
+          const { error } = await supabase.auth.exchangeCodeForSession(authCode);
+          if (!error) clearAuthRedirectParams();
+        } else if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (!error) clearAuthRedirectParams();
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        applySession(session?.user ?? null);
+      } catch {
+        applySession(null);
+      }
     };
 
     const timer = window.setTimeout(() => {
