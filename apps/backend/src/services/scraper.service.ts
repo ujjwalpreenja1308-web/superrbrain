@@ -6,20 +6,30 @@ export interface ScrapeResult {
   url: string;
 }
 
+const MIN_CONTENT_LENGTH = 200;
+
 export async function scrapeUrl(url: string): Promise<ScrapeResult> {
   try {
     const result = await firecrawl.scrapeUrl(url, {
       formats: ["markdown"],
+      onlyMainContent: true,
     });
 
-    if (result.success) {
-      return {
-        markdown: result.markdown || "",
-        title: result.metadata?.title || null,
-        url,
-      };
+    if (!result.success) {
+      throw new Error(result.error ?? "Firecrawl scrape failed");
     }
-    throw new Error("Firecrawl scrape failed");
+
+    const markdown = result.markdown ?? "";
+
+    if (markdown.length < MIN_CONTENT_LENGTH) {
+      throw new Error(`Firecrawl returned too little content (${markdown.length} chars) — likely a bot-wall or 404`);
+    }
+
+    return {
+      markdown,
+      title: result.metadata?.title ?? null,
+      url,
+    };
   } catch (err) {
     console.warn(`Firecrawl failed for ${url}, attempting fallback:`, err);
     return await scrapeFallback(url);

@@ -1,6 +1,46 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm --filter @covable/shared build && pnpm --filter @covable/frontend build",
-  "outputDirectory": "apps/frontend/dist"
+  "buildCommand": "pnpm build:deploy",
+  "outputDirectory": "dist",
+  "redirects": [
+    {
+      "source": "/sign-in",
+      "has": [{ "type": "host", "value": "auth.covable.app" }],
+      "destination": "https://covable.app/sign-in",
+      "permanent": true
+    },
+    {
+      "source": "/sign-up",
+      "has": [{ "type": "host", "value": "auth.covable.app" }],
+      "destination": "https://covable.app/sign-up",
+      "permanent": true
+    },
+    {
+      "source": "/get-started",
+      "has": [{ "type": "host", "value": "auth.covable.app" }],
+      "destination": "https://covable.app/sign-up",
+      "permanent": true
+    },
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "www.covable.app" }],
+      "destination": "https://covable.app/$1",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    { "source": "/sign-in", "destination": "/__app/index.html" },
+    { "source": "/sign-up", "destination": "/__app/index.html" },
+    { "source": "/get-started", "destination": "/__app/index.html" },
+    { "source": "/login", "destination": "/__app/index.html" },
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "home.covable.app" }],
+      "destination": "/__app/index.html"
+    },
+    { "source": "/privacy", "destination": "/privacy.html" },
+    { "source": "/terms", "destination": "/terms.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

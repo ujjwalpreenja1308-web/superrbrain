@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import type { Brand, Prompt } from "@covable/shared";
@@ -11,9 +12,29 @@ export function useBrands() {
 }
 
 export function useBrand(brandId?: string) {
+  const queryClient = useQueryClient();
+  const wasRunningRef = useRef(false);
+
   return useQuery({
     queryKey: ["brand", brandId],
-    queryFn: () => api.get<Brand>(`/api/brands/${brandId}`),
+    queryFn: async () => {
+      const brand = await api.get<Brand>(`/api/brands/${brandId}`);
+
+      const isRunning = brand.status === "onboarding" || brand.status === "running" || brand.status === "pending";
+
+      // Transition: was running, now done → invalidate all dependent queries
+      if (wasRunningRef.current && !isRunning && brandId) {
+        wasRunningRef.current = false;
+        queryClient.invalidateQueries({ queryKey: ["brands"] });
+        queryClient.invalidateQueries({ queryKey: ["report", brandId] });
+        queryClient.invalidateQueries({ queryKey: ["citations", brandId] });
+        queryClient.invalidateQueries({ queryKey: ["gaps", brandId] });
+      } else {
+        wasRunningRef.current = isRunning;
+      }
+
+      return brand;
+    },
     enabled: !!brandId,
     refetchInterval: (query) => {
       const data = query.state.data;

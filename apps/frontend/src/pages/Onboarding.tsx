@@ -148,7 +148,7 @@ export function Onboarding() {
                     ))}
                   </select>
                   <p className="text-xs text-muted-foreground/60 px-0.5">
-                    AI searches will use the static IP for this region
+                    AI searches will be performed from this region
                   </p>
                 </div>
               )}

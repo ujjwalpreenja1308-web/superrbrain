@@ -1,5 +1,5 @@
 import { openai } from "../lib/openai.js";
-import { scrapeChatGPT } from "./chatgpt-scraper.service.js";
+import { scrapeWithBrightData, scrapeWithBrightDataBatch } from "./brightdata.service.js";
 import type { AiEngine } from "@covable/shared";
 
 export interface AiQueryResult {
@@ -23,11 +23,35 @@ export async function firePrompt(
   engine: AiEngine,
   location?: LocationContext
 ): Promise<AiQueryResult> {
-  if (process.env.BROWSER_WS_ENDPOINT) {
-    const result = await scrapeChatGPT(promptText, "anonymous", location?.country);
+  if (process.env.BRIGHTDATA_API_KEY) {
+    const result = await scrapeWithBrightData(promptText, location?.country);
     return parseResponse(result.text, brandName, competitors, "chatgpt", result.citations);
   }
   return await queryChatGPT(promptText, brandName, competitors, location);
+}
+
+/**
+ * Fire all prompts in a single Bright Data API call (one poll cycle for all).
+ * Falls back to individual parallel OpenAI calls if Bright Data is not configured.
+ * Returns results in the same order as input prompts.
+ */
+export async function firePromptBatch(
+  prompts: string[],
+  brandName: string,
+  competitors: { name: string }[],
+  location?: LocationContext
+): Promise<AiQueryResult[]> {
+  if (process.env.BRIGHTDATA_API_KEY) {
+    const bdResults = await scrapeWithBrightDataBatch(
+      prompts.map((prompt) => ({ prompt, country: location?.country }))
+    );
+    return bdResults.map((r) => parseResponse(r.text, brandName, competitors, "chatgpt", r.citations));
+  }
+
+  // Fallback: parallel individual OpenAI calls
+  return Promise.all(
+    prompts.map((p) => queryChatGPT(p, brandName, competitors, location))
+  );
 }
 
 async function queryChatGPT(

@@ -69,4 +69,12 @@ export const api = {
     });
     return handleResponse<T>(res);
   },
+
+  async delete<T>(path: string): Promise<T> {
+    const res = await fetch(`${API_URL}${path}`, {
+      method: "DELETE",
+      headers: await getHeaders(),
+    });
+    return handleResponse<T>(res);
+  },
 };

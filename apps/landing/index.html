@@ -9,8 +9,8 @@
   <meta property="og:description" content="Every conversation someone has with ChatGPT about your category is sending them to a competitor. Covable shows you exactly where and helps you close the gap." />
   <meta property="og:type" content="website" />
   <!-- Preload critical fonts -->
-  <link rel="preload" as="font" href="/PPEditorialNew-Ultralight.woff" type="font/woff" crossorigin />
-  <link rel="preload" as="font" href="/SFPRODISPLAYREGULAR.woff" type="font/woff" crossorigin />
+  <link rel="preload" as="font" href="/fonts/PPEditorialNew-Ultralight.woff" type="font/woff" crossorigin />
+  <link rel="preload" as="font" href="/fonts/SFPRODISPLAYREGULAR.woff" type="font/woff" crossorigin />
   <!-- Preload ASCII snippet so fetch is instant -->
   <link rel="prefetch" href="/ascii-snippet.html" />
   <link rel="stylesheet" href="/styles/base.css" />
@@ -31,11 +31,11 @@
       <li><a href="javascript:void(0)" data-scroll="pricing">Pricing</a></li>
     </ul>
     <div class="nav-cta">
-      <a href="https://auth.covable.app" class="btn-secondary nav-btn-signin" style="padding: 8px 16px; font-size: 12px;">
+      <a href="/sign-in" class="btn-secondary nav-btn-signin" style="padding: 8px 16px; font-size: 12px;">
         <span class="nav-btn-text">Sign in</span>
         <svg class="nav-btn-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
       </a>
-      <a href="https://auth.covable.app/get-started" class="btn-primary nav-btn-start" style="padding: 8px 16px; font-size: 12px;">
+      <a href="/sign-up" class="btn-primary nav-btn-start" style="padding: 8px 16px; font-size: 12px;">
         <span class="nav-btn-text">Get started</span>
         <svg class="nav-btn-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
       </a>
@@ -57,7 +57,7 @@
           When someone asks ChatGPT what to buy in your category, the answer is built from sources your competitors seeded: Reddit threads, review articles, listicles. Covable shows you exactly which ones, and generates content to get you cited instead
         </p>
         <div style="display: flex; gap: 16px; flex-wrap: wrap; animation: fadeUp 600ms 600ms both ease-out;">
-          <a href="https://auth.covable.app/get-started" class="btn-primary">See where you stand</a>
+          <a href="/sign-up" class="btn-primary">See where you stand</a>
         </div>
       </div>
       <!-- Right: ASCII art -->
@@ -477,9 +477,9 @@
             </tr>
             <tr>
               <td></td>
-              <td><a href="https://auth.covable.app/get-started?plan=starter" class="btn-secondary" style="padding: 8px 16px; font-size: 12px;">Try 3 days free</a><div style="font-size:10px;color:var(--text-secondary);margin-top:4px;">Card required · cancel anytime</div></td>
-              <td class="featured"><a href="https://auth.covable.app/get-started?plan=growth" class="btn-primary" style="padding: 8px 16px; font-size: 12px;">Get started</a></td>
-              <td><a href="https://auth.covable.app/get-started?plan=scale" class="btn-secondary" style="padding: 8px 16px; font-size: 12px;">Get started</a></td>
+              <td><a href="/sign-up?plan=starter" class="btn-secondary" style="padding: 8px 16px; font-size: 12px;">Try 3 days free</a><div style="font-size:10px;color:var(--text-secondary);margin-top:4px;">Card required · cancel anytime</div></td>
+              <td class="featured"><a href="/sign-up?plan=growth" class="btn-primary" style="padding: 8px 16px; font-size: 12px;">Get started</a></td>
+              <td><a href="/sign-up?plan=scale" class="btn-secondary" style="padding: 8px 16px; font-size: 12px;">Get started</a></td>
             </tr>
           </tbody>
         </table>
@@ -547,7 +547,7 @@ function setPricing(mode) {
       <p class="label">Get started</p>
       <h2 class="section-heading" style="margin-bottom: 20px;">Find out what ChatGPT says about your category</h2>
       <p style="color: var(--text-secondary); margin-bottom: 40px; line-height: 1.8;">Enter your brand URL. We'll run a scan, show you your visibility score, every competitor ChatGPT recommends instead, and your first gap queue. In 60 seconds</p>
-      <a href="https://auth.covable.app/get-started" class="btn-primary">See where you stand</a>
+      <a href="/sign-up" class="btn-primary">See where you stand</a>
     </div>
   </div>
 </section>

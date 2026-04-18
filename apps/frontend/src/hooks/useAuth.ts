@@ -2,13 +2,25 @@ import { useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
+const MARKETING_URL =
+  import.meta.env.VITE_MARKETING_URL ||
+  (import.meta.env.PROD ? "https://covable.app" : "http://localhost:5173");
+
 const HOME_URL =
   import.meta.env.VITE_HOME_URL ||
   (import.meta.env.PROD ? "https://home.covable.app" : "http://localhost:5173");
 
-const AUTH_URL =
+const SIGN_IN_URL =
+  import.meta.env.VITE_SIGN_IN_URL ||
   import.meta.env.VITE_AUTH_URL ||
-  (import.meta.env.PROD ? "https://auth.covable.app" : "http://localhost:5173");
+  `${MARKETING_URL}/sign-in`;
+
+const SIGN_UP_URL =
+  import.meta.env.VITE_SIGN_UP_URL ||
+  `${MARKETING_URL}/sign-up`;
+
+const MARKETING_HOSTNAME = new URL(MARKETING_URL).hostname;
+const HOME_HOSTNAME = new URL(HOME_URL).hostname;
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -50,12 +62,11 @@ export function useAuth() {
   }
 
   async function signInWithGoogle() {
-    const planParam = new URLSearchParams(window.location.search).get("plan");
-    // Always redirect back to auth domain — detectSessionInUrl picks up the token,
-    // then AuthPage forwards to home.covable.app (preserving ?plan= if present)
-    const redirectTo = planParam
-      ? `${AUTH_URL}/get-started?plan=${planParam}`
-      : AUTH_URL;
+    // Always redirect back to the current auth route so detectSessionInUrl can
+    // pick up the token before forwarding the user to home.covable.app.
+    const redirectTo = import.meta.env.PROD
+      ? `${MARKETING_URL}${window.location.pathname}${window.location.search}`
+      : `${window.location.origin}${window.location.pathname}${window.location.search}`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo },
@@ -65,23 +76,36 @@ export function useAuth() {
 
   async function signOut() {
     await supabase.auth.signOut();
-    // Redirect to auth app after sign out
+    // Redirect to the public sign-in page after sign out.
     if (import.meta.env.PROD) {
-      window.location.href = AUTH_URL;
+      window.location.href = SIGN_IN_URL;
     }
   }
 
   return { user, loading, signIn, signUp, signOut, signInWithGoogle };
 }
 
-/** Returns true if running on the auth subdomain (or localhost in dev) */
-export function isAuthDomain(): boolean {
+export function isMarketingDomain(): boolean {
   if (!import.meta.env.PROD) return true; // dev: always show auth routes
-  return window.location.hostname === "auth.covable.app";
+  return window.location.hostname === MARKETING_HOSTNAME;
 }
 
 /** Returns true if running on the home/dashboard subdomain */
 export function isHomeDomain(): boolean {
   if (!import.meta.env.PROD) return true; // dev: always show dashboard routes
-  return window.location.hostname === "home.covable.app";
+  return window.location.hostname === HOME_HOSTNAME;
+}
+
+export function getSignInUrl(plan?: string | null): string {
+  if (!plan) return SIGN_IN_URL;
+  const url = new URL(SIGN_IN_URL);
+  url.searchParams.set("plan", plan);
+  return url.toString();
+}
+
+export function getSignUpUrl(plan?: string | null): string {
+  if (!plan) return SIGN_UP_URL;
+  const url = new URL(SIGN_UP_URL);
+  url.searchParams.set("plan", plan);
+  return url.toString();
 }

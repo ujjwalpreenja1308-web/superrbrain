@@ -1,9 +1,8 @@
 import { task, logger, tasks } from "@trigger.dev/sdk/v3";
 import { supabaseAdmin } from "../lib/supabase.js";
-import { firePrompt } from "../services/ai-engine.service.js";
+import { firePromptBatch } from "../services/ai-engine.service.js";
 import { enrichCitation, extractBrandsFromResponse } from "../services/citation.service.js";
 import { computeReport } from "../services/scoring.service.js";
-import { AI_ENGINES } from "@covable/shared";
 
 export const runMonitoring = task({
   id: "run-monitoring",
@@ -39,70 +38,60 @@ export const runMonitoring = task({
         city: (brand as any).city || undefined,
       };
 
-      if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
-
-      const activeEngines = AI_ENGINES;
-
-      logger.info(`Firing ${prompts.length} prompts across: ${activeEngines.join(", ")}`);
+      logger.info(`Firing ${prompts.length} prompts in a single batch call`);
 
       // url -> { responseIds, responseText } — track per-URL context
       const urlData = new Map<string, { responseIds: string[]; responseText: string }>();
 
-      const promptBatchSize = 3;
-      for (let i = 0; i < prompts.length; i += promptBatchSize) {
-        const batch = prompts.slice(i, i + promptBatchSize);
+      // Single API call for all prompts — Bright Data processes them in parallel server-side.
+      // Result order matches input order.
+      const results = await firePromptBatch(
+        prompts.map((p) => p.text),
+        brand.name || "",
+        competitors,
+        location
+      );
 
-        const batchTasks = batch.flatMap((prompt) =>
-          activeEngines.map(async (engine) => {
-            try {
-              logger.info(`[${engine}] ${prompt.text.slice(0, 60)}...`);
+      for (let i = 0; i < prompts.length; i++) {
+        const prompt = prompts[i];
+        const result = results[i];
+        if (!result) continue;
 
-              const result = await firePrompt(
-                prompt.text,
-                brand.name || "",
-                competitors,
-                engine,
-                location
-              );
+        try {
+          const { data: inserted } = await supabaseAdmin
+            .from("ai_responses")
+            .insert({
+              prompt_id: prompt.id,
+              brand_id: brandId,
+              engine: result.engine,
+              raw_response: result.raw_response,
+              brand_mentioned: result.brand_mentioned,
+              brand_position: result.brand_position,
+              competitor_mentions: result.competitor_mentions,
+              run_id: runId,
+            })
+            .select("id")
+            .single();
 
-              const { data: inserted } = await supabaseAdmin
-                .from("ai_responses")
-                .insert({
-                  prompt_id: prompt.id,
-                  brand_id: brandId,
-                  engine,
-                  raw_response: result.raw_response,
-                  brand_mentioned: result.brand_mentioned,
-                  brand_position: result.brand_position,
-                  competitor_mentions: result.competitor_mentions,
-                  run_id: runId,
-                })
-                .select("id")
-                .single();
+          logger.info(
+            `[prompt ${i + 1}/${prompts.length}] brand_mentioned=${result.brand_mentioned}, citations=${result.citations.length}`
+          );
 
-              logger.info(
-                `[${engine}] brand_mentioned=${result.brand_mentioned}, citations=${result.citations.length}`
-              );
-
-              if (inserted?.id) {
-                for (const url of result.citations) {
-                  const existing = urlData.get(url) || {
-                    responseIds: [],
-                    responseText: result.raw_response,
-                  };
-                  existing.responseIds.push(inserted.id);
-                  urlData.set(url, existing);
-                }
-              }
-            } catch (err) {
-              logger.error(`Failed: ${prompt.text.slice(0, 40)} on ${engine}`, {
-                error: err instanceof Error ? err.message : String(err),
-              });
+          if (inserted?.id) {
+            for (const url of result.citations) {
+              const existing = urlData.get(url) || {
+                responseIds: [],
+                responseText: result.raw_response,
+              };
+              existing.responseIds.push(inserted.id);
+              urlData.set(url, existing);
             }
-          })
-        );
-
-        await Promise.allSettled(batchTasks);
+          }
+        } catch (err) {
+          logger.error(`Failed to save result for prompt ${i + 1}`, {
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
       }
 
       // Enrich citations directly from AI response text — no external scraping

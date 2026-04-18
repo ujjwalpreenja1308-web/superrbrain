@@ -11,20 +11,26 @@ import { ContentWorkbench } from "@/pages/ContentWorkbench";
 import { Outcomes } from "@/pages/Outcomes";
 import { Settings } from "@/pages/Settings";
 import { Help } from "@/pages/Help";
-import { Blog } from "@/pages/Blog";
 import { Prompts } from "@/pages/Prompts";
+import { ContentMoat } from "@/pages/ContentMoat";
+import { PromptLab } from "@/pages/PromptLab";
+import { PagesList } from "@/pages/PagesList";
+import { PageEditor } from "@/pages/PageEditor";
+import { Publishers } from "@/pages/Publishers";
+import { ReinforcementQueue } from "@/pages/ReinforcementQueue";
 import { Login } from "@/pages/Login";
-import { useAuth, isAuthDomain, isHomeDomain } from "@/hooks/useAuth";
+import { useAuth, getSignInUrl, isHomeDomain } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { usePlan, useActivateTrial } from "@/hooks/usePlan";
-
-const AUTH_URL =
-  import.meta.env.VITE_AUTH_URL ||
-  (import.meta.env.PROD ? "https://auth.covable.app" : "http://localhost:5173");
 
 const HOME_URL =
   import.meta.env.VITE_HOME_URL ||
   (import.meta.env.PROD ? "https://home.covable.app" : "http://localhost:5173");
+
+const SIGN_IN_PATH = "/sign-in";
+const SIGN_UP_PATH = "/sign-up";
+const LEGACY_SIGN_UP_PATH = "/get-started";
+const LEGACY_LOGIN_PATH = "/login";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,7 +41,7 @@ const queryClient = new QueryClient({
   },
 });
 
-/** Auth guard: if not logged in, redirect to auth.covable.app */
+/** Auth guard: if not logged in, redirect to covable.app/sign-in */
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const redirectedRef = useRef(false);
@@ -45,8 +51,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
     if (loading || user || redirectedRef.current) return;
     redirectedRef.current = true;
     const planParam = new URLSearchParams(window.location.search).get("plan");
-    const redirectTo = planParam ? `${AUTH_URL}?plan=${planParam}` : AUTH_URL;
-    window.location.replace(redirectTo);
+    window.location.replace(getSignInUrl(planParam));
   }, [user, loading]);
 
   if (loading) {
@@ -58,15 +63,16 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    if (import.meta.env.PROD) {
-      // Show spinner while useEffect fires the redirect
-      return (
-        <div className="flex min-h-screen items-center justify-center bg-background">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        </div>
-      );
+    if (!import.meta.env.PROD) {
+      // Dev: skip auth entirely
+      return <>{children}</>;
     }
-    return <Navigate to="/login" replace />;
+    // Show spinner while useEffect fires the redirect
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
   }
 
   return <>{children}</>;
@@ -207,17 +213,18 @@ function AuthPage() {
 }
 
 function AppRoutes() {
-  // In production: auth.covable.app only serves login, home.covable.app serves the app
-  // In dev: both on localhost, routes coexist
-  const authDomain = isAuthDomain();
+  // In production: covable.app serves auth routes, home.covable.app serves the app.
+  // In dev: both live on localhost, so routes coexist.
   const homeDomain = isHomeDomain();
 
-  // On auth subdomain in production: only render login/get-started
-  if (import.meta.env.PROD && authDomain && !homeDomain) {
+  if (import.meta.env.PROD && !homeDomain) {
     return (
       <Routes>
-        <Route path="/get-started" element={<AuthPage />} />
-        <Route path="*" element={<AuthPage />} />
+        <Route path={SIGN_IN_PATH} element={<AuthPage />} />
+        <Route path={SIGN_UP_PATH} element={<AuthPage />} />
+        <Route path={LEGACY_SIGN_UP_PATH} element={<AuthPage />} />
+        <Route path={LEGACY_LOGIN_PATH} element={<AuthPage />} />
+        <Route path="*" element={<Navigate to={SIGN_IN_PATH} replace />} />
       </Routes>
     );
   }
@@ -225,7 +232,10 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Auth routes */}
-      <Route path="/login" element={<AuthPage />} />
+      <Route path={SIGN_IN_PATH} element={<AuthPage />} />
+      <Route path={SIGN_UP_PATH} element={<AuthPage />} />
+      <Route path={LEGACY_SIGN_UP_PATH} element={<AuthPage />} />
+      <Route path={LEGACY_LOGIN_PATH} element={<AuthPage />} />
 
       {/* Protected app routes */}
       <Route
@@ -251,8 +261,13 @@ function AppRoutes() {
         <Route path="/gap-queue" element={<GapQueue />} />
         <Route path="/content/:jobId" element={<ContentWorkbench />} />
         <Route path="/outcomes" element={<Outcomes />} />
-        <Route path="/blog" element={<Blog />} />
         <Route path="/prompts" element={<Prompts />} />
+        <Route path="/content-moat" element={<ContentMoat />} />
+        <Route path="/content-moat/prompts" element={<PromptLab />} />
+        <Route path="/content-moat/pages" element={<PagesList />} />
+        <Route path="/content-moat/pages/:id" element={<PageEditor />} />
+        <Route path="/content-moat/publishers" element={<Publishers />} />
+        <Route path="/content-moat/reinforcement" element={<ReinforcementQueue />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/help" element={<Help />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

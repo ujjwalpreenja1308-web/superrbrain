@@ -9,7 +9,6 @@ import {
   HelpCircle,
   LogOut,
   ChevronsUpDown,
-  FileText,
   MessageSquare,
   Plus,
   Check,
@@ -40,8 +39,7 @@ import {
 
 const mainNavItems = [
   { title: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
-  { title: "Gap Queue", to: "/gap-queue", icon: ListChecks },
-  { title: "Blog", to: "/blog", icon: FileText },
+  { title: "Reddit Engine", to: "/gap-queue", icon: ListChecks },
   { title: "Prompts", to: "/prompts", icon: MessageSquare },
   { title: "Outcomes", to: "/outcomes", icon: TrendingUp },
 ];

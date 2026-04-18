@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+
+const SIGN_UP_PATHS = new Set(["/sign-up", "/get-started"]);
 
 function GoogleIcon() {
   return (
@@ -29,14 +32,18 @@ function GoogleIcon() {
 
 export function Login() {
   const { signIn, signUp, signInWithGoogle } = useAuth();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(
-    window.location.pathname === "/get-started"
-  );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const isSignUp = SIGN_UP_PATHS.has(location.pathname);
+  const toggleHref = `${isSignUp ? "/sign-in" : "/sign-up"}${location.search}`;
+
+  useEffect(() => {
+    setError("");
+  }, [location.pathname, location.search]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +77,7 @@ export function Login() {
     <div className="relative flex min-h-screen w-full overflow-hidden bg-black">
       {/* Video background */}
       <video
-        src="https://rwqxpfmktpzsnujnmyca.supabase.co/storage/v1/object/public/assets/asciiii.mp4"
+        src="/ascii-art.mp4"
         autoPlay
         loop
         muted
@@ -98,7 +105,7 @@ export function Login() {
           </h1>
           <p className="mt-1 text-sm text-white/50">
             {isSignUp
-              ? "Start monitoring AI citations today."
+              ? "Create your workspace and start tracking AI citations."
               : "Sign in to your Covable dashboard."}
           </p>
         </div>
@@ -177,16 +184,12 @@ export function Login() {
         {/* Toggle sign-in / sign-up */}
         <p className="mt-6 text-center text-sm text-white/40">
           {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-          <button
-            type="button"
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError("");
-            }}
+          <Link
+            to={toggleHref}
             className="text-white/70 underline underline-offset-2 hover:text-white transition-colors"
           >
             {isSignUp ? "Sign in" : "Sign up"}
-          </button>
+          </Link>
         </p>
 
         {/* Footer */}

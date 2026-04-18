@@ -8,16 +8,17 @@ import { promptRoutes } from "./routes/prompts.js";
 import { citationRoutes } from "./routes/citations.js";
 import { gapRoutes } from "./routes/gaps.js";
 import { executionRoutes } from "./routes/execution.js";
-import blogRoutes from "./routes/blog.js";
 import meRoutes from "./routes/me.js";
 import webhookRoutes from "./routes/webhooks.js";
+import { redditRoutes } from "./routes/reddit.js";
+import { promptsV2Routes } from "./routes/prompts-v2.js";
+import { pagesRoutes } from "./routes/pages.js";
+import { publisherRoutes } from "./routes/publishers.js";
+import { reinforcementRoutes } from "./routes/reinforcement.js";
 import { authMiddleware } from "./middleware/auth.js";
-import { errorMiddleware } from "./middleware/error.js";
+import { errorMiddleware, AppError } from "./middleware/error.js";
 import { rateLimitMiddleware } from "./middleware/rateLimit.js";
 import type { AppVariables } from "./types.js";
-import { closeBrowser } from "./services/chatgpt-scraper.service.js";
-import { getConfiguredProxies } from "./lib/proxy.js";
-
 const app = new Hono<{ Variables: AppVariables }>();
 
 app.use("*", logger());
@@ -38,30 +39,30 @@ app.use(
 app.use("*", errorMiddleware);
 app.use("/api/*", authMiddleware);
 
-const REGION_LABELS: Record<string, string> = {
-  IN: "India",
-  US: "United States",
-  GB: "United Kingdom",
-  AU: "Australia",
-  SG: "Singapore",
-  AE: "UAE",
-  CA: "Canada",
-  DE: "Germany",
-  FR: "France",
-  JP: "Japan",
-};
+const REGIONS = [
+  { code: "US", label: "United States" },
+  { code: "GB", label: "United Kingdom" },
+  { code: "IN", label: "India" },
+  { code: "AU", label: "Australia" },
+  { code: "CA", label: "Canada" },
+  { code: "SG", label: "Singapore" },
+  { code: "AE", label: "UAE" },
+  { code: "DE", label: "Germany" },
+  { code: "FR", label: "France" },
+  { code: "JP", label: "Japan" },
+];
+
+app.onError((err, c) => {
+  if (err instanceof AppError) {
+    return c.json({ error: err.message }, err.statusCode as any);
+  }
+  console.error("Unhandled error:", err);
+  return c.json({ error: err.message || "Internal server error" }, 500);
+});
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 
-// Returns only the regions that have a proxy configured — used to populate onboarding dropdown
-app.get("/api/regions", (c) => {
-  const configured = getConfiguredProxies().filter((k) => k !== "default");
-  const regions = configured.map((code) => ({
-    code,
-    label: REGION_LABELS[code] ?? code,
-  }));
-  return c.json({ regions });
-});
+app.get("/api/regions", (c) => c.json({ regions: REGIONS }));
 
 // Webhooks — no auth middleware, signature verified inside
 app.route("/webhooks", webhookRoutes);
@@ -72,18 +73,24 @@ app.route("/api/brands", promptRoutes);
 app.route("/api/brands", citationRoutes);
 app.route("/api/brands", gapRoutes);
 app.route("/api/brands", executionRoutes);
-app.route("/api/blog", blogRoutes);
+app.route("/api/reddit", redditRoutes);
+app.route("/api/prompts-v2", promptsV2Routes);
+app.route("/api/pages", pagesRoutes);
+app.route("/api/publishers", publisherRoutes);
+app.route("/api/reinforcement", reinforcementRoutes);
 
 const port = Number(process.env.PORT) || 3001;
 console.log(`Server starting on port ${port}`);
 serve({ fetch: app.fetch, port });
 
-// Graceful shutdown — release Chromium CDP connection cleanly
 async function shutdown(signal: string) {
   console.log(`[Server] ${signal} received — shutting down`);
-  await closeBrowser();
   process.exit(0);
 }
 
 process.once("SIGTERM", () => shutdown("SIGTERM"));
 process.once("SIGINT", () => shutdown("SIGINT"));
+
+process.on("unhandledRejection", (reason) => {
+  console.error("[Server] Unhandled promise rejection:", reason);
+});
