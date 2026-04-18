@@ -1,7 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+const supabaseAnonKey =
+  (
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
+    import.meta.env.VITE_SUPABASE_ANON_KEY
+  )?.trim();
+
+function requireEnv(name: string, value: string | undefined) {
+  if (value) return value;
+  throw new Error(
+    `[Covable auth] Missing ${name}. Set ${name} in the frontend environment before loading auth routes.`
+  );
+}
 
 // Cookie domain: in prod use .covable.app so all subdomains share it
 const COOKIE_DOMAIN = import.meta.env.PROD ? ".covable.app" : "localhost";
@@ -48,11 +59,18 @@ const cookieStorage = {
   },
 };
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(
+  requireEnv("VITE_SUPABASE_URL", supabaseUrl),
+  requireEnv(
+    "VITE_SUPABASE_PUBLISHABLE_KEY or VITE_SUPABASE_ANON_KEY",
+    supabaseAnonKey
+  ),
+  {
   auth: {
     persistSession: true,
     storageKey: COOKIE_NAME,
     storage: cookieStorage,
     detectSessionInUrl: true,
   },
-});
+  }
+);
