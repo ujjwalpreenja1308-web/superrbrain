@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/button";
 import { useBrand, useRunMonitoring } from "@/hooks/useBrand";
 import { useCitations, useGaps, useReport } from "@/hooks/useReport";
 import { useActiveBrand } from "@/hooks/useActiveBrand";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import { RefreshCw, Loader2, Eye, AlertTriangle, Radio, Trophy } from "lucide-react";
 
 function DashboardSkeleton() {
@@ -52,12 +55,21 @@ function DashboardSkeleton() {
 export function Dashboard() {
   const navigate = useNavigate();
   const { activeBrand: brand, activeBrandId: brandId, brands, isLoading: brandsLoading } = useActiveBrand();
+  const { user } = useAuth();
+  const { data: me, isLoading: meLoading } = useQuery({
+    queryKey: ["me", user?.id],
+    queryFn: () => api.get<{ plan: string }>("/api/me"),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
 
   useEffect(() => {
-    if (!brandsLoading && brands.length === 0) {
+    // Don't redirect trial users with no brands — PlanGuard shows PlanChooser first.
+    // Only redirect to onboarding once we know the user has a paid plan.
+    if (!brandsLoading && !meLoading && brands.length === 0 && me?.plan !== "trial") {
       navigate("/onboarding");
     }
-  }, [brandsLoading, brands.length, navigate]);
+  }, [brandsLoading, meLoading, brands.length, me?.plan, navigate]);
 
   const { data: brandDetail } = useBrand(brandId);
   const { data: citations, isError: citError, refetch: refetchCitations } = useCitations(brandId);
