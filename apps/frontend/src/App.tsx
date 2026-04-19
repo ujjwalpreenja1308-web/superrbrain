@@ -61,6 +61,15 @@ const queryClient = new QueryClient({
   },
 });
 
+// On every sign-in, clear the plan chooser dismiss flag and invalidate
+// the /api/me cache so PlanChooser always shows for fresh trial users.
+supabase.auth.onAuthStateChange((event) => {
+  if (event === "SIGNED_IN") {
+    sessionStorage.removeItem("plan_chooser_dismissed");
+    queryClient.invalidateQueries({ queryKey: ["me"] });
+  }
+});
+
 /** Auth guard: if not logged in, redirect to covable.app/sign-in */
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
