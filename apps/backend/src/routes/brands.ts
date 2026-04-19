@@ -3,6 +3,8 @@ import { createBrandSchema } from "@covable/shared";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { AppError } from "../middleware/error.js";
 import { tasks } from "@trigger.dev/sdk/v3";
+import { getPlanTier } from "../middleware/requirePlan.js";
+import { PLAN_LIMITS } from "@covable/shared";
 import type { AppVariables } from "../types.js";
 
 const app = new Hono<{ Variables: AppVariables }>();
@@ -15,6 +17,17 @@ app.post("/", async (c) => {
 
   if (!parsed.success) {
     throw new AppError(400, parsed.error.errors[0].message);
+  }
+
+  // Enforce maxBrands per plan
+  const tier = await getPlanTier(userId);
+  const maxBrands = PLAN_LIMITS[tier].maxBrands;
+  const { count } = await supabaseAdmin
+    .from("brands")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId);
+  if ((count ?? 0) >= maxBrands) {
+    throw new AppError(403, `Your ${PLAN_LIMITS[tier].label} plan allows up to ${maxBrands} brand${maxBrands === 1 ? "" : "s"}.`);
   }
 
   const { data: brand, error } = await supabaseAdmin
