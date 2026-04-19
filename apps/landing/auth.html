@@ -363,16 +363,14 @@
     btn.innerHTML = loading ? `<span class="spinner${btn === document.getElementById('btn-submit') ? '' : ' spinner-white'}"></span>` : label;
   }
 
-  function redirectHome(_session) {
-    // Session is already stored in the shared .covable.app cookie by the
-    // Supabase client above — no need to pass tokens in the hash.
+  function redirectAfterAuth() {
     window.location.href = `${HOME_URL}/plan`;
   }
 
-  // If already signed in, redirect to home
+  // If already signed in, go straight to the app (not the plan chooser)
   const { data: { session: existingSession } } = await supabase.auth.getSession();
   if (existingSession) {
-    redirectHome(existingSession);
+    window.location.href = `${HOME_URL}/dashboard`;
   }
 
   // Email/password form
@@ -389,7 +387,7 @@
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw new Error(error.message);
         if (data.session) {
-          redirectHome(data.session);
+          redirectAfterAuth();
         } else {
           // Email confirmation required
           btn.disabled = false;
@@ -399,7 +397,7 @@
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw new Error(error.message);
-        redirectHome(data.session);
+        redirectAfterAuth();
       }
     } catch (err) {
       showError(err.message || "Authentication failed");
