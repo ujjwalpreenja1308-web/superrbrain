@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
@@ -23,8 +23,6 @@ import { Login } from "@/pages/Login";
 import { useAuth, getSignInUrl, isHomeDomain } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { usePlan } from "@/hooks/usePlan";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
 
 const HOME_URL =
   import.meta.env.VITE_HOME_URL ||
@@ -113,92 +111,10 @@ const DODO_PRODUCTS: Record<string, string> = {
   pro:     import.meta.env.VITE_DODO_PRODUCT_PRO_MONTHLY     ?? "",
 };
 
-/**
- * Plan guard:
- * 1. On ?payment=success → go to onboarding
- * 2. On ?plan= → redirect straight to Dodo checkout
- * 3. New user (plan === "trial", never dismissed chooser) → show PlanChooser
- * 4. Trial expired → show expired wall (settings still accessible)
- *
- * Never blocks the app with a spinner — falls through to children while /api/me loads.
- */
+/** Blocks access when trial has expired. Settings always accessible. */
 function PlanGuard({ children }: { children: React.ReactNode }) {
   const plan = usePlan();
-  const { user } = useAuth();
-  const didHandleParams = useRef(false);
   const location = useLocation();
-
-  const { data: me, isLoading: meLoading } = useQuery({
-    queryKey: ["me", user?.id],
-    queryFn: () => api.get<{ plan: string; trial_expires_at: string | null }>("/api/me"),
-    enabled: !!user,
-    staleTime: 60_000,
-  });
-
-  // Handle ?payment= and ?plan= params — run once only
-  useEffect(() => {
-    if (didHandleParams.current || !user) return;
-
-    const params = new URLSearchParams(window.location.search);
-    const payment = params.get("payment");
-    if (payment === "success") {
-      didHandleParams.current = true;
-      window.history.replaceState({}, "", window.location.pathname);
-      window.location.href = `${HOME_URL}/onboarding`;
-      return;
-    }
-    if (payment === "cancelled") {
-      didHandleParams.current = true;
-      window.history.replaceState({}, "", window.location.pathname);
-      return;
-    }
-
-    const planParam = params.get("plan");
-    if (planParam) {
-      didHandleParams.current = true;
-      const productId = DODO_PRODUCTS[planParam];
-      if (productId) {
-        const checkoutParams = new URLSearchParams({
-          email: user.email ?? "",
-          "metadata[user_id]": user.id,
-          redirect_url: `${HOME_URL}?payment=success`,
-          cancel_url: `${HOME_URL}?payment=cancelled`,
-        });
-        window.history.replaceState({}, "", window.location.pathname);
-        window.location.href = `https://checkout.dodopayments.com/buy/${productId}?${checkoutParams.toString()}`;
-        return;
-      }
-      window.history.replaceState({}, "", window.location.pathname);
-      return;
-    }
-
-    didHandleParams.current = true;
-  }, [user]);
-
-  const params = new URLSearchParams(window.location.search);
-  const isHandlingPayment = params.get("payment") !== null || params.get("plan") !== null;
-
-  // While /api/me is loading for the first time, show a spinner so children
-  // (Dashboard etc.) don't race ahead and redirect before we know the plan.
-  // Only block on the initial fetch — not refetches (me would be defined then).
-  if (user && meLoading && me === undefined && !isHandlingPayment) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
-  const chooserDismissed = sessionStorage.getItem("plan_chooser_dismissed") === "1";
-  if (
-    !isHandlingPayment &&
-    me !== undefined &&
-    me?.plan === "trial" &&
-    !chooserDismissed &&
-    location.pathname !== "/settings"
-  ) {
-    return <PlanChooser onSkip={() => sessionStorage.setItem("plan_chooser_dismissed", "1")} />;
-  }
 
   // Trial expired → block access except settings
   if (plan.trialExpired && location.pathname !== "/settings") {
@@ -225,7 +141,51 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-/** If already logged in on auth domain, redirect to home (preserving ?plan=) */
+/**
+ * Dedicated plan selection page shown after every sign-in/sign-up.
+ * Handles Dodo payment callbacks and shows PlanChooser.
+ */
+function PlanPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const didHandle = useRef(false);
+
+  useEffect(() => {
+    if (didHandle.current || !user) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+
+    if (payment === "success") {
+      didHandle.current = true;
+      window.history.replaceState({}, "", "/plan");
+      window.location.href = `${HOME_URL}/onboarding`;
+      return;
+    }
+    if (payment === "cancelled") {
+      didHandle.current = true;
+      window.history.replaceState({}, "", "/plan");
+      return;
+    }
+
+    didHandle.current = true;
+  }, [user]);
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("payment") === "success") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  return (
+    <PlanChooser onSkip={() => navigate("/dashboard", { replace: true })} />
+  );
+}
+
+/** If already logged in on auth domain, redirect to home/plan */
 function AuthPage() {
   const { user, loading } = useAuth();
   const redirectedRef = useRef(false);
@@ -235,15 +195,12 @@ function AuthPage() {
     if (loading || !user || redirectedRef.current) return;
     redirectedRef.current = true;
 
-    const planParam = new URLSearchParams(window.location.search).get("plan");
-    const base = planParam ? `${HOME_URL}?plan=${planParam}` : HOME_URL;
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         const hash = `access_token=${session.access_token}&refresh_token=${session.refresh_token}&type=magiclink`;
-        window.location.replace(`${base}#${hash}`);
+        window.location.replace(`${HOME_URL}/plan#${hash}`);
       } else {
-        window.location.replace(base);
+        window.location.replace(`${HOME_URL}/plan`);
       }
     });
   }, [user, loading]);
@@ -257,7 +214,6 @@ function AuthPage() {
   }
 
   if (user && import.meta.env.PROD) {
-    // Show spinner while the useEffect redirect fires
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -266,8 +222,7 @@ function AuthPage() {
   }
 
   if (user) {
-    const planParam = new URLSearchParams(window.location.search).get("plan");
-    return <Navigate to={planParam ? `/?plan=${planParam}` : "/dashboard"} replace />;
+    return <Navigate to="/plan" replace />;
   }
 
   return <Login />;
@@ -301,6 +256,16 @@ function AppRoutes() {
       <Route path={LEGACY_SIGN_UP_PATH} element={<ExternalRedirect to={SIGN_UP_PATH} />} />
       <Route path={LEGACY_GET_STARTED_PATH} element={<ExternalRedirect to={SIGN_UP_PATH} />} />
       <Route path={LEGACY_LOGIN_PATH} element={<ExternalRedirect to={SIGN_IN_PATH} />} />
+
+      {/* Plan chooser — shown after every auth, user picks a plan or skips */}
+      <Route
+        path="/plan"
+        element={
+          <RequireAuth>
+            <PlanPage />
+          </RequireAuth>
+        }
+      />
 
       {/* Protected app routes */}
       <Route

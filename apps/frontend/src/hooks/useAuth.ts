@@ -143,23 +143,25 @@ export function useAuth() {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
     if (import.meta.env.PROD) {
-      const planParam = new URLSearchParams(window.location.search).get("plan");
       const session = data.session!;
       const hash = `access_token=${session.access_token}&refresh_token=${session.refresh_token}&type=magiclink`;
-      const base = planParam ? `${HOME_URL}?plan=${planParam}` : HOME_URL;
-      window.location.href = `${base}#${hash}`;
+      window.location.href = `${HOME_URL}/plan#${hash}`;
     }
   }
 
   async function signUp(email: string, password: string) {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw new Error(error.message);
-    if (import.meta.env.PROD && data.session) {
-      const planParam = new URLSearchParams(window.location.search).get("plan");
-      const session = data.session;
-      const hash = `access_token=${session.access_token}&refresh_token=${session.refresh_token}&type=magiclink`;
-      const base = planParam ? `${HOME_URL}?plan=${planParam}` : HOME_URL;
-      window.location.href = `${base}#${hash}`;
+    if (import.meta.env.PROD) {
+      if (data.session) {
+        const session = data.session;
+        const hash = `access_token=${session.access_token}&refresh_token=${session.refresh_token}&type=magiclink`;
+        window.location.href = `${HOME_URL}/plan#${hash}`;
+      } else {
+        // Email confirmation required — redirect to plan page anyway,
+        // they'll be asked to confirm first before accessing the app.
+        window.location.href = `${HOME_URL}/plan`;
+      }
     }
   }
 
