@@ -10,7 +10,7 @@ const TRIAL_DAYS = 14;
  * GET /api/me
  * Returns current user's plan from the subscriptions table.
  */
-meRoutes.get("/", async (c) => {
+meRoutes.get("", async (c) => {
   const userId = c.get("userId");
 
   const { data: sub } = await supabaseAdmin
