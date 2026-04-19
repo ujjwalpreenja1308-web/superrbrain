@@ -4,56 +4,39 @@ import type { AppVariables } from "../types.js";
 
 const meRoutes = new Hono<{ Variables: AppVariables }>();
 
-const TRIAL_DAYS = 3;
-
-/**
- * POST /api/me/activate-trial
- * Called once on first dashboard load.
- * If user has no plan yet, sets plan=trial and trial_expires_at=now+3days.
- * Idempotent — safe to call multiple times.
- */
-meRoutes.post("/activate-trial", async (c) => {
-  const userId = c.get("userId");
-
-  const { data: { user }, error } = await supabaseAdmin.auth.admin.getUserById(userId);
-  if (error || !user) return c.json({ error: "User not found" }, 404);
-
-  // Already has a plan set — nothing to do
-  if (user.user_metadata?.plan) {
-    return c.json({
-      plan: user.user_metadata.plan,
-      trial_expires_at: user.user_metadata.trial_expires_at ?? null,
-    });
-  }
-
-  const trialExpiresAt = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString();
-
-  await supabaseAdmin.auth.admin.updateUserById(userId, {
-    user_metadata: {
-      ...user.user_metadata,
-      plan: "trial",
-      trial_expires_at: trialExpiresAt,
-    },
-  });
-
-  return c.json({ plan: "trial", trial_expires_at: trialExpiresAt });
-});
+const TRIAL_DAYS = 14;
 
 /**
  * GET /api/me
- * Returns current user's plan info.
+ * Returns current user's plan from the subscriptions table.
  */
 meRoutes.get("/", async (c) => {
   const userId = c.get("userId");
-  const { data: { user }, error } = await supabaseAdmin.auth.admin.getUserById(userId);
-  if (error || !user) return c.json({ error: "User not found" }, 404);
+
+  const { data: sub } = await supabaseAdmin
+    .from("subscriptions")
+    .select("plan, status, trial_expires_at, current_period_end, dodo_subscription_id")
+    .eq("user_id", userId)
+    .single();
+
+  if (!sub) {
+    // No subscription row yet — create trial
+    const trialExpiresAt = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    await supabaseAdmin.from("subscriptions").insert({
+      user_id: userId,
+      plan: "trial",
+      status: "active",
+      trial_expires_at: trialExpiresAt,
+    });
+    return c.json({ plan: "trial", status: "active", trial_expires_at: trialExpiresAt, dodo_subscription_id: null });
+  }
 
   return c.json({
-    id: user.id,
-    email: user.email,
-    plan: user.user_metadata?.plan ?? null,
-    trial_expires_at: user.user_metadata?.trial_expires_at ?? null,
-    dodo_subscription_id: user.user_metadata?.dodo_subscription_id ?? null,
+    plan: sub.plan,
+    status: sub.status,
+    trial_expires_at: sub.trial_expires_at ?? null,
+    current_period_end: sub.current_period_end ?? null,
+    dodo_subscription_id: sub.dodo_subscription_id ?? null,
   });
 });
 

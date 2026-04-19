@@ -18,6 +18,7 @@ import {
   Search,
   Globe,
   X,
+  Clock,
 } from "lucide-react";
 import type { Prompt } from "@covable/shared";
 
@@ -214,7 +215,7 @@ function CategoryGroup({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function Prompts() {
-  const { activeBrand: brand } = useActiveBrand();
+  const { activeBrand: brand } = useActiveBrand() as { activeBrand: (import("@covable/shared").Brand & { pending_prompts?: unknown; pending_prompts_effective_at?: string | null }) | undefined };
   const { data: prompts, isLoading, isError, error, refetch } = usePrompts(brand?.id);
   const updatePrompts = useUpdatePrompts(brand?.id ?? "");
   const regeneratePrompts = useRegeneratePrompts(brand?.id ?? "");
@@ -270,7 +271,7 @@ export function Prompts() {
         }))
       );
       setLocal(null);
-      toast.success(`${valid.length} prompts saved`);
+      toast.success("Changes saved — will take effect from next Monday's scan");
     } catch {
       // handled by mutation onError
     }
@@ -391,6 +392,19 @@ export function Prompts() {
             <Globe className="h-3.5 w-3.5" />
             {webSearchCount} web-search optimized
           </button>
+        </div>
+      )}
+
+      {/* Pending changes notice */}
+      {brand?.pending_prompts && !isDirty && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-400/80">
+          <Clock className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+          <span>
+            You have saved prompt changes pending — they will take effect from next Monday's scan.
+            {brand.pending_prompts_effective_at && (
+              <> Effective: {new Date(brand.pending_prompts_effective_at).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}.</>
+            )}
+          </span>
         </div>
       )}
 

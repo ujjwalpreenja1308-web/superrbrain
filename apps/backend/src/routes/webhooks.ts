@@ -107,19 +107,24 @@ webhookRoutes.post("/dodo", async (c) => {
       }
     }
 
-    // Update user metadata with plan info
-    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
-      user_metadata: {
-        ...user.user_metadata,
-        plan,
-        plan_activated_at: new Date().toISOString(),
-        dodo_customer_id: customerId,
-        dodo_subscription_id: subscriptionId,
-      },
-    });
+    // Upsert subscription row
+    const { error: updateError } = await supabaseAdmin
+      .from("subscriptions")
+      .upsert(
+        {
+          user_id: user.id,
+          plan,
+          status: "active",
+          plan_activated_at: new Date().toISOString(),
+          dodo_customer_id: customerId ?? null,
+          dodo_subscription_id: subscriptionId ?? null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" }
+      );
 
     if (updateError) {
-      console.error("[webhook] Failed to update user plan", updateError);
+      console.error("[webhook] Failed to update subscription", updateError);
       return c.json({ error: "Failed to update plan" }, 500);
     }
 
@@ -145,14 +150,18 @@ webhookRoutes.post("/dodo", async (c) => {
 
     if (!user) return c.json({ received: true });
 
-    await supabaseAdmin.auth.admin.updateUserById(user.id, {
-      user_metadata: {
-        ...user.user_metadata,
-        plan: "trial",
-        plan_cancelled_at: new Date().toISOString(),
-        dodo_subscription_id: null,
-      },
-    });
+    await supabaseAdmin
+      .from("subscriptions")
+      .upsert(
+        {
+          user_id: user.id,
+          plan: "trial",
+          status: "cancelled",
+          dodo_subscription_id: null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" }
+      );
 
     console.log(`[webhook] Plan cancelled for ${customerEmail} — reverted to trial`);
   }

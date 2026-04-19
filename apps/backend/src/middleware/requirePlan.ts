@@ -1,26 +1,59 @@
-import type { User } from "@supabase/supabase-js";
+import { supabaseAdmin } from "../lib/supabase.js";
 import { AppError } from "./error.js";
+import { PLAN_LIMITS, type PlanTier } from "@covable/shared";
 
-type PlanTier = "trial" | "starter" | "growth" | "scale";
+export async function getPlanTier(userId: string): Promise<PlanTier> {
+  const { data } = await supabaseAdmin
+    .from("subscriptions")
+    .select("plan, status, trial_expires_at")
+    .eq("user_id", userId)
+    .single();
 
-/**
- * Check that the user's plan includes the given feature.
- * Call this at the top of route handlers that require a paid plan.
- * Throws an AppError (→ 403) if the check fails.
- */
-export function checkPlan(user: User, feature: "execution" | "blog"): void {
-  const plan = (user.user_metadata?.plan ?? "trial") as PlanTier;
-  const trialExpiresAt = user.user_metadata?.trial_expires_at as string | undefined;
+  if (!data) return "trial";
 
-  if (plan === "trial" && trialExpiresAt != null && new Date(trialExpiresAt) < new Date()) {
+  const tier = (data.plan ?? "trial") as PlanTier;
+
+  if (tier === "trial" && data.trial_expires_at && new Date(data.trial_expires_at) < new Date()) {
     throw new AppError(403, "Your trial has expired. Please upgrade to continue.");
   }
 
-  if (feature === "execution" && plan !== "growth" && plan !== "scale") {
-    throw new AppError(403, "Content execution requires a Growth or Scale plan.");
-  }
+  return tier;
+}
 
-  if (feature === "blog" && plan !== "scale") {
-    throw new AppError(403, "Blog generation requires the Scale plan.");
+export async function checkFeature(userId: string, feature: "reddit" | "execution" | "apiAccess"): Promise<void> {
+  const tier = await getPlanTier(userId);
+  const limits = PLAN_LIMITS[tier];
+
+  if (feature === "reddit" && !limits.hasReddit) {
+    throw new AppError(403, "Reddit tracking requires the Growth or Pro plan.");
+  }
+  if (feature === "execution" && !limits.hasExecution) {
+    throw new AppError(403, "Content execution requires the Growth or Pro plan.");
+  }
+  if (feature === "apiAccess" && !limits.hasApiAccess) {
+    throw new AppError(403, "API access requires the Pro plan.");
+  }
+}
+
+export async function checkPromptLimit(userId: string, brandId: string, newCount: number): Promise<void> {
+  const tier = await getPlanTier(userId);
+  const max = PLAN_LIMITS[tier].maxPrompts;
+  if (newCount > max) {
+    throw new AppError(403, `Your ${PLAN_LIMITS[tier].label} plan allows up to ${max} prompts. You submitted ${newCount}.`);
+  }
+}
+
+export async function checkRedditLimits(userId: string, keywords: string[], subreddits: string[]): Promise<void> {
+  const tier = await getPlanTier(userId);
+  const limits = PLAN_LIMITS[tier];
+
+  if (!limits.hasReddit) {
+    throw new AppError(403, "Reddit tracking requires the Growth or Pro plan.");
+  }
+  if (keywords.length > limits.maxKeywords) {
+    throw new AppError(403, `Your ${limits.label} plan allows up to ${limits.maxKeywords} keywords. You submitted ${keywords.length}.`);
+  }
+  if (subreddits.length > limits.maxSubreddits) {
+    throw new AppError(403, `Your ${limits.label} plan allows up to ${limits.maxSubreddits} subreddits. You submitted ${subreddits.length}.`);
   }
 }

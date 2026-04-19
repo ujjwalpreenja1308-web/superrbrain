@@ -27,8 +27,79 @@ export type BrandStatus = (typeof BRAND_STATUSES)[number];
 export const GAP_STATUSES = ["open", "addressed"] as const;
 export type GapStatus = (typeof GAP_STATUSES)[number];
 
-export const MAX_PROMPTS_PER_BRAND = 25;
+export const MAX_PROMPTS_PER_BRAND = 60; // Pro limit
 export const DEFAULT_PROMPT_COUNT = 18;
+
+export type PlanTier = "trial" | "starter" | "growth" | "pro";
+
+export interface PlanLimits {
+  tier: PlanTier;
+  label: string;
+  price: number | null;
+  maxBrands: number;
+  maxPrompts: number;
+  hasReddit: boolean;
+  maxKeywords: number;
+  maxSubreddits: number;
+  maxPostsPerMonth: number;
+  hasExecution: boolean;
+  hasApiAccess: boolean;
+}
+
+export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
+  trial: {
+    tier: "trial",
+    label: "Trial",
+    price: null,
+    maxBrands: 1,
+    maxPrompts: 10,
+    hasReddit: false,
+    maxKeywords: 0,
+    maxSubreddits: 0,
+    maxPostsPerMonth: 0,
+    hasExecution: false,
+    hasApiAccess: false,
+  },
+  starter: {
+    tier: "starter",
+    label: "Starter",
+    price: 9,
+    maxBrands: 1,
+    maxPrompts: 10,
+    hasReddit: false,
+    maxKeywords: 0,
+    maxSubreddits: 0,
+    maxPostsPerMonth: 0,
+    hasExecution: false,
+    hasApiAccess: false,
+  },
+  growth: {
+    tier: "growth",
+    label: "Growth",
+    price: 29,
+    maxBrands: 3,
+    maxPrompts: 30,
+    hasReddit: true,
+    maxKeywords: 5,
+    maxSubreddits: 2,
+    maxPostsPerMonth: 200,
+    hasExecution: true,
+    hasApiAccess: false,
+  },
+  pro: {
+    tier: "pro",
+    label: "Pro",
+    price: 79,
+    maxBrands: 10,
+    maxPrompts: 60,
+    hasReddit: true,
+    maxKeywords: 10,
+    maxSubreddits: 4,
+    maxPostsPerMonth: 800,
+    hasExecution: true,
+    hasApiAccess: true,
+  },
+};
 
 export const EXECUTION_JOB_STATUSES = ["pending", "running", "complete", "failed"] as const;
 export type ExecutionJobStatus = (typeof EXECUTION_JOB_STATUSES)[number];

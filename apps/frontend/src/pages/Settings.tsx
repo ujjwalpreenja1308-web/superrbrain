@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useActiveBrand } from "@/hooks/useActiveBrand";
 import { useAuth } from "@/hooks/useAuth";
-import { usePlan, getPlanLimits } from "@/hooks/usePlan";
+import { usePlan } from "@/hooks/usePlan";
+import { PLAN_LIMITS } from "@covable/shared";
 import { useSearchParams } from "react-router-dom";
 import type { PlanTier } from "@/hooks/usePlan";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,19 +12,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, CreditCard, Globe, Check, X, Zap, Building2, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Dodo product IDs from env — set VITE_DODO_PRODUCT_* in Vercel/local env
 const DODO_PRODUCTS: Record<string, string> = {
-  starter_monthly: import.meta.env.VITE_DODO_PRODUCT_STARTER_MONTHLY ?? "",
-  growth_monthly:  import.meta.env.VITE_DODO_PRODUCT_GROWTH_MONTHLY  ?? "",
-  pro_monthly:     import.meta.env.VITE_DODO_PRODUCT_PRO_MONTHLY     ?? "",
+  starter: import.meta.env.VITE_DODO_PRODUCT_STARTER_MONTHLY ?? "",
+  growth:  import.meta.env.VITE_DODO_PRODUCT_GROWTH_MONTHLY  ?? "",
+  pro:     import.meta.env.VITE_DODO_PRODUCT_PRO_MONTHLY     ?? "",
 };
 
 const HOME_URL =
   import.meta.env.VITE_HOME_URL ||
   (import.meta.env.PROD ? "https://home.covable.app" : "http://localhost:5173");
 
-function buildCheckoutUrl(productKey: string, email: string, userId: string): string {
-  const productId = DODO_PRODUCTS[productKey];
+function buildCheckoutUrl(plan: string, email: string, userId: string): string {
+  const productId = DODO_PRODUCTS[plan];
   if (!productId) return "#";
   const params = new URLSearchParams({
     email,
@@ -49,8 +49,7 @@ interface PlanCardProps {
 
 function PlanCard({ tier, name, monthlyPrice, annualMonthlyPrice, features, isPopular, isCurrent, isAnnual, userEmail, userId }: PlanCardProps) {
   const price = isAnnual ? annualMonthlyPrice : monthlyPrice;
-  const linkKey = `${tier}_${isAnnual ? "annual" : "monthly"}`;
-  const checkoutUrl = buildCheckoutUrl(linkKey, userEmail, userId);
+  const checkoutUrl = buildCheckoutUrl(tier, userEmail, userId);
 
   const isStarter = tier === "starter";
 
@@ -152,10 +151,10 @@ export function Settings() {
     {
       tier: "starter",
       name: "Starter",
-      monthly: 9,
-      annual: 9,
+      monthly: PLAN_LIMITS.starter.price!,
+      annual: PLAN_LIMITS.starter.price!,
       features: [
-        { label: "10 AI prompts / month", included: true },
+        { label: `${PLAN_LIMITS.starter.maxPrompts} AI prompts / month`, included: true },
         { label: "ChatGPT response analysis", included: true },
         { label: "1 brand", included: true },
         { label: "Gap detection", included: true },
@@ -166,12 +165,12 @@ export function Settings() {
     {
       tier: "growth",
       name: "Growth",
-      monthly: 29,
-      annual: 29,
+      monthly: PLAN_LIMITS.growth.price!,
+      annual: PLAN_LIMITS.growth.price!,
       features: [
-        { label: "30 AI prompts / month", included: true },
+        { label: `${PLAN_LIMITS.growth.maxPrompts} AI prompts / month`, included: true },
         { label: "ChatGPT response analysis", included: true },
-        { label: "Reddit tracking (5 keywords, 2 subreddits)", included: true },
+        { label: `Reddit tracking (${PLAN_LIMITS.growth.maxKeywords} keywords, ${PLAN_LIMITS.growth.maxSubreddits} subreddits)`, included: true },
         { label: "~200 posts tracked / month", included: true },
         { label: "Priority support", included: true },
         { label: "Competitor tracking", included: false },
@@ -180,12 +179,12 @@ export function Settings() {
     {
       tier: "pro",
       name: "Pro",
-      monthly: 79,
-      annual: 79,
+      monthly: PLAN_LIMITS.pro.price!,
+      annual: PLAN_LIMITS.pro.price!,
       features: [
-        { label: "60 AI prompts / month", included: true },
+        { label: `${PLAN_LIMITS.pro.maxPrompts} AI prompts / month`, included: true },
         { label: "ChatGPT response analysis", included: true },
-        { label: "Reddit tracking (10 keywords, 4 subreddits)", included: true },
+        { label: `Reddit tracking (${PLAN_LIMITS.pro.maxKeywords} keywords, ${PLAN_LIMITS.pro.maxSubreddits} subreddits)`, included: true },
         { label: "800+ posts tracked / month", included: true },
         { label: "Competitor tracking", included: true },
         { label: "Dedicated support", included: true },
@@ -284,7 +283,7 @@ export function Settings() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">{getPlanLimits(plan.tier).label}</p>
+                  <p className="font-medium">{PLAN_LIMITS[plan.tier].label}</p>
                   <p className="text-xs text-muted-foreground">
                     {plan.tier === "trial"
                       ? "3-day trial · upgrade to keep access"

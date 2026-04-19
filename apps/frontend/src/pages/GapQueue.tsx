@@ -31,6 +31,7 @@ import {
   ArrowRight,
   Search,
   Hash,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { RedditPost } from "@covable/shared";
@@ -729,6 +730,19 @@ export function GapQueue() {
               </button>
             </div>
           </div>
+
+          {/* Pending config banner */}
+          {activeMonitor?.pending_keywords && (
+            <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-400/80">
+              <Clock className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <span>
+                Keyword/subreddit changes saved — will take effect from next Monday's scan.
+                {activeMonitor.pending_keywords.length > 0 && (
+                  <> New keywords: {activeMonitor.pending_keywords.join(", ")}.</>
+                )}
+              </span>
+            </div>
+          )}
 
           {/* AI-cited Reddit threads */}
           {redditCitations.length > 0 && (

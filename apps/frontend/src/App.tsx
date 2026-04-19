@@ -12,6 +12,7 @@ import { Outcomes } from "@/pages/Outcomes";
 import { Settings } from "@/pages/Settings";
 import { Help } from "@/pages/Help";
 import { Prompts } from "@/pages/Prompts";
+import { PlanChooser } from "@/pages/PlanChooser";
 import { ContentMoat } from "@/pages/ContentMoat";
 import { PromptLab } from "@/pages/PromptLab";
 import { PagesList } from "@/pages/PagesList";
@@ -21,7 +22,9 @@ import { ReinforcementQueue } from "@/pages/ReinforcementQueue";
 import { Login } from "@/pages/Login";
 import { useAuth, getSignInUrl, isHomeDomain } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
-import { usePlan, useActivateTrial } from "@/hooks/usePlan";
+import { usePlan } from "@/hooks/usePlan";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
 const HOME_URL =
   import.meta.env.VITE_HOME_URL ||
@@ -102,15 +105,25 @@ const DODO_PRODUCTS: Record<string, string> = {
 };
 
 /**
- * Plan guard: activates trial on first load, blocks expired-trial users.
- * Handles ?plan= param from landing page CTA → redirects to Dodo checkout after auth.
+ * Plan guard:
+ * 1. On ?payment=success → go to onboarding (plan row already written by webhook)
+ * 2. On ?plan= → redirect straight to Dodo checkout (user came from landing CTA)
+ * 3. No plan row yet (fresh signup, no ?plan=) → show PlanChooser
+ * 4. Trial expired → show expired wall (settings still accessible)
  */
 function PlanGuard({ children }: { children: React.ReactNode }) {
-  useActivateTrial();
   const plan = usePlan();
   const { user } = useAuth();
   const didHandleParams = useRef(false);
   const location = useLocation();
+
+  // Fetch /api/me directly to know if subscription row exists (independent of plan state)
+  const { data: me, isLoading: meLoading } = useQuery({
+    queryKey: ["me", user?.id],
+    queryFn: () => api.get<{ plan: string; trial_expires_at: string | null }>("/api/me"),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
 
   // Handle return from Dodo checkout OR ?plan= redirect — run once only
   useEffect(() => {
@@ -131,10 +144,9 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
     }
 
     // If came from landing page with ?plan=, redirect straight to Dodo checkout.
-    // Wait for user to be loaded before handling — don't mark done if user isn't ready yet.
     const planParam = params.get("plan");
     if (planParam) {
-      if (!user) return; // wait for auth to resolve, effect will re-run
+      if (!user) return;
       didHandleParams.current = true;
       const productId = DODO_PRODUCTS[planParam];
       if (productId) {
@@ -152,11 +164,33 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // No relevant params — mark done
     didHandleParams.current = true;
   }, [user]);
 
-  // Allow /settings through even when trial has expired so the user can upgrade
+  // Still loading plan info — show spinner
+  if (meLoading || !me) {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.get("payment") && !params.get("plan")) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      );
+    }
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const isHandlingPayment = params.get("payment") !== null || params.get("plan") !== null;
+
+  // Show PlanChooser to trial users who haven't dismissed it this session.
+  // Dismissed once the user clicks a plan CTA (navigates away to Dodo) or hits "skip".
+  // We use sessionStorage so it reappears on a fresh browser session until they subscribe.
+  const chooserDismissed = sessionStorage.getItem("plan_chooser_dismissed") === "1";
+  if (!isHandlingPayment && me?.plan === "trial" && !chooserDismissed && location.pathname !== "/settings") {
+    return <PlanChooser onSkip={() => sessionStorage.setItem("plan_chooser_dismissed", "1")} />;
+  }
+
+  // Trial expired → block access except settings
   if (plan.trialExpired && location.pathname !== "/settings") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-6">

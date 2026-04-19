@@ -64,6 +64,9 @@ export interface RedditMonitor {
   subreddits: string[];
   is_active: boolean;
   automode: boolean;
+  pending_keywords: string[] | null;
+  pending_subreddits: string[] | null;
+  pending_effective_at: string | null;
   created_at: string;
   updated_at: string;
 }

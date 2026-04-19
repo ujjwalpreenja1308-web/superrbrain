@@ -10,9 +10,20 @@ import {
   getRedditUsername,
 } from "../services/composio.service.js";
 import { checkGuardrails } from "../services/reddit-guardrails.service.js";
+import { checkRedditLimits } from "../middleware/requirePlan.js";
 import type { AppVariables } from "../types.js";
 
 const app = new Hono<{ Variables: AppVariables }>();
+
+function nextMondayAt9UTC(): Date {
+  const now = new Date();
+  const day = now.getUTCDay(); // 0=Sun,1=Mon,...
+  const daysUntilMonday = day === 1 ? 7 : (8 - day) % 7 || 7;
+  const next = new Date(now);
+  next.setUTCDate(now.getUTCDate() + daysUntilMonday);
+  next.setUTCHours(9, 0, 0, 0);
+  return next;
+}
 
 const MAX_KEYWORDS = 10;
 const MAX_SUBREDDITS = 5;
@@ -98,6 +109,8 @@ app.post("/monitors", async (c) => {
   const parsed = createMonitorSchema.safeParse(body);
   if (!parsed.success) throw new AppError(400, parsed.error.errors[0].message);
 
+  await checkRedditLimits(userId, parsed.data.keywords, parsed.data.subreddits);
+
   const { data: brand } = await supabaseAdmin
     .from("brands")
     .select("id")
@@ -145,9 +158,24 @@ app.patch("/monitors/:id", async (c) => {
   const parsed = updateMonitorSchema.safeParse(body);
   if (!parsed.success) throw new AppError(400, parsed.error.errors[0].message);
 
+  // keyword/subreddit changes are staged as pending — applied next Monday by weekly cron
+  const hasConfigChange = parsed.data.keywords !== undefined || parsed.data.subreddits !== undefined;
+  const isImmediateUpdate = !hasConfigChange; // automode / is_active can apply immediately
+
+  let updatePayload: Record<string, unknown> = { updated_at: new Date().toISOString() };
+
+  if (hasConfigChange) {
+    if (parsed.data.keywords) await checkRedditLimits(userId, parsed.data.keywords, parsed.data.subreddits ?? []);
+    if (parsed.data.keywords !== undefined) updatePayload.pending_keywords = parsed.data.keywords;
+    if (parsed.data.subreddits !== undefined) updatePayload.pending_subreddits = parsed.data.subreddits;
+    updatePayload.pending_effective_at = nextMondayAt9UTC().toISOString();
+  }
+  if (parsed.data.automode !== undefined) updatePayload.automode = parsed.data.automode;
+  if (parsed.data.is_active !== undefined) updatePayload.is_active = parsed.data.is_active;
+
   const { data, error } = await supabaseAdmin
     .from("reddit_monitors")
-    .update({ ...parsed.data, updated_at: new Date().toISOString() })
+    .update(updatePayload)
     .eq("id", monitorId)
     .eq("user_id", userId)
     .select()
@@ -155,7 +183,7 @@ app.patch("/monitors/:id", async (c) => {
 
   if (error || !data) throw new AppError(404, "Monitor not found");
 
-  return c.json(data);
+  return c.json({ ...data, _pending_config: hasConfigChange });
 });
 
 app.delete("/monitors/:id", async (c) => {
