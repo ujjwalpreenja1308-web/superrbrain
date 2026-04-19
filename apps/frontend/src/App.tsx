@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { AppShell } from "@/components/AppShell";
@@ -153,28 +153,31 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
 function PlanPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [paymentTimeout, setPaymentTimeout] = useState(false);
+
+  const isAwaitingPayment = new URLSearchParams(window.location.search).get("payment") === "success";
+
+  // If webhook doesn't fire within 15s, assume payment failed — show chooser again
+  useEffect(() => {
+    if (!isAwaitingPayment) return;
+    const t = setTimeout(() => {
+      window.history.replaceState({}, "", "/plan");
+      setPaymentTimeout(true);
+    }, 15_000);
+    return () => clearTimeout(t);
+  }, [isAwaitingPayment]);
 
   const { data: me, isLoading: meLoading, isError: meError } = useQuery({
     queryKey: ["me", user?.id],
     queryFn: () => api.get<{ plan: string }>("/api/me"),
     enabled: !!user,
-    staleTime: 60_000,
+    staleTime: isAwaitingPayment ? 0 : 60_000,
+    refetchInterval: isAwaitingPayment ? 3000 : false,
     retry: 2,
   });
 
   const params = new URLSearchParams(window.location.search);
   const payment = params.get("payment");
-
-  // Payment success — go to onboarding
-  if (payment === "success") {
-    window.history.replaceState({}, "", "/plan");
-    window.location.href = `${HOME_URL}/onboarding`;
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
 
   // Wait for plan to load
   if (meLoading) {
@@ -185,13 +188,36 @@ function PlanPage() {
     );
   }
 
+  // Came back from Dodo checkout — poll until webhook confirms plan activation
+  if (payment === "success" && !paymentTimeout) {
+    if (!meError && me && me.plan !== "trial") {
+      // Webhook already fired — go to onboarding
+      window.history.replaceState({}, "", "/plan");
+      window.location.href = `${HOME_URL}/onboarding`;
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      );
+    }
+    // Still waiting for webhook — show spinner and keep refetching
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="space-y-3 text-center">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
+          <p className="text-sm text-muted-foreground">Confirming your payment…</p>
+        </div>
+      </div>
+    );
+  }
+
   // Already on a paid plan — skip chooser
   if (!meError && me && me.plan !== "trial") {
     navigate("/dashboard", { replace: true });
     return null;
   }
 
-  // If /api/me errored or returned trial — show chooser
+  // Trial or error — show chooser
   return <PlanChooser />;
 }
 
