@@ -154,11 +154,12 @@ function PlanPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const { data: me, isLoading: meLoading } = useQuery({
+  const { data: me, isLoading: meLoading, isError: meError } = useQuery({
     queryKey: ["me", user?.id],
     queryFn: () => api.get<{ plan: string }>("/api/me"),
     enabled: !!user,
     staleTime: 60_000,
+    retry: 2,
   });
 
   const params = new URLSearchParams(window.location.search);
@@ -176,7 +177,7 @@ function PlanPage() {
   }
 
   // Wait for plan to load
-  if (meLoading || !me) {
+  if (meLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -185,11 +186,12 @@ function PlanPage() {
   }
 
   // Already on a paid plan — skip chooser
-  if (me.plan !== "trial") {
+  if (!meError && me && me.plan !== "trial") {
     navigate("/dashboard", { replace: true });
     return null;
   }
 
+  // If /api/me errored or returned trial — show chooser
   return (
     <PlanChooser onSkip={() => navigate("/dashboard", { replace: true })} />
   );
