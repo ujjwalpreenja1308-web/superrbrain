@@ -367,10 +367,10 @@
     window.location.href = `${HOME_URL}/plan`;
   }
 
-  // If already signed in, go straight to the app (not the plan chooser)
+  // If already signed in, go to /plan — it will redirect to /dashboard if paid
   const { data: { session: existingSession } } = await supabase.auth.getSession();
   if (existingSession) {
-    window.location.href = `${HOME_URL}/dashboard`;
+    window.location.href = `${HOME_URL}/plan`;
   }
 
   // Email/password form
