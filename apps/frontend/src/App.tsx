@@ -23,6 +23,8 @@ import { Login } from "@/pages/Login";
 import { useAuth, getSignInUrl, isHomeDomain } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { usePlan } from "@/hooks/usePlan";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
 const HOME_URL =
   import.meta.env.VITE_HOME_URL ||
@@ -142,42 +144,50 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Dedicated plan selection page shown after every sign-in/sign-up.
- * Handles Dodo payment callbacks and shows PlanChooser.
+ * Post-auth plan page.
+ * - ?payment=success → /onboarding
+ * - ?payment=cancelled → stay, show chooser again
+ * - paid plan → skip straight to /dashboard
+ * - trial → show PlanChooser
  */
 function PlanPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const didHandle = useRef(false);
 
-  useEffect(() => {
-    if (didHandle.current || !user) return;
-
-    const params = new URLSearchParams(window.location.search);
-    const payment = params.get("payment");
-
-    if (payment === "success") {
-      didHandle.current = true;
-      window.history.replaceState({}, "", "/plan");
-      window.location.href = `${HOME_URL}/onboarding`;
-      return;
-    }
-    if (payment === "cancelled") {
-      didHandle.current = true;
-      window.history.replaceState({}, "", "/plan");
-      return;
-    }
-
-    didHandle.current = true;
-  }, [user]);
+  const { data: me, isLoading: meLoading } = useQuery({
+    queryKey: ["me", user?.id],
+    queryFn: () => api.get<{ plan: string }>("/api/me"),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
 
   const params = new URLSearchParams(window.location.search);
-  if (params.get("payment") === "success") {
+  const payment = params.get("payment");
+
+  // Payment success — go to onboarding
+  if (payment === "success") {
+    window.history.replaceState({}, "", "/plan");
+    window.location.href = `${HOME_URL}/onboarding`;
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
+  }
+
+  // Wait for plan to load
+  if (meLoading || !me) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  // Already on a paid plan — skip chooser
+  if (me.plan !== "trial") {
+    navigate("/dashboard", { replace: true });
+    return null;
   }
 
   return (
