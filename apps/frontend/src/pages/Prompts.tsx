@@ -214,8 +214,13 @@ function CategoryGroup({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+type BrandWithPending = import("@covable/shared").Brand & {
+  pending_prompts?: object | null;
+  pending_prompts_effective_at?: string | null;
+};
+
 export function Prompts() {
-  const { activeBrand: brand } = useActiveBrand() as { activeBrand: (import("@covable/shared").Brand & { pending_prompts?: unknown; pending_prompts_effective_at?: string | null }) | undefined };
+  const { activeBrand: brand } = useActiveBrand() as { activeBrand: BrandWithPending | undefined };
   const { data: prompts, isLoading, isError, error, refetch } = usePrompts(brand?.id);
   const updatePrompts = useUpdatePrompts(brand?.id ?? "");
   const regeneratePrompts = useRegeneratePrompts(brand?.id ?? "");
