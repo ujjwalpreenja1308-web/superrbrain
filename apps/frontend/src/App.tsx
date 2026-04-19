@@ -192,9 +192,7 @@ function PlanPage() {
   }
 
   // If /api/me errored or returned trial — show chooser
-  return (
-    <PlanChooser onSkip={() => navigate("/dashboard", { replace: true })} />
-  );
+  return <PlanChooser />;
 }
 
 /** If already logged in on auth domain, redirect to home/plan */
