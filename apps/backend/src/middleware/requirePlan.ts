@@ -20,7 +20,7 @@ export async function getPlanTier(userId: string): Promise<PlanTier> {
   return tier;
 }
 
-export async function checkFeature(userId: string, feature: "reddit" | "execution" | "apiAccess"): Promise<void> {
+export async function checkFeature(userId: string, feature: "reddit" | "execution"): Promise<void> {
   const tier = await getPlanTier(userId);
   const limits = PLAN_LIMITS[tier];
 
@@ -29,9 +29,6 @@ export async function checkFeature(userId: string, feature: "reddit" | "executio
   }
   if (feature === "execution" && !limits.hasExecution) {
     throw new AppError(403, "Content execution requires the Growth or Pro plan.");
-  }
-  if (feature === "apiAccess" && !limits.hasApiAccess) {
-    throw new AppError(403, "API access requires the Pro plan.");
   }
 }
 

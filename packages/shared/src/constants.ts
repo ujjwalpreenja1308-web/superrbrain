@@ -43,7 +43,6 @@ export interface PlanLimits {
   maxSubreddits: number;
   maxPostsPerMonth: number;
   hasExecution: boolean;
-  hasApiAccess: boolean;
 }
 
 export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
@@ -58,7 +57,6 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxSubreddits: 0,
     maxPostsPerMonth: 0,
     hasExecution: false,
-    hasApiAccess: false,
   },
   starter: {
     tier: "starter",
@@ -71,7 +69,6 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxSubreddits: 0,
     maxPostsPerMonth: 0,
     hasExecution: false,
-    hasApiAccess: false,
   },
   growth: {
     tier: "growth",
@@ -84,7 +81,6 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxSubreddits: 2,
     maxPostsPerMonth: 200,
     hasExecution: true,
-    hasApiAccess: false,
   },
   pro: {
     tier: "pro",
@@ -97,7 +93,6 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxSubreddits: 4,
     maxPostsPerMonth: 900,
     hasExecution: true,
-    hasApiAccess: true,
   },
 };
 
