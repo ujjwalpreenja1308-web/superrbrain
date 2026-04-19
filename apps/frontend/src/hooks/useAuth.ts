@@ -140,29 +140,15 @@ export function useAuth() {
   }, []);
 
   async function signIn(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
-    if (import.meta.env.PROD) {
-      const session = data.session!;
-      const hash = `access_token=${session.access_token}&refresh_token=${session.refresh_token}&type=magiclink`;
-      window.location.href = `${HOME_URL}/plan#${hash}`;
-    }
+    // AuthPage's onAuthStateChange handler will redirect to HOME_URL/plan
   }
 
   async function signUp(email: string, password: string) {
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({ email, password });
     if (error) throw new Error(error.message);
-    if (import.meta.env.PROD) {
-      if (data.session) {
-        const session = data.session;
-        const hash = `access_token=${session.access_token}&refresh_token=${session.refresh_token}&type=magiclink`;
-        window.location.href = `${HOME_URL}/plan#${hash}`;
-      } else {
-        // Email confirmation required — redirect to plan page anyway,
-        // they'll be asked to confirm first before accessing the app.
-        window.location.href = `${HOME_URL}/plan`;
-      }
-    }
+    // AuthPage's onAuthStateChange handler will redirect to HOME_URL/plan
   }
 
   async function signInWithGoogle() {
