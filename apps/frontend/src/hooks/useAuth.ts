@@ -96,6 +96,7 @@ export function useAuth() {
       applySession(session?.user ?? null);
     });
 
+
     const syncSession = async () => {
       try {
         if (authCode) {
@@ -110,6 +111,17 @@ export function useAuth() {
         }
 
         const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          // getUser always hits the server — catches deleted-user case where
+          // getSession returns stale cached data with a still-valid JWT.
+          const { error: userError } = await supabase.auth.getUser();
+          if (userError) {
+            await supabase.auth.signOut();
+            applySession(null);
+            if (import.meta.env.PROD) window.location.href = SIGN_IN_URL;
+            return;
+          }
+        }
         applySession(session?.user ?? null);
       } catch {
         applySession(null);
