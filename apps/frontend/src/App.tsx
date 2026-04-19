@@ -128,7 +128,7 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
   const didHandleParams = useRef(false);
   const location = useLocation();
 
-  const { data: me } = useQuery({
+  const { data: me, isLoading: meLoading } = useQuery({
     queryKey: ["me", user?.id],
     queryFn: () => api.get<{ plan: string; trial_expires_at: string | null }>("/api/me"),
     enabled: !!user,
@@ -178,8 +178,17 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
   const params = new URLSearchParams(window.location.search);
   const isHandlingPayment = params.get("payment") !== null || params.get("plan") !== null;
 
-  // Show PlanChooser only once we know the plan is trial AND user hasn't dismissed it.
-  // Don't block on meLoading — only show chooser once me has resolved.
+  // While /api/me is loading for the first time, show a spinner so children
+  // (Dashboard etc.) don't race ahead and redirect before we know the plan.
+  // Only block on the initial fetch — not refetches (me would be defined then).
+  if (user && meLoading && me === undefined && !isHandlingPayment) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
   const chooserDismissed = sessionStorage.getItem("plan_chooser_dismissed") === "1";
   if (
     !isHandlingPayment &&
