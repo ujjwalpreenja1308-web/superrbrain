@@ -364,9 +364,8 @@
   }
 
   function redirectHome(session) {
-    const base = planParam ? `${HOME_URL}?plan=${planParam}` : HOME_URL;
     const hash = `access_token=${session.access_token}&refresh_token=${session.refresh_token}&type=magiclink`;
-    window.location.href = `${base}#${hash}`;
+    window.location.href = `${HOME_URL}/plan#${hash}`;
   }
 
   // If already signed in, redirect to home
