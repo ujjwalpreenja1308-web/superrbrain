@@ -363,9 +363,10 @@
     btn.innerHTML = loading ? `<span class="spinner${btn === document.getElementById('btn-submit') ? '' : ' spinner-white'}"></span>` : label;
   }
 
-  function redirectHome(session) {
-    const hash = `access_token=${session.access_token}&refresh_token=${session.refresh_token}&type=magiclink`;
-    window.location.href = `${HOME_URL}/plan#${hash}`;
+  function redirectHome(_session) {
+    // Session is already stored in the shared .covable.app cookie by the
+    // Supabase client above — no need to pass tokens in the hash.
+    window.location.href = `${HOME_URL}/plan`;
   }
 
   // If already signed in, redirect to home
