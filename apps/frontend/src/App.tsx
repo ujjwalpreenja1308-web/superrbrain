@@ -106,10 +106,12 @@ const DODO_PRODUCTS: Record<string, string> = {
 
 /**
  * Plan guard:
- * 1. On ?payment=success → go to onboarding (plan row already written by webhook)
- * 2. On ?plan= → redirect straight to Dodo checkout (user came from landing CTA)
- * 3. No plan row yet (fresh signup, no ?plan=) → show PlanChooser
+ * 1. On ?payment=success → go to onboarding
+ * 2. On ?plan= → redirect straight to Dodo checkout
+ * 3. New user (plan === "trial", never dismissed chooser) → show PlanChooser
  * 4. Trial expired → show expired wall (settings still accessible)
+ *
+ * Never blocks the app with a spinner — falls through to children while /api/me loads.
  */
 function PlanGuard({ children }: { children: React.ReactNode }) {
   const plan = usePlan();
@@ -117,17 +119,16 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
   const didHandleParams = useRef(false);
   const location = useLocation();
 
-  // Fetch /api/me directly to know if subscription row exists (independent of plan state)
-  const { data: me, isLoading: meLoading } = useQuery({
+  const { data: me } = useQuery({
     queryKey: ["me", user?.id],
     queryFn: () => api.get<{ plan: string; trial_expires_at: string | null }>("/api/me"),
     enabled: !!user,
     staleTime: 60_000,
   });
 
-  // Handle return from Dodo checkout OR ?plan= redirect — run once only
+  // Handle ?payment= and ?plan= params — run once only
   useEffect(() => {
-    if (didHandleParams.current) return;
+    if (didHandleParams.current || !user) return;
 
     const params = new URLSearchParams(window.location.search);
     const payment = params.get("payment");
@@ -143,10 +144,8 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // If came from landing page with ?plan=, redirect straight to Dodo checkout.
     const planParam = params.get("plan");
     if (planParam) {
-      if (!user) return;
       didHandleParams.current = true;
       const productId = DODO_PRODUCTS[planParam];
       if (productId) {
@@ -167,26 +166,19 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
     didHandleParams.current = true;
   }, [user]);
 
-  // Still loading plan info — show spinner
-  if (meLoading || !me) {
-    const params = new URLSearchParams(window.location.search);
-    if (!params.get("payment") && !params.get("plan")) {
-      return (
-        <div className="flex min-h-screen items-center justify-center bg-background">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        </div>
-      );
-    }
-  }
-
   const params = new URLSearchParams(window.location.search);
   const isHandlingPayment = params.get("payment") !== null || params.get("plan") !== null;
 
-  // Show PlanChooser to trial users who haven't dismissed it this session.
-  // Dismissed once the user clicks a plan CTA (navigates away to Dodo) or hits "skip".
-  // We use sessionStorage so it reappears on a fresh browser session until they subscribe.
+  // Show PlanChooser only once we know the plan is trial AND user hasn't dismissed it.
+  // Don't block on meLoading — only show chooser once me has resolved.
   const chooserDismissed = sessionStorage.getItem("plan_chooser_dismissed") === "1";
-  if (!isHandlingPayment && me?.plan === "trial" && !chooserDismissed && location.pathname !== "/settings") {
+  if (
+    !isHandlingPayment &&
+    me !== undefined &&
+    me?.plan === "trial" &&
+    !chooserDismissed &&
+    location.pathname !== "/settings"
+  ) {
     return <PlanChooser onSkip={() => sessionStorage.setItem("plan_chooser_dismissed", "1")} />;
   }
 
