@@ -107,18 +107,18 @@
       },
       {
         "@type": "Question",
-        "name": "Does the generated content sound AI-written?",
+        "name": "How accurate is the citation data?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Every piece is scored on four dimensions before you see it: human-sounding, platform match, natural brand mention, and on-topic. Content that doesn't pass is regenerated automatically. You only ever see the best attempt."
+          "text": "We run real prompts — the same buyer-intent questions your customers are actually typing — directly against ChatGPT and record every response verbatim. We don't simulate or model responses. What you see is what ChatGPT actually said."
         }
       },
       {
         "@type": "Question",
-        "name": "How quickly do score changes show up after I post content?",
+        "name": "How often does my visibility score update?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "ChatGPT's training data updates on its own cycle, typically 2 to 6 weeks after content is live and indexed. Your score updates every time you run a scan, so you'll see the delta as it happens."
+          "text": "Your score refreshes every weekly scan. As new sources get cited and old ones drop off, your score moves with them. Run a manual scan any time to get a fresh read."
         }
       }
     ]
@@ -170,7 +170,7 @@
           ChatGPT is telling your buyers<br>to go elsewhere
         </h1>
         <p class="subheading" style="animation: fadeUp 600ms 400ms both ease-out; margin-bottom: 40px;">
-          When someone asks ChatGPT what to buy in your category, the answer is built from sources your competitors seeded: Reddit threads, review articles, listicles. Covable shows you exactly which ones, and generates content to get you cited instead
+          When someone asks ChatGPT what to buy in your category, the answer is built from sources your competitors seeded: Reddit threads, review articles, listicles. Covable shows you exactly which ones — and exactly what it will take to get cited instead
         </p>
         <div style="display: flex; gap: 16px; flex-wrap: wrap; animation: fadeUp 600ms 600ms both ease-out;">
           <a href="/auth/sign-up" class="btn-primary">See where you stand</a>
@@ -358,10 +358,10 @@
 
       <div class="feature-card reveal" style="padding: 32px 28px;">
         <div style="font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 20px;">03</div>
-        <h3 style="font-size: 22px; color: var(--text-primary); margin-bottom: 12px;">Close Gaps</h3>
-        <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.8;">Generate platform-native content for each gap. A Reddit comment that reads like a real user. A blog post structured for AI citation. You approve it, you post it. The source becomes yours</p>
+        <h3 style="font-size: 22px; color: var(--text-primary); margin-bottom: 12px;">Act on Intel</h3>
+        <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.8;">Every gap is a specific URL with a specific competitor winning. You know the source, the platform, the impact score. You know exactly what to do next — no guessing required</p>
         <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);">
-          <div style="font-size: 12px; color: var(--accent);">Quality-scored before it reaches you</div>
+          <div style="font-size: 12px; color: var(--accent);">Ranked by opportunity · updated weekly</div>
         </div>
       </div>
     </div>
@@ -475,37 +475,37 @@
           <div style="display: flex; flex-direction: column; gap: 10px;">
             <div class="feature-card" style="padding: 16px; display: flex; justify-content: space-between; align-items: center;">
               <div>
-                <div style="font-size: 12px; color: var(--text-primary); margin-bottom: 4px;">Garden of Life</div>
-                <div style="font-size: 11px; color: var(--text-tertiary);">reddit · impact 9.2</div>
+                <div style="font-size: 12px; color: var(--text-primary); margin-bottom: 4px;">reddit.com/r/Supplements/best-protein</div>
+                <div style="font-size: 11px; color: var(--text-tertiary);">reddit · impact 9.2 · Garden of Life winning</div>
               </div>
-              <span style="font-size: 11px; font-weight: 500; background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 4px 10px;">Generate</span>
+              <span style="font-size: 11px; font-weight: 500; color: var(--danger); border: 1px solid var(--danger); border-radius: 3px; padding: 4px 10px; opacity: 0.8;">Gap</span>
             </div>
             <div class="feature-card" style="padding: 16px; display: flex; justify-content: space-between; align-items: center;">
               <div>
-                <div style="font-size: 12px; color: var(--text-primary); margin-bottom: 4px;">Ritual</div>
-                <div style="font-size: 11px; color: var(--text-tertiary);">listicle · impact 8.7</div>
+                <div style="font-size: 12px; color: var(--text-primary); margin-bottom: 4px;">healthline.com/nutrition/best-vitamins</div>
+                <div style="font-size: 11px; color: var(--text-tertiary);">listicle · impact 8.7 · Ritual winning</div>
               </div>
-              <span style="font-size: 11px; color: var(--text-tertiary); border: 1px solid var(--border); border-radius: 3px; padding: 4px 10px;">Blog post</span>
+              <span style="font-size: 11px; font-weight: 500; color: var(--danger); border: 1px solid var(--danger); border-radius: 3px; padding: 4px 10px; opacity: 0.8;">Gap</span>
             </div>
             <div class="feature-card" style="padding: 16px; display: flex; justify-content: space-between; align-items: center;">
               <div>
-                <div style="font-size: 12px; color: var(--text-primary); margin-bottom: 4px;">Thorne</div>
-                <div style="font-size: 11px; color: var(--text-tertiary);">news · impact 7.1</div>
+                <div style="font-size: 12px; color: var(--text-primary); margin-bottom: 4px;">consumerlab.com/reviews/protein-powder</div>
+                <div style="font-size: 11px; color: var(--text-tertiary);">review · impact 7.1 · Thorne winning</div>
               </div>
-              <span style="font-size: 11px; color: var(--text-tertiary); border: 1px solid var(--border); border-radius: 3px; padding: 4px 10px;">Blog post</span>
+              <span style="font-size: 11px; font-weight: 500; color: var(--danger); border: 1px solid var(--danger); border-radius: 3px; padding: 4px 10px; opacity: 0.8;">Gap</span>
             </div>
           </div>
         </div>
       </div>
       <div class="split-text">
         <p class="label">Gap Queue</p>
-        <h2 class="section-heading" style="margin-bottom: 20px;">Your action list for getting into the conversation</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 24px; line-height: 1.8;">Each gap is a specific source where ChatGPT is learning about your competitors. Sorted by impact. One click generates content that targets that exact source: a Reddit comment in the right thread, a blog post with the right structure. You own the output, you post it, you get cited</p>
+        <h2 class="section-heading" style="margin-bottom: 20px;">Know exactly which sources to target — and why</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 24px; line-height: 1.8;">Each gap is a real URL where ChatGPT is citing your competitors but not you. Ranked by impact score. You see the source, the platform, which competitor is winning there, and how much it matters. No spreadsheets. No guesswork. Just a prioritised list of the doors you haven't walked through yet</p>
         <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
-          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Reddit comments written for the specific thread</li>
-          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>AEO blog posts built from real citation patterns</li>
-          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Quality-scored before you approve</li>
-          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Track deployed content and measure gap closure</li>
+          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Every gap tied to a specific citation URL</li>
+          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Sorted by opportunity impact score</li>
+          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>See which competitor owns each source</li>
+          <li style="display: flex; gap: 12px; font-size: 14px; color: var(--text-secondary);"><span style="color: var(--accent); flex-shrink: 0;">✓</span>Updated every weekly scan as citations shift</li>
         </ul>
       </div>
     </div>
@@ -634,12 +634,12 @@
           <div class="faq-answer">A citation gap is a specific URL that ChatGPT cites when recommending competitors in your category, but your brand isn't mentioned in it. Each gap is a concrete piece of content you can target to get cited alongside or instead of your competitor.</div>
         </div>
         <div class="faq-item reveal">
-          <div class="faq-question">Does the generated content sound AI-written</div>
-          <div class="faq-answer">Every piece is scored on four dimensions before you see it: human-sounding, platform match, natural brand mention, and on-topic. Content that doesn't pass is regenerated automatically. You only ever see the best attempt.</div>
+          <div class="faq-question">How accurate is the citation data</div>
+          <div class="faq-answer">We run real prompts — the same buyer-intent questions your customers are actually typing — directly against ChatGPT and record every response verbatim. We don't simulate or model responses. What you see is what ChatGPT actually said.</div>
         </div>
         <div class="faq-item reveal">
-          <div class="faq-question">How quickly do score changes show up after I post content</div>
-          <div class="faq-answer">ChatGPT's training data updates on its own cycle, typically 2 to 6 weeks after content is live and indexed. Your score updates every time you run a scan, so you'll see the delta as it happens.</div>
+          <div class="faq-question">How often does my visibility score update</div>
+          <div class="faq-answer">Your score refreshes every weekly scan. As new sources get cited and old ones drop off, your score moves with them. Run a manual scan any time to get a fresh read.</div>
         </div>
       </div>
     </div>
@@ -654,7 +654,7 @@
     <div class="centered reveal" style="max-width: 640px;">
       <p class="label">Get started</p>
       <h2 class="section-heading" style="margin-bottom: 20px;">Find out what ChatGPT says about your category</h2>
-      <p style="color: var(--text-secondary); margin-bottom: 40px; line-height: 1.8;">Enter your brand URL. We'll run a scan, show you your visibility score, every competitor ChatGPT recommends instead, and your first gap queue. In 60 seconds</p>
+      <p style="color: var(--text-secondary); margin-bottom: 40px; line-height: 1.8;">Enter your brand. We'll run a scan, show you your visibility score, every competitor ChatGPT recommends instead, and the exact sources driving it. In 60 seconds</p>
       <a href="/sign-up" class="btn-primary">See where you stand</a>
     </div>
   </div>
