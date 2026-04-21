@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { usePrompts, useUpdatePrompts, useRegeneratePrompts } from "@/hooks/useBrand";
 import { useActiveBrand } from "@/hooks/useActiveBrand";
+import { usePlan } from "@/hooks/usePlan";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -224,6 +225,7 @@ export function Prompts() {
   const { data: prompts, isLoading, isError, error, refetch } = usePrompts(brand?.id);
   const updatePrompts = useUpdatePrompts(brand?.id ?? "");
   const regeneratePrompts = useRegeneratePrompts(brand?.id ?? "");
+  const plan = usePlan();
 
   const [local, setLocal] = useState<LocalPrompt[] | null>(null);
   const [filter, setFilter] = useState<string | null>(null);
@@ -379,6 +381,18 @@ export function Prompts() {
           )}
         </div>
       </div>
+
+      {/* Prompt limit upgrade nudge */}
+      {!isLoading && !isError && activeCount >= plan.maxPrompts && (
+        <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-2.5 text-xs">
+          <span className="text-muted-foreground">
+            You've reached your <span className="font-medium text-foreground">{plan.maxPrompts} prompt</span> limit on the {plan.label} plan.
+          </span>
+          <a href="/settings?tab=billing" className="ml-4 shrink-0 font-medium text-primary hover:underline">
+            Upgrade →
+          </a>
+        </div>
+      )}
 
       {/* Stats strip */}
       {!isLoading && !isError && working.length > 0 && (

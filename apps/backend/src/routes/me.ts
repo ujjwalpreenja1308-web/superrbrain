@@ -40,4 +40,22 @@ meRoutes.get("", async (c) => {
   });
 });
 
+/**
+ * POST /api/me/cancel
+ * Downgrades user to trial immediately (no Dodo API call — just DB update).
+ * Real cancellation should be handled via Dodo dashboard or webhook.
+ */
+meRoutes.post("/cancel", async (c) => {
+  const userId = c.get("userId");
+
+  const { error } = await supabaseAdmin
+    .from("subscriptions")
+    .update({ plan: "trial", status: "cancelled", updated_at: new Date().toISOString() })
+    .eq("user_id", userId);
+
+  if (error) return c.json({ error: "Failed to cancel plan" }, 500);
+
+  return c.json({ success: true });
+});
+
 export default meRoutes;

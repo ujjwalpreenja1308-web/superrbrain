@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useActiveBrand } from "@/hooks/useActiveBrand";
+import { usePlan } from "@/hooks/usePlan";
 import { useCitations } from "@/hooks/useReport";
 import {
   useRedditConnection,
@@ -381,6 +382,7 @@ type OnboardingStep = "keywords" | "subreddits" | "scanning" | "results";
 export function GapQueue() {
   const [searchParams] = useSearchParams();
   const { activeBrand: brand } = useActiveBrand();
+  const plan = usePlan();
 
   const { data: connection, refetch: refetchConnection } = useRedditConnection();
   const connectReddit = useConnectReddit();
@@ -501,6 +503,28 @@ export function GapQueue() {
 
   const stepIndex = { keywords: 0, subreddits: 1, scanning: 2, results: 2 }[step];
   const isOnboarding = step !== "results";
+
+  if (!plan.hasReddit) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
+        <div className="max-w-sm text-center space-y-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 mx-auto">
+            <Search className="h-6 w-6 text-primary" />
+          </div>
+          <h2 className="text-lg font-semibold">Reddit tracking requires Growth or Pro</h2>
+          <p className="text-sm text-muted-foreground">
+            Monitor Reddit conversations about your brand, track keywords across subreddits, and get notified when people mention you.
+          </p>
+          <a
+            href="/settings?tab=billing"
+            className="inline-block w-full rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            Upgrade plan
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

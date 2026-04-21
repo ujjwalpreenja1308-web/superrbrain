@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePlan } from "@/hooks/usePlan";
 import { PLAN_LIMITS } from "@covable/shared";
 import { useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import type { PlanTier } from "@/hooks/usePlan";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -11,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, CreditCard, Globe, Check, X, Zap, Building2, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 const DODO_PRODUCTS: Record<string, string> = {
   starter: import.meta.env.VITE_DODO_PRODUCT_STARTER_MONTHLY ?? "",
@@ -140,12 +143,27 @@ export function Settings() {
   const { user } = useAuth();
   const { activeBrand: brand, brands } = useActiveBrand();
   const plan = usePlan();
+  const queryClient = useQueryClient();
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? "U";
   const [searchParams] = useSearchParams();
-  // ?plan= from landing page CTA or ?tab=billing from trial-expired paywall → open billing tab automatically
+  const [cancelling, setCancelling] = useState(false);
   const incomingPlan = searchParams.get("plan");
   const tabParam = searchParams.get("tab");
   const defaultTab = (incomingPlan || tabParam === "billing") ? "billing" : "profile";
+
+  async function handleCancelPlan() {
+    if (!confirm("Are you sure you want to cancel your plan? You'll be downgraded to the free trial immediately.")) return;
+    setCancelling(true);
+    try {
+      await api.post("/api/me/cancel", {});
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+      toast.success("Plan cancelled. You've been moved to the free trial.");
+    } catch {
+      toast.error("Failed to cancel plan. Please contact support@covable.app.");
+    } finally {
+      setCancelling(false);
+    }
+  }
 
   const plans: { tier: PlanTier; name: string; monthly: number; annual: number; features: { label: string; included: boolean }[] }[] = [
     {
@@ -185,7 +203,7 @@ export function Settings() {
         { label: `${PLAN_LIMITS.pro.maxPrompts} AI prompts / month`, included: true },
         { label: "ChatGPT response analysis", included: true },
         { label: `Reddit tracking (${PLAN_LIMITS.pro.maxKeywords} keywords, ${PLAN_LIMITS.pro.maxSubreddits} subreddits)`, included: true },
-        { label: "800+ posts tracked / month", included: true },
+        { label: `${PLAN_LIMITS.pro.maxPostsPerMonth}+ posts tracked / month`, included: true },
         { label: "Competitor tracking", included: true },
         { label: "Dedicated support", included: true },
       ],
@@ -298,19 +316,37 @@ export function Settings() {
                 </Badge>
               </div>
 
-              {/* Usage bar */}
-              <div className="mt-4 space-y-2">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Brands</span>
-                  <span>{brands.length} / {plan.maxBrands}</span>
-                </div>
-                <div className="h-1 rounded-full bg-secondary overflow-hidden">
-                  <div
-                    className="h-full bg-primary rounded-full"
-                    style={{ width: `${Math.min((brands.length / plan.maxBrands) * 100, 100)}%` }}
-                  />
+              {/* Usage bars */}
+              <div className="mt-4 space-y-3">
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Brands</span>
+                    <span>{brands.length} / {plan.maxBrands}</span>
+                  </div>
+                  <div className="h-1 rounded-full bg-secondary overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full"
+                      style={{ width: `${Math.min((brands.length / plan.maxBrands) * 100, 100)}%` }}
+                    />
+                  </div>
                 </div>
               </div>
+
+              {/* Cancel button — only for paid plans */}
+              {plan.tier !== "trial" && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <button
+                    onClick={handleCancelPlan}
+                    disabled={cancelling}
+                    className="text-xs text-destructive hover:underline disabled:opacity-50"
+                  >
+                    {cancelling ? "Cancelling…" : "Cancel plan"}
+                  </button>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    You'll be downgraded to the free trial immediately.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
