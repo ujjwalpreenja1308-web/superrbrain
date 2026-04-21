@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Covable: Track Your AI Citation Visibility in ChatGPT</title>
-  <meta name="description" content="Covable shows you which sources ChatGPT cites in your category, which competitors are winning those citations, and exactly where your brand is invisible. Know your AI visibility score in 60 seconds." />
+  <meta name="description" content="Track which sources ChatGPT cites when recommending brands in your category. See your AI citation visibility score vs. competitors and close the gaps driving buyers to them." />
   <link rel="canonical" href="https://covable.com/" />
   <meta name="robots" content="index, follow" />
 
@@ -24,7 +24,7 @@
   <meta name="twitter:description" content="Covable shows you which sources ChatGPT cites in your category, which competitors are winning those citations, and exactly where your brand is invisible. Know your AI visibility score in 60 seconds." />
   <meta name="twitter:image" content="https://covable.com/og-image.png" />
 
-  <!-- JSON-LD: SoftwareApplication + Organization -->
+  <!-- JSON-LD: SoftwareApplication + Organization + FAQPage -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -42,21 +42,24 @@
             "name": "Starter",
             "price": "9.00",
             "priceCurrency": "USD",
-            "billingPeriod": "P1M"
+            "billingPeriod": "P1M",
+            "priceValidUntil": "2027-01-01"
           },
           {
             "@type": "Offer",
             "name": "Growth",
             "price": "29.00",
             "priceCurrency": "USD",
-            "billingPeriod": "P1M"
+            "billingPeriod": "P1M",
+            "priceValidUntil": "2027-01-01"
           },
           {
             "@type": "Offer",
             "name": "Pro",
             "price": "79.00",
             "priceCurrency": "USD",
-            "billingPeriod": "P1M"
+            "billingPeriod": "P1M",
+            "priceValidUntil": "2027-01-01"
           }
         ]
       },
@@ -65,61 +68,81 @@
         "name": "Covable",
         "url": "https://covable.com",
         "logo": "https://covable.com/logo.svg",
+        "sameAs": [],
         "contactPoint": {
           "@type": "ContactPoint",
           "email": "hello@covable.com",
           "contactType": "customer support"
         }
-      }
-    ]
-  }
-  </script>
-
-  <!-- JSON-LD: FAQPage -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "Which AI models does Covable monitor?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "ChatGPT in v1. We chose depth over breadth. Reliable, accurate citation data from one AI engine is more useful than patchy coverage across many. Additional engines are planned for v2."
-        }
       },
       {
-        "@type": "Question",
-        "name": "How is Covable different from traditional SEO tools?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Traditional SEO tools track Google search rankings. Covable tracks AI citation visibility, which is a completely separate signal. A page can rank number one on Google and never appear in a ChatGPT response. We measure what AI recommends, which is where a growing share of buyers now go first."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What is a citation gap?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "A citation gap is a specific URL that ChatGPT cites when recommending competitors in your category, where your brand is not mentioned. Each gap points to a real source you can get into to start appearing in AI answers alongside your competitors."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "How accurate is the citation data?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "We run real buyer-intent prompts directly against ChatGPT and record every response verbatim. We do not simulate or model responses. What you see in Covable is exactly what ChatGPT returned."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "How often does my AI visibility score update?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Your score refreshes every weekly scan. As new sources get cited and old ones drop out, your score moves automatically to reflect the latest citation patterns."
-        }
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is AI citation visibility?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "AI citation visibility measures how often ChatGPT mentions or recommends your brand when buyers ask questions in your category. When someone types a buying question into ChatGPT, the answer is built from sources it already trusts. Your AI citation visibility score tells you how often your brand appears in those answers versus your competitors."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does ChatGPT decide what sources to cite?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "ChatGPT pulls from sources it encountered during training and via web search: Reddit threads, review sites, listicles, news articles, and industry publications. Brands that appear in those sources get cited. Brands that don't, don't. Covable shows you exactly which sources are driving citations in your category so you know where to focus."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How is Covable different from traditional SEO tools?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Traditional SEO tools track Google search rankings. Covable tracks AI citation visibility, which is a completely separate signal. A page can rank number one on Google and never appear in a ChatGPT response. We measure what AI recommends, which is where a growing share of buyers now go first."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What is a citation gap?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A citation gap is a specific URL that ChatGPT cites when recommending competitors in your category, where your brand is not mentioned. Each gap points to a real source you can get into to start appearing in AI answers alongside your competitors."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Which AI models does Covable monitor?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "ChatGPT in v1. We chose depth over breadth. Reliable, accurate citation data from one AI engine is more useful than patchy coverage across many. Additional engines are planned for v2."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How accurate is the citation data?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "We run real buyer-intent prompts directly against ChatGPT and record every response verbatim. We do not simulate or model responses. What you see in Covable is exactly what ChatGPT returned."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How often does my AI visibility score update?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Your score refreshes every weekly scan. As new sources get cited and old ones drop out, your score moves automatically to reflect the latest citation patterns."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is my data private?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Your brand data, prompts, and scan results are only visible to your account. We do not share or sell your data. You can delete your account and all associated data at any time."
+            }
+          }
+        ]
       }
     ]
   }
@@ -622,25 +645,37 @@
         <h2 class="section-heading">Things people ask</h2>
       </div>
       <div>
-        <div class="faq-item reveal">
-          <div class="faq-question">Which AI models you monitor</div>
-          <div class="faq-answer">ChatGPT in v1. We chose depth over breadth. Reliable, accurate citation data from one AI engine is more useful than patchy coverage across many. Additional engines are planned for v2.</div>
+        <div class="faq-item faq-accordion">
+          <button class="faq-question" aria-expanded="false">What is AI citation visibility?</button>
+          <div class="faq-answer" hidden>AI citation visibility measures how often ChatGPT mentions or recommends your brand when buyers ask questions in your category. When someone types "best project management software" or "what vitamins should I take" into ChatGPT, the answer is built from sources it already trusts. Your AI citation visibility score tells you how often your brand appears in those answers versus your competitors.</div>
         </div>
-        <div class="faq-item reveal">
-          <div class="faq-question">How this differs from traditional SEO tools</div>
-          <div class="faq-answer">Traditional SEO tools track Google search rankings. Covable tracks AI citation visibility, which is a completely separate signal. A page can rank number one on Google and never appear in a ChatGPT response. We measure what AI recommends, which is where a growing share of buyers now go first.</div>
+        <div class="faq-item faq-accordion">
+          <button class="faq-question" aria-expanded="false">How does ChatGPT decide what sources to cite?</button>
+          <div class="faq-answer" hidden>ChatGPT pulls from sources it encountered during training and via web search: Reddit threads, review sites, listicles, news articles, and industry publications. Brands that appear in those sources get cited. Brands that don't, don't. Covable shows you exactly which sources are driving citations in your category so you know where to focus.</div>
         </div>
-        <div class="faq-item reveal">
-          <div class="faq-question">What a citation gap actually is</div>
-          <div class="faq-answer">A citation gap is a specific URL that ChatGPT cites when recommending competitors in your category, where your brand is not mentioned. Each gap points to a real source you can get into to start appearing in AI answers alongside your competitors.</div>
+        <div class="faq-item faq-accordion">
+          <button class="faq-question" aria-expanded="false">How is this different from traditional SEO tools?</button>
+          <div class="faq-answer" hidden>Traditional SEO tools track Google search rankings. Covable tracks AI citation visibility, which is a completely separate signal. A page can rank number one on Google and never appear in a ChatGPT response. We measure what AI recommends, which is where a growing share of buyers now go first.</div>
         </div>
-        <div class="faq-item reveal">
-          <div class="faq-question">How accurate the citation data is</div>
-          <div class="faq-answer">We run real buyer-intent prompts directly against ChatGPT and record every response verbatim. We do not simulate or model responses. What you see in Covable is exactly what ChatGPT returned.</div>
+        <div class="faq-item faq-accordion">
+          <button class="faq-question" aria-expanded="false">What is a citation gap?</button>
+          <div class="faq-answer" hidden>A citation gap is a specific URL that ChatGPT cites when recommending competitors in your category, where your brand is not mentioned. Each gap points to a real source you can get into to start appearing in AI answers alongside your competitors.</div>
         </div>
-        <div class="faq-item reveal">
-          <div class="faq-question">How often your visibility score updates</div>
-          <div class="faq-answer">Your score refreshes every weekly scan. As new sources get cited and old ones drop out, your score moves automatically to reflect the latest citation patterns.</div>
+        <div class="faq-item faq-accordion">
+          <button class="faq-question" aria-expanded="false">Which AI models does Covable monitor?</button>
+          <div class="faq-answer" hidden>ChatGPT in v1. We chose depth over breadth. Reliable, accurate citation data from one AI engine is more useful than patchy coverage across many. Additional engines are planned for v2.</div>
+        </div>
+        <div class="faq-item faq-accordion">
+          <button class="faq-question" aria-expanded="false">How accurate is the citation data?</button>
+          <div class="faq-answer" hidden>We run real buyer-intent prompts directly against ChatGPT and record every response verbatim. We do not simulate or model responses. What you see in Covable is exactly what ChatGPT returned.</div>
+        </div>
+        <div class="faq-item faq-accordion">
+          <button class="faq-question" aria-expanded="false">How often does my visibility score update?</button>
+          <div class="faq-answer" hidden>Your score refreshes every weekly scan. As new sources get cited and old ones drop out, your score moves automatically to reflect the latest citation patterns.</div>
+        </div>
+        <div class="faq-item faq-accordion">
+          <button class="faq-question" aria-expanded="false">Is my data private?</button>
+          <div class="faq-answer" hidden>Yes. Your brand data, prompts, and scan results are only visible to your account. We do not share or sell your data. You can delete your account and all associated data at any time.</div>
         </div>
       </div>
     </div>
@@ -711,5 +746,15 @@
 <script type="module" src="/scripts/navbar.js"></script>
 <script type="module" src="/scripts/countup.js"></script>
 <script src="/scripts/ascii.js"></script>
+<script>
+document.querySelectorAll('.faq-accordion .faq-question').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var answer = btn.nextElementSibling;
+    var open = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+    if (open) { answer.hidden = true; } else { answer.hidden = false; }
+  });
+});
+</script>
 </body>
 </html>

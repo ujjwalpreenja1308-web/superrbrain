@@ -281,19 +281,53 @@ nav.nav-collapsed .nav-btn-start {
 /* ── FAQ ── */
 .faq-item {
   border-top: 1px solid var(--border);
-  padding: 24px 0;
+}
+.faq-item:last-child {
+  border-bottom: 1px solid var(--border);
 }
 .faq-question {
   font-size: 15px;
   font-weight: 500;
   color: var(--text-primary);
-  margin-bottom: 12px;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  padding: 20px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  font-family: inherit;
+  transition: color 120ms ease;
+}
+.faq-question:hover {
+  color: var(--text-secondary);
+}
+.faq-question::after {
+  content: '+';
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition: transform 200ms ease, color 120ms ease;
+}
+.faq-question[aria-expanded="true"]::after {
+  transform: rotate(45deg);
+  color: var(--accent);
 }
 .faq-answer {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 300;
   color: var(--text-secondary);
   line-height: 1.8;
+  padding-bottom: 20px;
+  overflow: hidden;
+  transition: max-height 250ms ease, opacity 200ms ease;
+}
+.faq-answer[hidden] {
+  display: none;
 }
 
 /* ── Metric display ── */
