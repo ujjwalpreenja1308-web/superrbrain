@@ -297,6 +297,18 @@ nav.nav-collapsed .nav-btn-start {
 }
 
 /* ── Metric display ── */
+.metric-cell {
+  background: var(--bg-primary);
+  padding: 40px;
+  text-align: center;
+}
+@media (max-width: 768px) {
+  .metric-cell {
+    padding: 28px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .metric-cell:last-child { border-bottom: none; }
+}
 .metric-number {
   font-size: 56px;
   font-weight: 300;
