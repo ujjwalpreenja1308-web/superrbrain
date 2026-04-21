@@ -5,9 +5,125 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Covable - AI Citation Intelligence</title>
   <meta name="description" content="Every conversation someone has with ChatGPT about your category is sending them to a competitor. Covable shows you exactly where and helps you close the gap." />
+  <link rel="canonical" href="https://covable.com/" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Open Graph -->
   <meta property="og:title" content="Covable - AI Citation Intelligence" />
   <meta property="og:description" content="Every conversation someone has with ChatGPT about your category is sending them to a competitor. Covable shows you exactly where and helps you close the gap." />
   <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://covable.com/" />
+  <meta property="og:image" content="https://covable.com/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:site_name" content="Covable" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Covable - AI Citation Intelligence" />
+  <meta name="twitter:description" content="Every conversation someone has with ChatGPT about your category is sending them to a competitor. Covable shows you exactly where and helps you close the gap." />
+  <meta name="twitter:image" content="https://covable.com/og-image.png" />
+
+  <!-- JSON-LD: SoftwareApplication + Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "Covable",
+        "url": "https://covable.com",
+        "description": "AI Citation Intelligence platform that shows brands where ChatGPT cites competitors instead of them, and generates content to close those citation gaps.",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "offers": [
+          {
+            "@type": "Offer",
+            "name": "Starter",
+            "price": "9.00",
+            "priceCurrency": "USD",
+            "billingPeriod": "P1M"
+          },
+          {
+            "@type": "Offer",
+            "name": "Growth",
+            "price": "29.00",
+            "priceCurrency": "USD",
+            "billingPeriod": "P1M"
+          },
+          {
+            "@type": "Offer",
+            "name": "Pro",
+            "price": "79.00",
+            "priceCurrency": "USD",
+            "billingPeriod": "P1M"
+          }
+        ]
+      },
+      {
+        "@type": "Organization",
+        "name": "Covable",
+        "url": "https://covable.com",
+        "logo": "https://covable.com/logo.svg",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "email": "hello@covable.com",
+          "contactType": "customer support"
+        }
+      }
+    ]
+  }
+  </script>
+
+  <!-- JSON-LD: FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Which AI do you monitor right now?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "ChatGPT (GPT-4o) in v1. We built for depth before breadth. It's better to have reliable, accurate data from one engine than noisy coverage across many. More engines ship in v2."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is Covable different from traditional SEO tools?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Traditional SEO tracks Google rankings. Covable tracks AI citations: a completely separate signal. A page can rank #1 on Google and never appear in a ChatGPT response. We measure what AI recommends, which is increasingly where buyers go first."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What exactly is a citation gap?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A citation gap is a specific URL that ChatGPT cites when recommending competitors in your category, but your brand isn't mentioned in it. Each gap is a concrete piece of content you can target to get cited alongside or instead of your competitor."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does the generated content sound AI-written?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Every piece is scored on four dimensions before you see it: human-sounding, platform match, natural brand mention, and on-topic. Content that doesn't pass is regenerated automatically. You only ever see the best attempt."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How quickly do score changes show up after I post content?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "ChatGPT's training data updates on its own cycle, typically 2 to 6 weeks after content is live and indexed. Your score updates every time you run a scan, so you'll see the delta as it happens."
+        }
+      }
+    ]
+  }
+  </script>
   <!-- Preload critical fonts -->
   <link rel="preload" as="font" href="/fonts/PPEditorialNew-Ultralight.woff" type="font/woff" crossorigin />
   <link rel="preload" as="font" href="/fonts/SFPRODISPLAYREGULAR.woff" type="font/woff" crossorigin />
@@ -576,6 +692,7 @@
 }
 </style>
 
+<noscript><style>.reveal { opacity: 1; transform: none; }</style></noscript>
 <script type="module" src="/scripts/reveal.js"></script>
 <script type="module" src="/scripts/navbar.js"></script>
 <script type="module" src="/scripts/countup.js"></script>
