@@ -233,18 +233,6 @@ function PlanPage() {
     return null;
   }
 
-  // Auth error (401) — sign out and redirect to sign-in
-  if (meError) {
-    supabase.auth.signOut().then(() => {
-      window.location.replace(getSignInUrl());
-    });
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
   // Trial — show chooser
   return <PlanChooser />;
 }
