@@ -25,7 +25,7 @@ export interface UsePlanResult extends PlanLimits {
 export function usePlan(): UsePlanResult {
   const { user } = useAuth();
 
-  const { data: me, isLoading } = useQuery<MeResponse>({
+  const { data: me, isLoading, isFetching } = useQuery<MeResponse>({
     queryKey: ["me", user?.id],
     queryFn: () => api.get<MeResponse>("/api/me"),
     enabled: !!user,
@@ -40,13 +40,17 @@ export function usePlan(): UsePlanResult {
   const trialExpired = tier === "trial" && trialExpiresAt !== null && trialExpiresAt < new Date();
   const hasAccess = tier !== "trial" || !trialExpired;
 
+  // isLoading: no data yet (first fetch). isFetching: any in-flight request.
+  // PlanGuard must wait for isFetching to settle so stale cache doesn't gate paid users.
+  const loading = (isLoading || isFetching) && !!user;
+
   return {
     ...PLAN_LIMITS[tier],
     tier,
     trialExpired,
     trialExpiresAt,
     hasAccess,
-    isLoading: isLoading && !!user,
+    isLoading: loading,
   };
 }
 
