@@ -23,7 +23,8 @@ export async function authMiddleware(c: Context, next: Next) {
   } = await supabaseAdmin.auth.getUser(token);
 
   if (error || !user) {
-    return c.json({ error: "Unauthorized" }, 401);
+    console.error("[auth] getUser failed:", error?.message, error?.status, error?.code);
+    return c.json({ error: "Unauthorized", debug: error?.message }, 401);
   }
 
   c.set("user", user);
