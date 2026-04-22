@@ -113,31 +113,47 @@ const DODO_PRODUCTS: Record<string, string> = {
   pro:     import.meta.env.VITE_DODO_PRODUCT_PRO_MONTHLY     ?? "",
 };
 
-/** Blocks access when trial has expired. Settings always accessible. */
+/** Blocks access to paid-only routes. Trial users (active or expired) are redirected to /plan. */
 function PlanGuard({ children }: { children: React.ReactNode }) {
   const plan = usePlan();
+  const navigate = useNavigate();
   const location = useLocation();
 
-  // Trial expired → block access except settings
-  if (plan.trialExpired && location.pathname !== "/settings") {
+  // Still loading — don't flash the gate
+  if (plan.isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-6">
-        <div className="max-w-sm text-center space-y-4">
-          <div className="text-4xl">⏱</div>
-          <h2 className="text-xl font-semibold">Your trial has ended</h2>
-          <p className="text-sm text-muted-foreground">
-            Choose a plan to continue using Covable. Your data is safe and waiting for you.
-          </p>
-          <a
-            href="/settings?tab=billing"
-            className="inline-block w-full rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            View plans
-          </a>
-          <p className="text-xs text-muted-foreground">Cancel anytime · No hidden fees</p>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
+  }
+
+  // Trial (active or expired) → must pick a plan. Settings always accessible.
+  if (plan.tier === "trial" && location.pathname !== "/settings") {
+    // Expired trial — show hard block with billing link
+    if (plan.trialExpired) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-background px-6">
+          <div className="max-w-sm text-center space-y-4">
+            <div className="text-4xl">⏱</div>
+            <h2 className="text-xl font-semibold">Your trial has ended</h2>
+            <p className="text-sm text-muted-foreground">
+              Choose a plan to continue using Covable. Your data is safe and waiting for you.
+            </p>
+            <a
+              href="/plan"
+              className="inline-block w-full rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              View plans
+            </a>
+            <p className="text-xs text-muted-foreground">Cancel anytime · No hidden fees</p>
+          </div>
+        </div>
+      );
+    }
+    // Active trial — redirect to /plan to pick a plan
+    navigate("/plan", { replace: true });
+    return null;
   }
 
   return <>{children}</>;

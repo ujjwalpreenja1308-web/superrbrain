@@ -15,15 +15,17 @@ interface MeResponse {
 }
 
 export interface UsePlanResult extends PlanLimits {
+  tier: PlanTier;
   trialExpired: boolean;
   trialExpiresAt: Date | null;
   hasAccess: boolean;
+  isLoading: boolean;
 }
 
 export function usePlan(): UsePlanResult {
   const { user } = useAuth();
 
-  const { data: me } = useQuery<MeResponse>({
+  const { data: me, isLoading } = useQuery<MeResponse>({
     queryKey: ["me", user?.id],
     queryFn: () => api.get<MeResponse>("/api/me"),
     enabled: !!user,
@@ -39,9 +41,11 @@ export function usePlan(): UsePlanResult {
 
   return {
     ...PLAN_LIMITS[tier],
+    tier,
     trialExpired,
     trialExpiresAt,
     hasAccess,
+    isLoading: isLoading && !!user,
   };
 }
 
