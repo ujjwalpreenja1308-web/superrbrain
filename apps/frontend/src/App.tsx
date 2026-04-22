@@ -182,7 +182,7 @@ function PlanPage() {
     return () => clearTimeout(t);
   }, [isAwaitingPayment]);
 
-  const { data: me, isLoading: meLoading, isError: meError } = useQuery({
+  const { data: me, isLoading: meLoading, isFetching: meFetching, isError: meError } = useQuery({
     queryKey: ["me", user?.id],
     queryFn: () => api.get<{ plan: string }>("/api/me"),
     enabled: !!user,
@@ -195,8 +195,8 @@ function PlanPage() {
   const params = new URLSearchParams(window.location.search);
   const payment = params.get("payment");
 
-  // Wait for plan to load
-  if (meLoading) {
+  // Wait for fresh plan — meLoading is false when stale cache exists, so also check meFetching
+  if (meLoading || meFetching) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
