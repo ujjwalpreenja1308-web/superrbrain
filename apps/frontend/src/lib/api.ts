@@ -30,7 +30,15 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 async function getHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  const { data: { session } } = await supabase.auth.getSession();
+
+  let { data: { session } } = await supabase.auth.getSession();
+
+  // If no session or access token looks expired, try refreshing first
+  if (!session?.access_token) {
+    const { data: refreshed } = await supabase.auth.refreshSession();
+    session = refreshed.session;
+  }
+
   if (session?.access_token) {
     headers["Authorization"] = `Bearer ${session.access_token}`;
   }
