@@ -61,11 +61,10 @@ const queryClient = new QueryClient({
   },
 });
 
-// On every sign-in, clear the plan chooser dismiss flag and invalidate
-// the /api/me cache so PlanChooser always shows for fresh trial users.
+// Invalidate /api/me cache on auth events so plan status is always fresh.
 supabase.auth.onAuthStateChange((event) => {
-  if (event === "SIGNED_IN") {
-    sessionStorage.removeItem("plan_chooser_dismissed");
+  if (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") {
+    if (event === "SIGNED_IN") sessionStorage.removeItem("plan_chooser_dismissed");
     queryClient.invalidateQueries({ queryKey: ["me"] });
   }
 });
@@ -187,7 +186,8 @@ function PlanPage() {
     queryKey: ["me", user?.id],
     queryFn: () => api.get<{ plan: string }>("/api/me"),
     enabled: !!user,
-    staleTime: isAwaitingPayment ? 0 : 60_000,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
     refetchInterval: isAwaitingPayment ? 3000 : false,
     retry: 2,
   });

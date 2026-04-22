@@ -29,7 +29,8 @@ export function usePlan(): UsePlanResult {
     queryKey: ["me", user?.id],
     queryFn: () => api.get<MeResponse>("/api/me"),
     enabled: !!user,
-    staleTime: 60_000,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const rawTier = me?.plan ?? "trial";
