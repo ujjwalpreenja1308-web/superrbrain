@@ -15,7 +15,7 @@ meRoutes.get("", async (c) => {
 
   const { data: sub } = await supabaseAdmin
     .from("subscriptions")
-    .select("plan, status, trial_expires_at, current_period_end, dodo_subscription_id")
+    .select("plan, plan_override, status, trial_expires_at, current_period_end, dodo_subscription_id")
     .eq("user_id", userId)
     .single();
 
@@ -31,8 +31,10 @@ meRoutes.get("", async (c) => {
     return c.json({ plan: "trial", status: "active", trial_expires_at: trialExpiresAt, dodo_subscription_id: null });
   }
 
+  const effectivePlan = sub.plan_override ?? sub.plan;
+
   return c.json({
-    plan: sub.plan,
+    plan: effectivePlan,
     status: sub.status,
     trial_expires_at: sub.trial_expires_at ?? null,
     current_period_end: sub.current_period_end ?? null,

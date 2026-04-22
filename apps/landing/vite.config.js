@@ -2,12 +2,14 @@ import { defineConfig, loadEnv } from 'vite'
 import fs from 'fs'
 import path from 'path'
 
-// Vite plugin: strips the <!-- INLINE_ASCII --> placeholder (ASCII is now loaded via fetch)
+// Vite plugin: inlines ascii-snippet.html at build time so it renders immediately
 function inlineAsciiPlugin() {
   return {
     name: 'inline-ascii',
     transformIndexHtml(html) {
-      return html.replace('<!-- INLINE_ASCII -->', '')
+      const snippetPath = path.resolve(__dirname, 'public/ascii-snippet.html')
+      const snippet = fs.existsSync(snippetPath) ? fs.readFileSync(snippetPath, 'utf-8') : ''
+      return html.replace('<!-- INLINE_ASCII -->', snippet)
     }
   }
 }
