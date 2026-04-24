@@ -25,16 +25,15 @@ export async function authMiddleware(c: Context, next: Next) {
 
   const authorization = c.req.header("Authorization");
   if (!authorization?.startsWith("Bearer ")) {
+    console.error("[auth] No Bearer token");
     return c.json({ error: "Unauthorized" }, 401);
   }
 
   const token = authorization.slice(7);
 
-  // Decode the JWT to get user ID and expiry — Supabase tokens are RS256/ES256
-  // signed by Supabase's auth server, so decoding without verify is safe here
-  // since we're trusting the token came from Supabase's infrastructure.
   const payload = decodeJwtPayload(token);
   if (!payload) {
+    console.error("[auth] Failed to decode JWT");
     return c.json({ error: "Unauthorized" }, 401);
   }
 
@@ -42,25 +41,30 @@ export async function authMiddleware(c: Context, next: Next) {
   const sub = payload.sub as string | undefined;
   const role = payload.role as string | undefined;
 
-  // Reject expired tokens
   if (!exp || Date.now() / 1000 > exp) {
+    console.error("[auth] Token expired", { exp, now: Date.now() / 1000, sub });
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  // Must be an authenticated user token (not anon or service role)
   if (!sub || role !== "authenticated") {
+    console.error("[auth] Bad role or missing sub", { role, sub });
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  // Create a user-scoped Supabase client to verify the token is still valid
-  const userClient = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
-    { global: { headers: { Authorization: `Bearer ${token}` } } }
-  );
+  const anonKey = process.env.SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.SUPABASE_URL;
+  if (!anonKey || !supabaseUrl) {
+    console.error("[auth] Missing SUPABASE_URL or SUPABASE_ANON_KEY", { supabaseUrl: !!supabaseUrl, anonKey: !!anonKey });
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const userClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
   const { data: { user }, error } = await userClient.auth.getUser();
 
   if (error || !user) {
+    console.error("[auth] getUser failed", { error: error?.message, hasUser: !!user, sub });
     return c.json({ error: "Unauthorized" }, 401);
   }
 
