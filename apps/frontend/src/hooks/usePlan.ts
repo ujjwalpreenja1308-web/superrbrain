@@ -31,7 +31,7 @@ interface UsePlanOptions {
 export function usePlan(options: UsePlanOptions = {}): UsePlanResult {
   const { user } = useAuth();
 
-  const { data: me, isLoading, isFetching, isError, refetch } = useQuery<MeResponse>({
+  const { data: me, isLoading, isError, refetch } = useQuery<MeResponse>({
     queryKey: ["me", user?.id],
     queryFn: () => api.get<MeResponse>("/api/me"),
     enabled: !!user,
@@ -47,9 +47,9 @@ export function usePlan(options: UsePlanOptions = {}): UsePlanResult {
   const trialExpired = tier === "trial" && trialExpiresAt !== null && trialExpiresAt < new Date();
   const hasAccess = tier !== "trial" || !trialExpired;
 
-  // isLoading: no data yet (first fetch). isFetching: any in-flight request.
-  // PlanGuard must wait for isFetching to settle so stale cache doesn't gate paid users.
-  const loading = (isLoading || isFetching) && !!user;
+  // Only block route rendering on the first load. Background refetches happen on
+  // focus and should not unmount forms such as onboarding.
+  const loading = isLoading && !!user;
 
   return {
     ...PLAN_LIMITS[tier],
