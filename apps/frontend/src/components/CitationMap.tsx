@@ -143,21 +143,21 @@ export function CitationMap({ citations, brandName, totalPrompts }: CitationMapP
 
   function renderCitationCard() {
     return (
-    <Card className="flex flex-col min-h-0 h-full">
-      <CardHeader className="pb-2 shrink-0">
+    <Card className="relative flex flex-col min-h-0 h-full">
+      {!expanded && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="absolute left-3 top-3 z-10 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-muted hover:text-foreground"
+          aria-label="Expand citation map"
+          title="Expand citation map"
+        >
+          <Maximize2 className="h-3.5 w-3.5" />
+        </button>
+      )}
+      <CardHeader className={`pb-2 shrink-0 ${expanded ? "" : "pl-14"}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-start gap-2">
-            {!expanded && (
-              <button
-                type="button"
-                onClick={() => setExpanded(true)}
-                className="mt-[-5px] inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                aria-label="Expand citation map"
-                title="Expand citation map"
-              >
-                <Maximize2 className="h-3.5 w-3.5" />
-              </button>
-            )}
             <div>
               <CardTitle className="text-sm">Citation Map</CardTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
