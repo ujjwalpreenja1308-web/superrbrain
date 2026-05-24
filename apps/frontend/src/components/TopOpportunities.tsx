@@ -1,16 +1,33 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Zap, ExternalLink } from "lucide-react";
+import { Zap, ExternalLink, Loader2 } from "lucide-react";
+import { useStartExecution } from "@/hooks/useExecution";
 import type { CitationGap } from "@covable/shared";
 
 interface TopOpportunitiesProps {
   gaps: CitationGap[];
+  brandId?: string;
 }
 
-export function TopOpportunities({ gaps }: TopOpportunitiesProps) {
+export function TopOpportunities({ gaps, brandId }: TopOpportunitiesProps) {
+  const navigate = useNavigate();
+  const startExecution = useStartExecution(brandId ?? "");
+  const [startingGapId, setStartingGapId] = useState<string | null>(null);
   const top3 = gaps.slice(0, 3);
+
+  async function handleGenerateContent(gapId: string) {
+    if (!brandId) return;
+    setStartingGapId(gapId);
+    try {
+      const result = await startExecution.mutateAsync(gapId);
+      navigate(`/content/${result.job_id}`);
+    } finally {
+      setStartingGapId(null);
+    }
+  }
 
   return (
     <Card>
@@ -56,11 +73,18 @@ export function TopOpportunities({ gaps }: TopOpportunitiesProps) {
             )}
             {gap.source_type === "reddit" && (
               <div className="mt-3">
-                <Button size="sm" variant="outline" asChild>
-                  <Link to="/gap-queue">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleGenerateContent(gap.id)}
+                  disabled={!brandId || startingGapId === gap.id || startExecution.isPending}
+                >
+                  {startingGapId === gap.id ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
                     <Zap className="h-3 w-3" />
-                    Generate Content
-                  </Link>
+                  )}
+                  Generate Content
                 </Button>
               </div>
             )}

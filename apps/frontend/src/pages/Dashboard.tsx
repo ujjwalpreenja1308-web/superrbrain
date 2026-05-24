@@ -204,7 +204,7 @@ export function Dashboard() {
 
         {/* Right column: opportunities */}
         <div className="min-h-0 overflow-y-auto">
-          <TopOpportunities gaps={gaps ?? []} />
+          <TopOpportunities gaps={gaps ?? []} brandId={brandId} />
         </div>
       </div>
     </div>
