@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Maximize2, X } from "lucide-react";
 import type { Citation } from "@covable/shared";
 
 interface CitationMapProps {
@@ -39,6 +39,7 @@ const SECTION_DESC: Record<string, string> = {
 };
 
 const PAGE_SIZE = 8;
+const EXPANDED_PAGE_SIZE = 14;
 
 function CitationRow({
   cit,
@@ -94,6 +95,7 @@ function CitationRow({
 }
 
 export function CitationMap({ citations, brandName, totalPrompts }: CitationMapProps) {
+  const [expanded, setExpanded] = useState(false);
   const grouped = new Map<string, (Citation & { frequency_score: number })[]>();
   for (const cit of citations) {
     const type = cit.source_type ?? "other";
@@ -110,8 +112,19 @@ export function CitationMap({ citations, brandName, totalPrompts }: CitationMapP
 
   const currentTab = sections.includes(activeTab) ? activeTab : sections[0];
   const items = grouped.get(currentTab) ?? [];
-  const totalPages = Math.ceil(items.length / PAGE_SIZE);
-  const pageItems = items.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const pageSize = expanded ? EXPANDED_PAGE_SIZE : PAGE_SIZE;
+  const totalPages = Math.ceil(items.length / pageSize);
+  const safePage = totalPages > 0 ? Math.min(page, totalPages - 1) : 0;
+  const pageItems = items.slice(safePage * pageSize, (safePage + 1) * pageSize);
+
+  useEffect(() => {
+    if (!expanded) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setExpanded(false);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [expanded]);
 
   function switchTab(tab: string) {
     setActiveTab(tab);
@@ -128,29 +141,53 @@ export function CitationMap({ citations, brandName, totalPrompts }: CitationMapP
     );
   }
 
-  return (
+  function renderCitationCard() {
+    return (
     <Card className="flex flex-col min-h-0 h-full">
       <CardHeader className="pb-2 shrink-0">
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-sm">Citation Map</CardTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Where AI sends people · {totalPrompts > 0 ? `${totalPrompts} prompts` : "no data yet"}
-            </p>
+          <div className="flex items-start gap-2">
+            {!expanded && (
+              <button
+                type="button"
+                onClick={() => setExpanded(true)}
+                className="mt-[-5px] inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="Expand citation map"
+                title="Expand citation map"
+              >
+                <Maximize2 className="h-3.5 w-3.5" />
+              </button>
+            )}
+            <div>
+              <CardTitle className="text-sm">Citation Map</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Where AI sends people · {totalPrompts > 0 ? `${totalPrompts} prompts` : "no data yet"}
+              </p>
+            </div>
           </div>
-          {totalPages > 1 && (
+          {expanded ? (
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label="Close citation map"
+              title="Close"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          ) : totalPages > 1 && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <button
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
-                disabled={page === 0}
+                disabled={safePage === 0}
                 className="px-2 py-1 rounded hover:bg-muted disabled:opacity-40 transition-colors"
               >
                 ←
               </button>
-              <span>{page + 1} / {totalPages}</span>
+              <span>{safePage + 1} / {totalPages}</span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                disabled={page === totalPages - 1}
+                disabled={safePage === totalPages - 1}
                 className="px-2 py-1 rounded hover:bg-muted disabled:opacity-40 transition-colors"
               >
                 →
@@ -158,6 +195,26 @@ export function CitationMap({ citations, brandName, totalPrompts }: CitationMapP
             </div>
           )}
         </div>
+
+        {expanded && totalPages > 1 && (
+          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+            <button
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={safePage === 0}
+              className="px-2 py-1 rounded hover:bg-muted disabled:opacity-40 transition-colors"
+            >
+              ←
+            </button>
+            <span>{safePage + 1} / {totalPages}</span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              disabled={safePage === totalPages - 1}
+              className="px-2 py-1 rounded hover:bg-muted disabled:opacity-40 transition-colors"
+            >
+              →
+            </button>
+          </div>
+        )}
 
         {/* Tab strip */}
         <div className="flex gap-1 mt-2 overflow-x-auto scrollbar-none flex-wrap">
@@ -214,5 +271,28 @@ export function CitationMap({ citations, brandName, totalPrompts }: CitationMapP
         </table>
       </CardContent>
     </Card>
+    );
+  }
+
+  return (
+    <>
+      {renderCitationCard()}
+      {expanded && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => setExpanded(false)}
+          />
+          <div
+            className="relative h-[86vh] w-full max-w-6xl animate-in fade-in slide-in-from-bottom-6 duration-300"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Expanded citation map"
+          >
+            {renderCitationCard()}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
