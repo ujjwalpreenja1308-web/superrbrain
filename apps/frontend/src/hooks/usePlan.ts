@@ -20,17 +20,24 @@ export interface UsePlanResult extends PlanLimits {
   trialExpiresAt: Date | null;
   hasAccess: boolean;
   isLoading: boolean;
+  isError: boolean;
+  refetch: () => void;
 }
 
-export function usePlan(): UsePlanResult {
+interface UsePlanOptions {
+  refetchInterval?: number | false;
+}
+
+export function usePlan(options: UsePlanOptions = {}): UsePlanResult {
   const { user } = useAuth();
 
-  const { data: me, isLoading, isFetching } = useQuery<MeResponse>({
+  const { data: me, isLoading, isFetching, isError, refetch } = useQuery<MeResponse>({
     queryKey: ["me", user?.id],
     queryFn: () => api.get<MeResponse>("/api/me"),
     enabled: !!user,
     staleTime: 0,
     refetchOnWindowFocus: true,
+    refetchInterval: options.refetchInterval,
   });
 
   const rawTier = me?.plan ?? "trial";
@@ -51,6 +58,8 @@ export function usePlan(): UsePlanResult {
     trialExpiresAt,
     hasAccess,
     isLoading: loading,
+    isError,
+    refetch,
   };
 }
 

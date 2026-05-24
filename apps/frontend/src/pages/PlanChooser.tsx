@@ -107,7 +107,12 @@ export function PlanChooser({ onSkip }: { onSkip?: () => void }) {
               <td style={{ ...featuredTd, color: "#C8F53C" }}><span style={{ fontSize: 22, fontWeight: 700 }}>$29</span><span style={{ color: "#8A8A82", fontSize: 12 }}>/mo</span></td>
               <td style={tdStyle}><span style={{ fontSize: 22, fontWeight: 700 }}>$79</span><span style={{ color: "#8A8A82", fontSize: 12 }}>/mo</span></td>
             </tr>
-            <Row label="AI prompts / month" starter="10" growth="30" pro="60" />
+            <Row
+              label="Tracked prompts / brand"
+              starter="50"
+              growth="50"
+              pro="50"
+            />
             <CheckRow label="ChatGPT response analysis" starter growth pro />
             <tr>
               <td style={{ ...tdStyle, color: "#8A8A82", fontWeight: 400 }}>

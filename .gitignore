@@ -9,3 +9,8 @@ dist/
 .turbo
 .trigger
 .mcp.json
+
+# Agent runtime state (brand run checkpoints, generated assets)
+agent/state/
+agent/**/__pycache__/
+agent/**/*.pyc

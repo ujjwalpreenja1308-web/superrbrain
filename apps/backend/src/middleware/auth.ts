@@ -1,5 +1,6 @@
 import type { Context, Next } from "hono";
 import { createClient } from "@supabase/supabase-js";
+import { isLocalDevBypassEnabled } from "../lib/env.js";
 
 const DEV_USER_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -16,8 +17,13 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 }
 
 export async function authMiddleware(c: Context, next: Next) {
+  if (c.req.path === "/api/reddit/connect/callback") {
+    await next();
+    return;
+  }
+
   // In dev, skip auth and inject a fixed user ID so all routes work without a session
-  if (process.env.FRONTEND_URL?.includes("localhost")) {
+  if (isLocalDevBypassEnabled()) {
     c.set("userId", DEV_USER_ID);
     await next();
     return;

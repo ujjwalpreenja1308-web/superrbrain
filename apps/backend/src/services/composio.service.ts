@@ -1,4 +1,5 @@
 import { Composio, ComposioToolSet } from "composio-core";
+import { requireEnv } from "../lib/env.js";
 
 const REDDIT_APP_SLUG = "reddit";
 
@@ -32,7 +33,7 @@ export async function initiateRedditConnection(userId: string): Promise<string> 
     request = await client.connectedAccounts.initiate({
       appName: REDDIT_APP_SLUG,
       entityId: entityId(userId),
-      redirectUri: `${process.env.BACKEND_URL}/api/reddit/connect/callback`,
+      redirectUri: `${requireEnv("BACKEND_URL")}/api/reddit/connect/callback?user_id=${encodeURIComponent(userId)}`,
     });
   } catch (err: any) {
     const msg = err?.errCode || err?.message || String(err);

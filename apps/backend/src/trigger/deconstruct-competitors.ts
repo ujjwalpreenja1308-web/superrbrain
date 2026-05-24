@@ -34,56 +34,53 @@ export const deconstructCompetitors = task({
 
     logger.info(`Found ${urls.length} URLs to deconstruct`);
 
-    let processed = 0;
-    let failed = 0;
+    const results = await Promise.all(
+      urls.map(async (url, i) => {
+        try {
+          const { data: urlRow, error: urlError } = await supabaseAdmin
+            .from("competitor_urls")
+            .upsert(
+              {
+                prompt_id: promptId,
+                url,
+                rank: i + 1,
+                last_crawled_at: new Date().toISOString(),
+              },
+              { onConflict: "prompt_id,url" }
+            )
+            .select("id")
+            .single();
 
-    for (let i = 0; i < urls.length; i++) {
-      const url = urls[i];
+          if (urlError || !urlRow) {
+            logger.error(`Failed to upsert competitor_url for ${url}`, { error: urlError?.message });
+            return "failed";
+          }
 
-      try {
-        // Upsert competitor_urls row
-        const { data: urlRow, error: urlError } = await supabaseAdmin
-          .from("competitor_urls")
-          .upsert(
+          logger.info(`Deconstructing ${url}...`);
+          const blueprint = await deconstructUrl(url, prompt.text, prompt.intent);
+
+          await supabaseAdmin.from("competitor_blueprints").upsert(
             {
-              prompt_id: promptId,
-              url,
-              rank: i + 1,
-              last_crawled_at: new Date().toISOString(),
+              competitor_url_id: urlRow.id,
+              schema: blueprint.schema,
+              why_winning_signals: blueprint.why_winning_signals,
+              raw_markdown: blueprint.raw_markdown,
+              crawled_at: new Date().toISOString(),
             },
-            { onConflict: "prompt_id,url" }
-          )
-          .select("id")
-          .single();
+            { onConflict: "competitor_url_id" }
+          );
 
-        if (urlError || !urlRow) {
-          logger.error(`Failed to upsert competitor_url for ${url}`, { error: urlError?.message });
-          failed++;
-          continue;
+          logger.info(`Deconstructed ${url} — signals: ${blueprint.why_winning_signals.join(", ")}`);
+          return "ok";
+        } catch (err: any) {
+          logger.error(`Failed to deconstruct ${url}`, { error: err.message });
+          return "failed";
         }
+      })
+    );
 
-        logger.info(`Deconstructing ${url}...`);
-        const blueprint = await deconstructUrl(url, prompt.text, prompt.intent);
-
-        // Upsert blueprint (replace if re-crawled)
-        await supabaseAdmin.from("competitor_blueprints").upsert(
-          {
-            competitor_url_id: urlRow.id,
-            schema: blueprint.schema,
-            why_winning_signals: blueprint.why_winning_signals,
-            raw_markdown: blueprint.raw_markdown,
-            crawled_at: new Date().toISOString(),
-          },
-          { onConflict: "competitor_url_id" }
-        );
-
-        processed++;
-        logger.info(`Deconstructed ${url} — signals: ${blueprint.why_winning_signals.join(", ")}`);
-      } catch (err: any) {
-        logger.error(`Failed to deconstruct ${url}`, { error: err.message });
-        failed++;
-      }
-    }
+    const processed = results.filter((r) => r === "ok").length;
+    const failed = results.filter((r) => r === "failed").length;
 
     return { promptId, processed, failed };
   },

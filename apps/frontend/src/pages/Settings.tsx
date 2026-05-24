@@ -172,7 +172,7 @@ export function Settings() {
       monthly: PLAN_LIMITS.starter.price!,
       annual: PLAN_LIMITS.starter.price!,
       features: [
-        { label: `${PLAN_LIMITS.starter.maxPrompts} AI prompts / month`, included: true },
+        { label: `${PLAN_LIMITS.starter.maxPrompts} tracked prompts / brand`, included: true },
         { label: "ChatGPT response analysis", included: true },
         { label: "1 brand", included: true },
         { label: "Gap detection", included: true },
@@ -186,7 +186,7 @@ export function Settings() {
       monthly: PLAN_LIMITS.growth.price!,
       annual: PLAN_LIMITS.growth.price!,
       features: [
-        { label: `${PLAN_LIMITS.growth.maxPrompts} AI prompts / month`, included: true },
+        { label: `${PLAN_LIMITS.growth.maxPrompts} tracked prompts / brand`, included: true },
         { label: "ChatGPT response analysis", included: true },
         { label: `Reddit tracking (${PLAN_LIMITS.growth.maxKeywords} keywords, ${PLAN_LIMITS.growth.maxSubreddits} subreddits)`, included: true },
         { label: "~200 posts tracked / month", included: true },
@@ -200,7 +200,7 @@ export function Settings() {
       monthly: PLAN_LIMITS.pro.price!,
       annual: PLAN_LIMITS.pro.price!,
       features: [
-        { label: `${PLAN_LIMITS.pro.maxPrompts} AI prompts / month`, included: true },
+        { label: `${PLAN_LIMITS.pro.maxPrompts} tracked prompts / brand`, included: true },
         { label: "ChatGPT response analysis", included: true },
         { label: `Reddit tracking (${PLAN_LIMITS.pro.maxKeywords} keywords, ${PLAN_LIMITS.pro.maxSubreddits} subreddits)`, included: true },
         { label: `${PLAN_LIMITS.pro.maxPostsPerMonth}+ posts tracked / month`, included: true },

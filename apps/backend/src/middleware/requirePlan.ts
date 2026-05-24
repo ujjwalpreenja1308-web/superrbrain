@@ -1,17 +1,24 @@
 import { supabaseAdmin } from "../lib/supabase.js";
+import { isLocalDevBypassEnabled } from "../lib/env.js";
 import { AppError } from "./error.js";
 import { PLAN_LIMITS, type PlanTier } from "@covable/shared";
 
 export async function getPlanTier(userId: string): Promise<PlanTier> {
-  const { data } = await supabaseAdmin
+  if (isLocalDevBypassEnabled()) return "pro";
+  const { data, error } = await supabaseAdmin
     .from("subscriptions")
-    .select("plan, status, trial_expires_at")
+    .select("plan, plan_override, status, trial_expires_at")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
+
+  if (error) {
+    console.error("[plan] Failed to load subscription", { userId, error: error.message });
+    throw new AppError(500, "Failed to load plan");
+  }
 
   if (!data) return "trial";
 
-  const tier = (data.plan ?? "trial") as PlanTier;
+  const tier = (data.plan_override ?? data.plan ?? "trial") as PlanTier;
 
   if (tier === "trial" && data.trial_expires_at && new Date(data.trial_expires_at) < new Date()) {
     throw new AppError(403, "Your trial has expired. Please upgrade to continue.");
@@ -33,6 +40,7 @@ export async function checkFeature(userId: string, feature: "reddit" | "executio
 }
 
 export async function checkPromptLimit(userId: string, brandId: string, newCount: number): Promise<void> {
+  if (isLocalDevBypassEnabled()) return;
   const tier = await getPlanTier(userId);
   const max = PLAN_LIMITS[tier].maxPrompts;
   if (newCount > max) {

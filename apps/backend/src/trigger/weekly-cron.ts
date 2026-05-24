@@ -9,15 +9,15 @@ export const weeklyCron = schedules.task({
     const { data: pendingMonitors } = await supabaseAdmin
       .from("reddit_monitors")
       .select("id, pending_keywords, pending_subreddits")
-      .not("pending_keywords", "is", null);
+      .or("pending_keywords.not.is.null,pending_subreddits.not.is.null");
 
     if (pendingMonitors?.length) {
       for (const monitor of pendingMonitors) {
         await supabaseAdmin
           .from("reddit_monitors")
           .update({
-            keywords: monitor.pending_keywords,
-            subreddits: monitor.pending_subreddits ?? undefined,
+            ...(monitor.pending_keywords ? { keywords: monitor.pending_keywords } : {}),
+            ...(monitor.pending_subreddits ? { subreddits: monitor.pending_subreddits } : {}),
             pending_keywords: null,
             pending_subreddits: null,
             pending_effective_at: null,

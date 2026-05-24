@@ -11,6 +11,7 @@ import {
 } from "../services/composio.service.js";
 import { checkGuardrails } from "../services/reddit-guardrails.service.js";
 import { checkRedditLimits } from "../middleware/requirePlan.js";
+import { getPrimaryFrontendUrl } from "../lib/env.js";
 import type { AppVariables } from "../types.js";
 
 const app = new Hono<{ Variables: AppVariables }>();
@@ -50,11 +51,16 @@ app.get("/connect/status", async (c) => {
 
 // GET /api/reddit/connect/callback — Composio OAuth callback, upsert connection record
 app.get("/connect/callback", async (c) => {
-  const userId = c.get("userId") as string;
+  const frontendUrl = getPrimaryFrontendUrl();
+  const userId = (c.get("userId") as string | undefined) ?? c.req.query("user_id");
+  if (!userId) {
+    return c.redirect(`${frontendUrl}/gap-queue?error=connection_failed`);
+  }
+
   const connection = await getRedditConnection(userId);
 
   if (!connection) {
-    return c.redirect(`${process.env.FRONTEND_URL}/gap-queue?error=connection_failed`);
+    return c.redirect(`${frontendUrl}/gap-queue?error=connection_failed`);
   }
 
   // Fetch Reddit username and store connection record
@@ -73,7 +79,7 @@ app.get("/connect/callback", async (c) => {
       { onConflict: "user_id" }
     );
 
-  return c.redirect(`${process.env.FRONTEND_URL}/gap-queue?connected=1`);
+  return c.redirect(`${frontendUrl}/gap-queue?connected=1`);
 });
 
 // DELETE /api/reddit/connect — disconnect Reddit account
@@ -158,14 +164,26 @@ app.patch("/monitors/:id", async (c) => {
   const parsed = updateMonitorSchema.safeParse(body);
   if (!parsed.success) throw new AppError(400, parsed.error.errors[0].message);
 
+  const { data: existingMonitor } = await supabaseAdmin
+    .from("reddit_monitors")
+    .select("keywords, subreddits")
+    .eq("id", monitorId)
+    .eq("user_id", userId)
+    .single();
+
+  if (!existingMonitor) throw new AppError(404, "Monitor not found");
+
   // keyword/subreddit changes are staged as pending — applied next Monday by weekly cron
   const hasConfigChange = parsed.data.keywords !== undefined || parsed.data.subreddits !== undefined;
-  const isImmediateUpdate = !hasConfigChange; // automode / is_active can apply immediately
 
   let updatePayload: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
   if (hasConfigChange) {
-    if (parsed.data.keywords) await checkRedditLimits(userId, parsed.data.keywords, parsed.data.subreddits ?? []);
+    await checkRedditLimits(
+      userId,
+      parsed.data.keywords ?? existingMonitor.keywords ?? [],
+      parsed.data.subreddits ?? existingMonitor.subreddits ?? []
+    );
     if (parsed.data.keywords !== undefined) updatePayload.pending_keywords = parsed.data.keywords;
     if (parsed.data.subreddits !== undefined) updatePayload.pending_subreddits = parsed.data.subreddits;
     updatePayload.pending_effective_at = nextMondayAt9UTC().toISOString();

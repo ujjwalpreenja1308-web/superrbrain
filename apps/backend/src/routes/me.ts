@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { supabaseAdmin } from "../lib/supabase.js";
+import { AppError } from "../middleware/error.js";
 import type { AppVariables } from "../types.js";
 
 const meRoutes = new Hono<{ Variables: AppVariables }>();
@@ -13,21 +14,30 @@ const TRIAL_DAYS = 14;
 meRoutes.get("", async (c) => {
   const userId = c.get("userId");
 
-  const { data: sub } = await supabaseAdmin
+  const { data: sub, error: subError } = await supabaseAdmin
     .from("subscriptions")
     .select("plan, plan_override, status, trial_expires_at, current_period_end, dodo_subscription_id")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
+
+  if (subError) {
+    console.error("[me] Failed to load subscription", { userId, error: subError.message });
+    throw new AppError(500, "Failed to load plan");
+  }
 
   if (!sub) {
     // No subscription row yet — create trial
     const trialExpiresAt = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString();
-    await supabaseAdmin.from("subscriptions").insert({
+    const { error: insertError } = await supabaseAdmin.from("subscriptions").insert({
       user_id: userId,
       plan: "trial",
       status: "active",
       trial_expires_at: trialExpiresAt,
     });
+    if (insertError) {
+      console.error("[me] Failed to create trial subscription", { userId, error: insertError.message });
+      throw new AppError(500, "Failed to create trial");
+    }
     return c.json({ plan: "trial", status: "active", trial_expires_at: trialExpiresAt, dodo_subscription_id: null });
   }
 

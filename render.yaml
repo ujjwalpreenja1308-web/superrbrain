@@ -11,6 +11,8 @@ services:
         value: 3001
       - key: FRONTEND_URL
         value: https://home.covable.app
+      - key: BACKEND_URL
+        value: https://covable-backend.onrender.com
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
@@ -22,6 +24,14 @@ services:
       - key: PERPLEXITY_API_KEY
         sync: false
       - key: FIRECRAWL_API_KEY
+        sync: false
+      - key: BRIGHTDATA_API_KEY
+        sync: false
+      - key: APIFY_API_KEY
+        sync: false
+      - key: COMPOSIO_API_KEY
+        sync: false
+      - key: PUBLISHER_ENCRYPTION_KEY
         sync: false
       - key: TRIGGER_SECRET_KEY
         sync: false

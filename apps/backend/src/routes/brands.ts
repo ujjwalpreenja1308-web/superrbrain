@@ -4,6 +4,7 @@ import { supabaseAdmin } from "../lib/supabase.js";
 import { AppError } from "../middleware/error.js";
 import { tasks } from "@trigger.dev/sdk/v3";
 import { getPlanTier } from "../middleware/requirePlan.js";
+import { isLocalDevBypassEnabled } from "../lib/env.js";
 import { PLAN_LIMITS } from "@covable/shared";
 import type { AppVariables } from "../types.js";
 
@@ -14,20 +15,23 @@ app.post("/", async (c) => {
   const userId = c.get("userId") as string;
   const body = await c.req.json();
   const parsed = createBrandSchema.safeParse(body);
+  const isLocalDev = isLocalDevBypassEnabled();
 
   if (!parsed.success) {
     throw new AppError(400, parsed.error.errors[0].message);
   }
 
   // Enforce maxBrands per plan
-  const tier = await getPlanTier(userId);
-  const maxBrands = PLAN_LIMITS[tier].maxBrands;
-  const { count } = await supabaseAdmin
-    .from("brands")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
-  if ((count ?? 0) >= maxBrands) {
-    throw new AppError(403, `Your ${PLAN_LIMITS[tier].label} plan allows up to ${maxBrands} brand${maxBrands === 1 ? "" : "s"}.`);
+  if (!isLocalDev) {
+    const tier = await getPlanTier(userId);
+    const maxBrands = PLAN_LIMITS[tier].maxBrands;
+    const { count } = await supabaseAdmin
+      .from("brands")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId);
+    if ((count ?? 0) >= maxBrands) {
+      throw new AppError(403, `Your ${PLAN_LIMITS[tier].label} plan allows up to ${maxBrands} brand${maxBrands === 1 ? "" : "s"}.`);
+    }
   }
 
   const { data: brand, error } = await supabaseAdmin
@@ -132,6 +136,186 @@ app.get("/:id/report", async (c) => {
   }));
 
   return c.json({ engine_breakdown });
+});
+
+// POST /api/brands/:id/ingest — hermes pushes brand metadata + prompts directly (no AI onboarding)
+app.post("/:id/ingest", async (c) => {
+  const userId = c.get("userId") as string;
+  const brandId = c.req.param("id");
+
+  const { data: brand } = await supabaseAdmin
+    .from("brands")
+    .select("id")
+    .eq("id", brandId)
+    .eq("user_id", userId)
+    .single();
+
+  if (!brand) throw new AppError(404, "Brand not found");
+
+  const body = await c.req.json();
+  const { name, category, description, competitors, prompts } = body;
+
+  await supabaseAdmin
+    .from("brands")
+    .update({
+      ...(name && { name }),
+      ...(category && { category }),
+      ...(description && { description }),
+      ...(competitors && { competitors }),
+      status: "ready",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", brandId);
+
+  if (Array.isArray(prompts) && prompts.length > 0) {
+    await supabaseAdmin.from("prompts").delete().eq("brand_id", brandId);
+    await supabaseAdmin.from("prompts").insert(
+      prompts.map((p: { text: string; category?: string }) => ({
+        brand_id: brandId,
+        text: p.text,
+        category: p.category ?? null,
+        is_active: true,
+      }))
+    );
+  }
+
+  return c.json({ success: true, promptCount: prompts?.length ?? 0 });
+});
+
+// POST /api/brands/:id/results — hermes pushes query results directly (no AI firing)
+app.post("/:id/results", async (c) => {
+  const userId = c.get("userId") as string;
+  const brandId = c.req.param("id");
+
+  const { data: brand } = await supabaseAdmin
+    .from("brands")
+    .select("id, name, competitors")
+    .eq("id", brandId)
+    .eq("user_id", userId)
+    .single();
+
+  if (!brand) throw new AppError(404, "Brand not found");
+
+  const body = await c.req.json();
+  const { results, run_id } = body;
+
+  if (!Array.isArray(results) || results.length === 0) {
+    throw new AppError(400, "results array is required");
+  }
+
+  const runId: string = run_id || crypto.randomUUID();
+  const brandName: string = (brand.name as string) || "";
+  const competitors = ((brand.competitors as { name: string }[]) || []);
+
+  await supabaseAdmin.from("brands").update({ status: "running" }).eq("id", brandId);
+
+  const { enrichCitation, extractBrandsFromResponse } = await import("../services/citation.service.js");
+  const { computeReport } = await import("../services/scoring.service.js");
+
+  const urlData = new Map<string, { responseIds: string[]; responseText: string }>();
+
+  await Promise.all(
+    results.map(async (r: {
+      prompt_id: string;
+      engine: string;
+      raw_response: string;
+      citations: string[];
+      brand_mentioned: boolean;
+      brand_position: number | null;
+      competitor_mentions: { name: string; position: number | null }[];
+    }) => {
+      const { data: inserted } = await supabaseAdmin
+        .from("ai_responses")
+        .insert({
+          prompt_id: r.prompt_id,
+          brand_id: brandId,
+          engine: r.engine,
+          raw_response: r.raw_response,
+          brand_mentioned: r.brand_mentioned,
+          brand_position: r.brand_position,
+          competitor_mentions: r.competitor_mentions,
+          run_id: runId,
+        })
+        .select("id")
+        .single();
+
+      if (inserted?.id) {
+        for (const url of r.citations ?? []) {
+          const existing = urlData.get(url) || { responseIds: [], responseText: r.raw_response };
+          existing.responseIds.push(inserted.id);
+          urlData.set(url, existing);
+        }
+      }
+    })
+  );
+
+  await Promise.all(
+    Array.from(urlData.entries()).map(async ([url, data]) => {
+      const frequency = data.responseIds.length;
+      const primaryResponseId = data.responseIds[0];
+
+      const analysis = enrichCitation(url, data.responseText, brandName, competitors);
+      const extractedBrands = await extractBrandsFromResponse(data.responseText, brandName);
+      if (extractedBrands.length > 0) analysis.brands_mentioned = extractedBrands;
+
+      const { data: citation } = await supabaseAdmin
+        .from("citations")
+        .insert({
+          ai_response_id: primaryResponseId,
+          brand_id: brandId,
+          url: analysis.url,
+          domain: analysis.domain,
+          source_type: analysis.source_type,
+          title: analysis.title,
+          brands_mentioned: analysis.brands_mentioned,
+          content_snippet: analysis.content_snippet,
+          run_id: runId,
+        })
+        .select("id")
+        .single();
+
+      const brandMentioned = analysis.brands_mentioned.some(
+        (b) => b.name.toLowerCase() === brandName.toLowerCase()
+      );
+
+      if (!brandMentioned && citation?.id) {
+        const competitorsMentioned = analysis.brands_mentioned.filter((b) =>
+          competitors.some((c) => c.name.toLowerCase() === b.name.toLowerCase())
+        );
+        if (competitorsMentioned.length > 0) {
+          await Promise.all(
+            competitorsMentioned.map((comp) =>
+              supabaseAdmin.from("citation_gaps").insert({
+                brand_id: brandId,
+                competitor_name: comp.name,
+                source_url: analysis.url,
+                source_type: analysis.source_type,
+                opportunity_score: frequency * (comp.frequency || 1),
+                status: "open",
+                run_id: runId,
+              })
+            )
+          );
+        } else {
+          await supabaseAdmin.from("citation_gaps").insert({
+            brand_id: brandId,
+            competitor_name: "–",
+            source_url: analysis.url,
+            source_type: analysis.source_type,
+            opportunity_score: frequency,
+            status: "open",
+            run_id: runId,
+          });
+        }
+      }
+    })
+  );
+
+  const report = await computeReport(brandId, runId);
+
+  await supabaseAdmin.from("brands").update({ status: "ready" }).eq("id", brandId);
+
+  return c.json({ success: true, run_id: runId, visibility_score: report.visibility_score, gap_score: report.gap_score });
 });
 
 // POST /api/brands/:id/run — manually trigger monitoring run

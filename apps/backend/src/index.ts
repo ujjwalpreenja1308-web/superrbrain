@@ -18,16 +18,17 @@ import { reinforcementRoutes } from "./routes/reinforcement.js";
 import { authMiddleware } from "./middleware/auth.js";
 import { errorMiddleware, AppError } from "./middleware/error.js";
 import { rateLimitMiddleware } from "./middleware/rateLimit.js";
+import { getFrontendOrigins } from "./lib/env.js";
 import type { AppVariables } from "./types.js";
 const app = new Hono<{ Variables: AppVariables }>();
 
 app.use("*", logger());
 app.use("*", rateLimitMiddleware());
 
-if (!process.env.FRONTEND_URL) {
+const allowedOrigins = getFrontendOrigins();
+if (allowedOrigins.length === 0) {
   throw new Error("FRONTEND_URL environment variable is required");
 }
-const allowedOrigins = process.env.FRONTEND_URL.split(",").map((u) => u.trim());
 
 app.use(
   "*",

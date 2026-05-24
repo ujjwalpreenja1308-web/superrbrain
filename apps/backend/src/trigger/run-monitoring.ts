@@ -52,124 +52,125 @@ export const runMonitoring = task({
         location
       );
 
-      for (let i = 0; i < prompts.length; i++) {
-        const prompt = prompts[i];
-        const result = results[i];
-        if (!result) continue;
+      await Promise.all(
+        prompts.map(async (prompt, i) => {
+          const result = results[i];
+          if (!result) return;
 
-        try {
-          const { data: inserted } = await supabaseAdmin
-            .from("ai_responses")
+          try {
+            const { data: inserted } = await supabaseAdmin
+              .from("ai_responses")
+              .insert({
+                prompt_id: prompt.id,
+                brand_id: brandId,
+                engine: result.engine,
+                raw_response: result.raw_response,
+                brand_mentioned: result.brand_mentioned,
+                brand_position: result.brand_position,
+                competitor_mentions: result.competitor_mentions,
+                run_id: runId,
+              })
+              .select("id")
+              .single();
+
+            logger.info(
+              `[prompt ${i + 1}/${prompts.length}] brand_mentioned=${result.brand_mentioned}, citations=${result.citations.length}`
+            );
+
+            if (inserted?.id) {
+              for (const url of result.citations) {
+                const existing = urlData.get(url) || {
+                  responseIds: [],
+                  responseText: result.raw_response,
+                };
+                existing.responseIds.push(inserted.id);
+                urlData.set(url, existing);
+              }
+            }
+          } catch (err) {
+            logger.error(`Failed to save result for prompt ${i + 1}`, {
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
+        })
+      );
+
+      // Enrich citations directly from AI response text — no external scraping
+      logger.info(`Enriching ${urlData.size} unique citation URLs in parallel`);
+
+      await Promise.all(
+        Array.from(urlData.entries()).map(async ([url, data]) => {
+          const frequency = data.responseIds.length;
+          const primaryResponseId = data.responseIds[0];
+
+          const analysis = enrichCitation(
+            url,
+            data.responseText,
+            brand.name || "",
+            competitors
+          );
+
+          const extractedBrands = await extractBrandsFromResponse(
+            data.responseText,
+            brand.name || ""
+          );
+          if (extractedBrands.length > 0) {
+            analysis.brands_mentioned = extractedBrands;
+          }
+
+          const { data: citation } = await supabaseAdmin
+            .from("citations")
             .insert({
-              prompt_id: prompt.id,
+              ai_response_id: primaryResponseId,
               brand_id: brandId,
-              engine: result.engine,
-              raw_response: result.raw_response,
-              brand_mentioned: result.brand_mentioned,
-              brand_position: result.brand_position,
-              competitor_mentions: result.competitor_mentions,
+              url: analysis.url,
+              domain: analysis.domain,
+              source_type: analysis.source_type,
+              title: analysis.title,
+              brands_mentioned: analysis.brands_mentioned,
+              content_snippet: analysis.content_snippet,
               run_id: runId,
             })
             .select("id")
             .single();
 
-          logger.info(
-            `[prompt ${i + 1}/${prompts.length}] brand_mentioned=${result.brand_mentioned}, citations=${result.citations.length}`
+          const brandMentioned = analysis.brands_mentioned.some(
+            (b) => b.name.toLowerCase() === (brand.name || "").toLowerCase()
           );
 
-          if (inserted?.id) {
-            for (const url of result.citations) {
-              const existing = urlData.get(url) || {
-                responseIds: [],
-                responseText: result.raw_response,
-              };
-              existing.responseIds.push(inserted.id);
-              urlData.set(url, existing);
-            }
-          }
-        } catch (err) {
-          logger.error(`Failed to save result for prompt ${i + 1}`, {
-            error: err instanceof Error ? err.message : String(err),
-          });
-        }
-      }
+          if (!brandMentioned && citation?.id) {
+            const competitorsMentioned = analysis.brands_mentioned.filter((b) =>
+              competitors.some((c) => c.name.toLowerCase() === b.name.toLowerCase())
+            );
 
-      // Enrich citations directly from AI response text — no external scraping
-      logger.info(`Enriching ${urlData.size} unique citation URLs`);
-
-      for (const [url, data] of urlData.entries()) {
-        const frequency = data.responseIds.length;
-        const primaryResponseId = data.responseIds[0];
-
-        // Enrich using the response text that cited this URL — grounded, not hallucinated
-        const analysis = enrichCitation(
-          url,
-          data.responseText,
-          brand.name || "",
-          competitors
-        );
-
-        // Override brands_mentioned with GPT-extracted real brand names
-        const extractedBrands = await extractBrandsFromResponse(
-          data.responseText,
-          brand.name || ""
-        );
-        if (extractedBrands.length > 0) {
-          analysis.brands_mentioned = extractedBrands;
-        }
-
-        const { data: citation } = await supabaseAdmin
-          .from("citations")
-          .insert({
-            ai_response_id: primaryResponseId,
-            brand_id: brandId,
-            url: analysis.url,
-            domain: analysis.domain,
-            source_type: analysis.source_type,
-            title: analysis.title,
-            brands_mentioned: analysis.brands_mentioned,
-            content_snippet: analysis.content_snippet,
-            run_id: runId,
-          })
-          .select("id")
-          .single();
-
-        // Gap: source cited by AI but brand not mentioned in that response
-        const brandMentioned = analysis.brands_mentioned.some(
-          (b) => b.name.toLowerCase() === (brand.name || "").toLowerCase()
-        );
-
-        if (!brandMentioned && citation?.id) {
-          const competitorsMentioned = analysis.brands_mentioned.filter((b) =>
-            competitors.some((c) => c.name.toLowerCase() === b.name.toLowerCase())
-          );
-
-          if (competitorsMentioned.length > 0) {
-            for (const comp of competitorsMentioned) {
+            if (competitorsMentioned.length > 0) {
+              await Promise.all(
+                competitorsMentioned.map((comp) =>
+                  supabaseAdmin.from("citation_gaps").insert({
+                    brand_id: brandId,
+                    competitor_name: comp.name,
+                    source_url: analysis.url,
+                    source_type: analysis.source_type,
+                    opportunity_score: frequency * (comp.frequency || 1),
+                    status: "open",
+                    run_id: runId,
+                  })
+                )
+              );
+            } else {
               await supabaseAdmin.from("citation_gaps").insert({
                 brand_id: brandId,
-                competitor_name: comp.name,
+                competitor_name: "–",
                 source_url: analysis.url,
                 source_type: analysis.source_type,
-                opportunity_score: frequency * (comp.frequency || 1),
+                opportunity_score: frequency,
                 status: "open",
                 run_id: runId,
               });
             }
-          } else {
-            // Brand not mentioned and no known competitor — gap with no named competitor
-            await supabaseAdmin.from("citation_gaps").insert({
-              brand_id: brandId,
-              competitor_name: "–",
-              source_url: analysis.url,
-              source_type: analysis.source_type,
-              opportunity_score: frequency,
-              status: "open",
-              run_id: runId,
-            });
           }
-        }
-      }
+        })
+      );
 
       const report = await computeReport(brandId, runId);
 

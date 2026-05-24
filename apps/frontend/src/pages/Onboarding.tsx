@@ -38,13 +38,17 @@ export function Onboarding() {
     return () => clearInterval(interval);
   }, [step]);
 
-  if (step === "analyzing" && brand?.status === "ready" && prompts) {
-    setStep("prompts");
-  }
+  useEffect(() => {
+    if (step === "analyzing" && brand?.status === "ready" && prompts) {
+      setStep("prompts");
+    }
+  }, [step, brand?.status, prompts]);
 
-  if (step === "running" && brand?.status === "ready") {
-    navigate(`/dashboard`);
-  }
+  useEffect(() => {
+    if (step === "running" && brand?.status === "ready") {
+      navigate("/dashboard");
+    }
+  }, [step, brand?.status, navigate]);
 
   function normalizeUrl(raw: string): string {
     let u = raw.trim();
