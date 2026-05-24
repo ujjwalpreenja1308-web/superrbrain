@@ -13,13 +13,14 @@ interface ChartEntry {
   name: string;
   pct: number;
   count: number;
+  total: number;
   isYou: boolean;
 }
 
 interface CompetitorVisibilityChartProps {
   brandName: string;
-  brandCitationCount: number;
-  competitorRanking: { name: string; citationCount: number }[];
+  brandMentionedCount: number;
+  competitorRanking: { name: string; mentionedCount: number }[];
   totalPrompts: number;
 }
 
@@ -30,7 +31,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
     <div className="rounded-md border bg-popover px-3 py-2 text-xs shadow-md">
       <p className="font-medium">{d.name}{d.isYou ? " (you)" : ""}</p>
       <p className="text-muted-foreground">
-        Cited in {d.count} of {d.pct > 0 ? Math.round(d.count / (d.pct / 100)) : 0} prompts ({d.pct}%)
+        Mentioned in {d.count} of {d.total} prompts ({d.pct}%)
       </p>
     </div>
   );
@@ -38,7 +39,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
 
 export function CompetitorVisibilityChart({
   brandName,
-  brandCitationCount,
+  brandMentionedCount,
   competitorRanking,
   totalPrompts,
 }: CompetitorVisibilityChartProps) {
@@ -46,11 +47,18 @@ export function CompetitorVisibilityChart({
     totalPrompts > 0 ? Math.round((count / totalPrompts) * 100) : 0;
 
   const data: ChartEntry[] = [
-    { name: brandName || "You", pct: toPercent(brandCitationCount), count: brandCitationCount, isYou: true },
+    {
+      name: brandName || "You",
+      pct: toPercent(brandMentionedCount),
+      count: brandMentionedCount,
+      total: totalPrompts,
+      isYou: true,
+    },
     ...competitorRanking.map((c) => ({
       name: c.name,
-      pct: toPercent(c.citationCount),
-      count: c.citationCount,
+      pct: toPercent(c.mentionedCount),
+      count: c.mentionedCount,
+      total: totalPrompts,
       isYou: false,
     })),
   ].sort((a, b) => b.pct - a.pct);
@@ -63,7 +71,7 @@ export function CompetitorVisibilityChart({
       <CardHeader className="pb-2">
         <CardTitle className="text-sm">AI Visibility Ranking</CardTitle>
         <p className="text-xs text-muted-foreground">
-          % of AI responses citing each brand across {totalPrompts} prompts
+          % of AI responses mentioning each brand across {totalPrompts} prompts
         </p>
       </CardHeader>
       <CardContent>

@@ -116,16 +116,23 @@ app.get("/:id/report", async (c) => {
 
   const { data: responses } = await supabaseAdmin
     .from("ai_responses")
-    .select("engine, brand_mentioned")
+    .select("engine, brand_mentioned, competitor_mentions")
     .eq("brand_id", brandId)
     .eq("run_id", latest.run_id);
 
   const engineMap = new Map<string, { total: number; mentioned: number }>();
+  const competitorMap = new Map<string, number>();
   for (const r of responses ?? []) {
     const entry = engineMap.get(r.engine) || { total: 0, mentioned: 0 };
     entry.total++;
     if (r.brand_mentioned) entry.mentioned++;
     engineMap.set(r.engine, entry);
+
+    const competitors = Array.isArray(r.competitor_mentions) ? r.competitor_mentions : [];
+    for (const competitor of competitors) {
+      const name = typeof competitor?.name === "string" ? competitor.name.trim() : "";
+      if (name) competitorMap.set(name, (competitorMap.get(name) || 0) + 1);
+    }
   }
 
   const engine_breakdown = Array.from(engineMap.entries()).map(([engine, s]) => ({
@@ -135,7 +142,11 @@ app.get("/:id/report", async (c) => {
     score: s.total > 0 ? Math.round((s.mentioned / s.total) * 100) : 0,
   }));
 
-  return c.json({ engine_breakdown });
+  const competitor_breakdown = Array.from(competitorMap.entries())
+    .map(([name, mentioned]) => ({ name, mentioned }))
+    .sort((a, b) => b.mentioned - a.mentioned);
+
+  return c.json({ engine_breakdown, competitor_breakdown });
 });
 
 // POST /api/brands/:id/ingest — hermes pushes brand metadata + prompts directly (no AI onboarding)

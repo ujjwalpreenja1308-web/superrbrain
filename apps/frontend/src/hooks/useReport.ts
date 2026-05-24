@@ -9,11 +9,16 @@ interface EngineBreakdown {
   score: number;
 }
 
+interface CompetitorBreakdown {
+  name: string;
+  mentioned: number;
+}
+
 export function useReport(brandId?: string) {
   return useQuery({
     queryKey: ["report", brandId],
     queryFn: () =>
-      api.get<{ engine_breakdown: EngineBreakdown[] }>(
+      api.get<{ engine_breakdown: EngineBreakdown[]; competitor_breakdown?: CompetitorBreakdown[] }>(
         `/api/brands/${brandId}/report`
       ),
     enabled: !!brandId,

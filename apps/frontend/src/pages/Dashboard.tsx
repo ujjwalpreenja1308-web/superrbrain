@@ -87,10 +87,6 @@ export function Dashboard() {
   const visibilityScore = activeBrandDetail.latest_visibility_score ?? 0;
   const gapCount = activeBrandDetail.latest_gap_score ?? 0;
 
-  const brandCitationCount = citations?.filter((c) =>
-    c.brands_mentioned.some((b) => b.name.toLowerCase() === (activeBrandDetail.name || "").toLowerCase())
-  ).length ?? 0;
-
   const competitorCitationMap = new Map<string, number>();
   for (const cit of citations ?? []) {
     for (const b of cit.brands_mentioned) {
@@ -99,12 +95,15 @@ export function Dashboard() {
       }
     }
   }
-  const competitorRanking = Array.from(competitorCitationMap.entries())
-    .map(([name, citationCount]) => ({ name, citationCount }))
-    .sort((a, b) => b.citationCount - a.citationCount)
+  const competitorRanking = (report?.competitor_breakdown?.length
+    ? report.competitor_breakdown.map((c) => ({ name: c.name, mentionedCount: c.mentioned }))
+    : Array.from(competitorCitationMap.entries()).map(([name, mentionedCount]) => ({ name, mentionedCount }))
+  )
+    .sort((a, b) => b.mentionedCount - a.mentionedCount)
     .slice(0, 5);
 
   const totalPrompts = report?.engine_breakdown?.reduce((sum, e) => sum + e.total, 0) ?? 0;
+  const brandMentionedCount = report?.engine_breakdown?.reduce((sum, e) => sum + e.mentioned, 0) ?? 0;
 
   const topCompetitor = competitorRanking[0];
   const scoreColor = visibilityScore >= 60
@@ -163,7 +162,7 @@ export function Dashboard() {
         />
         <StatCard
           label="Top Competitor"
-          value={topCompetitor?.citationCount ?? 0}
+          value={topCompetitor?.mentionedCount ?? 0}
           suffix="x"
           icon={Trophy}
           subtext={topCompetitor?.name ?? "None"}
@@ -187,7 +186,7 @@ export function Dashboard() {
           <div className="shrink-0">
             <CompetitorVisibilityChart
               brandName={activeBrandDetail.name || "You"}
-              brandCitationCount={brandCitationCount}
+              brandMentionedCount={brandMentionedCount}
               competitorRanking={competitorRanking}
               totalPrompts={totalPrompts}
             />
