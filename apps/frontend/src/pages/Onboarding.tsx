@@ -1,16 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PromptEditor } from "@/components/PromptEditor";
 import { useCreateBrand, useBrand, usePrompts, useUpdatePrompts, useRunMonitoring } from "@/hooks/useBrand";
-import { Globe, Loader2, ArrowRight, Sparkles, Search, BarChart3, CheckCircle2 } from "lucide-react";
+import { Globe, Loader2, ArrowRight, Sparkles, Search, BarChart3, CheckCircle2, Check, ChevronDown } from "lucide-react";
 import { api } from "@/lib/api";
 
 export function Onboarding() {
   const navigate = useNavigate();
   const [url, setUrl] = useState("");
   const [country, setCountry] = useState("");
+  const [regionOpen, setRegionOpen] = useState(false);
   const [brandId, setBrandId] = useState<string | null>(null);
+  const regionRef = useRef<HTMLDivElement>(null);
 
   const { data: regionsData } = useQuery({
     queryKey: ["regions"],
@@ -28,6 +30,9 @@ export function Onboarding() {
   );
   const updatePrompts = useUpdatePrompts(brandId ?? "");
   const runMonitoring = useRunMonitoring(brandId ?? "");
+  const regions = regionsData?.regions ?? [];
+  const hasRegions = regions.length > 0;
+  const selectedRegion = regions.find((region) => region.code === country);
 
   // Cycle through analysis phases for the loader
   useEffect(() => {
@@ -50,6 +55,26 @@ export function Onboarding() {
     }
   }, [step, brand?.status, navigate]);
 
+  useEffect(() => {
+    if (!regionOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!regionRef.current?.contains(event.target as Node)) {
+        setRegionOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setRegionOpen(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [regionOpen]);
+
   function normalizeUrl(raw: string): string {
     let u = raw.trim();
     if (!u.startsWith("http://") && !u.startsWith("https://")) {
@@ -60,6 +85,8 @@ export function Onboarding() {
 
   const handleSubmitUrl = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (hasRegions && !country) return;
+
     try {
       const result = await createBrand.mutateAsync({ url: normalizeUrl(url), country: country || undefined });
       localStorage.setItem("covable_brand_id", result.id);
@@ -138,19 +165,55 @@ export function Onboarding() {
               </div>
 
               {/* Region selector */}
-              {regionsData?.regions && regionsData.regions.length > 0 && (
-                <div className="space-y-1.5">
-                  <select
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    required
-                    className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm text-foreground outline-none transition-colors duration-200 focus:border-primary/50"
-                  >
-                    <option value="" disabled>Select search region</option>
-                    {regionsData.regions.map((r) => (
-                      <option key={r.code} value={r.code}>{r.label}</option>
-                    ))}
-                  </select>
+              {hasRegions && (
+                <div ref={regionRef} className="space-y-1.5">
+                  <div className="relative">
+                    <button
+                      type="button"
+                      aria-haspopup="listbox"
+                      aria-expanded={regionOpen}
+                      onClick={() => setRegionOpen((open) => !open)}
+                      className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-2.5 text-left text-sm outline-none transition-colors duration-200 hover:border-primary/30 focus:border-primary/50"
+                    >
+                      <span className={selectedRegion ? "text-foreground" : "text-muted-foreground/50"}>
+                        {selectedRegion?.label ?? "Select search region"}
+                      </span>
+                      <ChevronDown
+                        className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${regionOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+
+                    {regionOpen && (
+                      <div
+                        role="listbox"
+                        className="absolute left-0 right-0 z-30 mt-2 max-h-64 overflow-y-auto rounded-lg border border-border bg-card p-1 shadow-2xl shadow-black/40 animate-in fade-in slide-in-from-top-1 duration-150"
+                      >
+                        {regions.map((region) => {
+                          const isSelected = region.code === country;
+                          return (
+                            <button
+                              key={region.code}
+                              type="button"
+                              role="option"
+                              aria-selected={isSelected}
+                              onClick={() => {
+                                setCountry(region.code);
+                                setRegionOpen(false);
+                              }}
+                              className={`flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors duration-150 ${
+                                isSelected
+                                  ? "bg-primary text-primary-foreground"
+                                  : "text-foreground hover:bg-muted/60"
+                              }`}
+                            >
+                              <span>{region.label}</span>
+                              {isSelected && <Check className="h-4 w-4 shrink-0" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground/60 px-0.5">
                     AI searches will be performed from this region
                   </p>
@@ -166,7 +229,7 @@ export function Onboarding() {
               {/* CTA button */}
               <button
                 type="submit"
-                disabled={createBrand.isPending || !url.trim()}
+                disabled={createBrand.isPending || !url.trim() || (hasRegions && !country)}
                 className="group relative w-full overflow-hidden rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition-all duration-200 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 mt-1"
               >
                 <span className="relative flex items-center justify-center gap-2">

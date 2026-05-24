@@ -38,7 +38,9 @@ export const runMonitoring = task({
         city: (brand as any).city || undefined,
       };
 
-      logger.info(`Firing ${prompts.length} prompts in a single batch call`);
+      logger.info(
+        `Firing ${prompts.length} prompts in a single batch call from region: ${location.country || "default"}`
+      );
 
       // url -> { responseIds, responseText } — track per-URL context
       const urlData = new Map<string, { responseIds: string[]; responseText: string }>();
