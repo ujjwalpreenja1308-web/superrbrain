@@ -98,7 +98,7 @@ export function TopOpportunities({ gaps, brandId }: TopOpportunitiesProps) {
     const visibleGaps = expanded ? gaps : top3;
 
     return (
-      <Card className={`relative ${expanded ? "flex max-h-[86vh] flex-col overflow-hidden" : ""}`}>
+      <Card className={`relative ${expanded ? "flex h-full min-h-0 flex-col overflow-hidden" : ""}`}>
         {gaps.length > 3 && !expanded && (
           <button
             type="button"
@@ -134,7 +134,7 @@ export function TopOpportunities({ gaps, brandId }: TopOpportunitiesProps) {
             )}
           </div>
         </CardHeader>
-      <CardContent className={`space-y-4 ${expanded ? "min-h-0 overflow-y-auto pb-6" : ""}`}>
+      <CardContent className={`space-y-4 ${expanded ? "min-h-0 flex-1 overflow-y-auto pb-6" : ""}`}>
         {visibleGaps.map((gap, index) => renderGap(gap, index))}
 
         {top3.length === 0 && (
@@ -164,13 +164,13 @@ export function TopOpportunities({ gaps, brandId }: TopOpportunitiesProps) {
     <>
       {renderCard()}
       {expanded && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
           <div
             className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
             onClick={() => setExpanded(false)}
           />
           <div
-            className="relative h-[86vh] w-full max-w-4xl animate-in fade-in slide-in-from-bottom-6 duration-300"
+            className="relative h-[calc(100dvh-3rem)] w-full max-w-4xl animate-in fade-in slide-in-from-bottom-6 duration-300"
             role="dialog"
             aria-modal="true"
             aria-label="All citation gaps"
