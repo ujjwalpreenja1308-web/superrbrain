@@ -1,4 +1,5 @@
 import { defineConfig } from "@trigger.dev/sdk/v3";
+import { syncEnvVars } from "@trigger.dev/build/extensions/core";
 import { config as loadEnv } from "dotenv";
 import { readFileSync } from "fs";
 import { resolve } from "path";
@@ -37,5 +38,8 @@ export default defineConfig({
   build: {
     external: ["composio-core", "@covable/shared"],
     env: loadEnvVars(),
+    extensions: [
+      syncEnvVars(async () => loadEnvVars()),
+    ],
   },
 });
