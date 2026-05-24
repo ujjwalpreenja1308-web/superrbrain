@@ -41,6 +41,24 @@ const SECTION_DESC: Record<string, string> = {
 const PAGE_SIZE = 8;
 const EXPANDED_PAGE_SIZE = 14;
 
+function formatSourceLabel(cit: Citation & { frequency_score: number }) {
+  if (cit.source_type === "reddit") {
+    try {
+      const url = new URL(cit.url);
+      const match = url.pathname.match(/\/r\/([^/]+)\/comments\/[^/]+\/?([^/]*)/);
+      if (match) {
+        const subreddit = `r/${decodeURIComponent(match[1])}`;
+        const slug = match[2]?.replace(/[-_]+/g, " ").trim();
+        return slug ? `${subreddit} · ${slug}` : subreddit;
+      }
+    } catch {
+      // Fall through to the generic label below.
+    }
+  }
+
+  return cit.title || cit.domain || cit.url;
+}
+
 function CitationRow({
   cit,
   brandName,
@@ -67,8 +85,8 @@ function CitationRow({
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 text-foreground hover:text-primary transition-colors"
         >
-          <span className="truncate max-w-[260px] text-sm">
-            {cit.title || cit.domain || cit.url}
+          <span className="truncate max-w-[360px] text-sm" title={cit.url}>
+            {formatSourceLabel(cit)}
           </span>
           <ExternalLink className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
         </a>
@@ -161,7 +179,7 @@ export function CitationMap({ citations, brandName, totalPrompts }: CitationMapP
             <div>
               <CardTitle className="text-sm">Citation Map</CardTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Where AI sends people · {totalPrompts > 0 ? `${totalPrompts} prompts` : "no data yet"}
+                Where AI sends people · {citations.length} sources · {totalPrompts > 0 ? `${totalPrompts} prompts` : "no data yet"}
               </p>
             </div>
           </div>

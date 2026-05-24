@@ -5,6 +5,21 @@ import type { AppVariables } from "../types.js";
 
 const app = new Hono<{ Variables: AppVariables }>();
 
+function normalizeCitationUrl(input: string) {
+  try {
+    const url = new URL(input);
+    url.hash = "";
+    for (const key of Array.from(url.searchParams.keys())) {
+      if (key.startsWith("utm_") || ["fbclid", "gclid"].includes(key)) {
+        url.searchParams.delete(key);
+      }
+    }
+    return url.toString();
+  } catch {
+    return input;
+  }
+}
+
 // GET /api/brands/:id/citations
 app.get("/:id/citations", async (c) => {
   const userId = c.get("userId") as string;
@@ -40,17 +55,38 @@ app.get("/:id/citations", async (c) => {
 
   if (error) throw new AppError(500, "Failed to fetch citations");
 
-  // Compute frequency: count how many times each domain appears
-  const domainFrequency = new Map<string, number>();
-  for (const c of citations ?? []) {
-    const domain = c.domain || new URL(c.url).hostname;
-    domainFrequency.set(domain, (domainFrequency.get(domain) || 0) + 1);
+  // Collapse repeat citations by URL. "Appeared in" should mean how many AI
+  // responses cited this exact source, not how often the whole domain appeared.
+  const citationsByUrl = new Map<string, typeof citations>();
+  for (const cit of citations ?? []) {
+    const key = normalizeCitationUrl(cit.url);
+    const existing = citationsByUrl.get(key) ?? [];
+    existing.push(cit);
+    citationsByUrl.set(key, existing);
   }
 
-  const enriched = (citations ?? []).map((cit) => ({
-    ...cit,
-    frequency_score: domainFrequency.get(cit.domain || "") || 1,
-  }));
+  const enriched = Array.from(citationsByUrl.values()).map((group) => {
+    const [first] = group;
+    const brands = new Map<string, { name: string; frequency: number }>();
+    for (const cit of group) {
+      const mentioned = Array.isArray(cit.brands_mentioned) ? cit.brands_mentioned : [];
+      for (const brand of mentioned) {
+        if (typeof brand?.name !== "string") continue;
+        const key = brand.name.toLowerCase();
+        const existing = brands.get(key);
+        brands.set(key, {
+          name: existing?.name ?? brand.name,
+          frequency: (existing?.frequency ?? 0) + (typeof brand.frequency === "number" ? brand.frequency : 1),
+        });
+      }
+    }
+
+    return {
+      ...first,
+      brands_mentioned: Array.from(brands.values()),
+      frequency_score: group.length,
+    };
+  });
 
   return c.json(enriched);
 });
