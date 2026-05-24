@@ -98,7 +98,7 @@ export function TopOpportunities({ gaps, brandId }: TopOpportunitiesProps) {
     const visibleGaps = expanded ? gaps : top3;
 
     return (
-      <Card className="relative">
+      <Card className={`relative ${expanded ? "flex max-h-[86vh] flex-col overflow-hidden" : ""}`}>
         {gaps.length > 3 && !expanded && (
           <button
             type="button"
@@ -134,7 +134,7 @@ export function TopOpportunities({ gaps, brandId }: TopOpportunitiesProps) {
             )}
           </div>
         </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className={`space-y-4 ${expanded ? "min-h-0 overflow-y-auto pb-6" : ""}`}>
         {visibleGaps.map((gap, index) => renderGap(gap, index))}
 
         {top3.length === 0 && (
@@ -170,7 +170,7 @@ export function TopOpportunities({ gaps, brandId }: TopOpportunitiesProps) {
             onClick={() => setExpanded(false)}
           />
           <div
-            className="relative max-h-[86vh] w-full max-w-4xl overflow-y-auto animate-in fade-in slide-in-from-bottom-6 duration-300"
+            className="relative h-[86vh] w-full max-w-4xl animate-in fade-in slide-in-from-bottom-6 duration-300"
             role="dialog"
             aria-modal="true"
             aria-label="All citation gaps"

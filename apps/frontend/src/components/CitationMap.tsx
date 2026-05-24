@@ -124,7 +124,10 @@ export function CitationMap({ citations, brandName, totalPrompts }: CitationMapP
     items.sort((a, b) => b.frequency_score - a.frequency_score);
   }
 
-  const sections = SECTION_ORDER.filter((t) => grouped.has(t));
+  const sections = [
+    ...SECTION_ORDER.filter((t) => grouped.has(t)),
+    ...Array.from(grouped.keys()).filter((t) => !SECTION_ORDER.includes(t)),
+  ];
   const [activeTab, setActiveTab] = useState(() => sections[0] ?? "reddit");
   const [page, setPage] = useState(0);
 
