@@ -1,56 +1,9 @@
 import { Hono } from "hono";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { createHmac, timingSafeEqual } from "crypto";
+import { getCustomerEmail, getCustomerId, getMetadata, getPlanFromDodoData } from "../lib/dodo.js";
 
 const webhookRoutes = new Hono();
-
-// Map Dodo product IDs to plan tiers
-// Set these env vars to your actual Dodo product IDs
-const PRODUCT_PLAN_MAP: Record<string, string> = {
-  [process.env.DODO_PRODUCT_STARTER_MONTHLY ?? "starter_monthly"]: "starter",
-  [process.env.DODO_PRODUCT_GROWTH_MONTHLY ?? "growth_monthly"]: "growth",
-  [process.env.DODO_PRODUCT_PRO_MONTHLY ?? "pro_monthly"]: "pro",
-};
-
-const VALID_PLANS = new Set(["starter", "growth", "pro"]);
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
-  return value as Record<string, unknown>;
-}
-
-function getCustomer(data: Record<string, unknown>): Record<string, unknown> | undefined {
-  return asRecord(data.customer);
-}
-
-function getMetadata(data: Record<string, unknown>): Record<string, string> | undefined {
-  const rootMetadata = asRecord(data.metadata);
-  const customerMetadata = asRecord(getCustomer(data)?.metadata);
-  const metadata = { ...customerMetadata, ...rootMetadata };
-  return Object.keys(metadata).length > 0 ? (metadata as Record<string, string>) : undefined;
-}
-
-function getCustomerEmail(data: Record<string, unknown>): string | undefined {
-  return (data.customer_email ?? data.email ?? getCustomer(data)?.email) as string | undefined;
-}
-
-function getCustomerId(data: Record<string, unknown>): string | undefined {
-  return (data.customer_id ?? data.customerId ?? getCustomer(data)?.customer_id ?? getCustomer(data)?.customerId) as string | undefined;
-}
-
-function getPlanFromWebhookData(data: Record<string, unknown>): string | undefined {
-  const productId =
-    (data.product_id ?? data.productId) as string | undefined ??
-    ((data.product_cart as { product_id?: string; productId?: string }[] | undefined)?.[0]?.product_id) ??
-    ((data.product_cart as { product_id?: string; productId?: string }[] | undefined)?.[0]?.productId);
-
-  if (productId && PRODUCT_PLAN_MAP[productId]) return PRODUCT_PLAN_MAP[productId];
-
-  const metadataPlan = getMetadata(data)?.plan;
-  if (metadataPlan && VALID_PLANS.has(metadataPlan)) return metadataPlan;
-
-  return undefined;
-}
 
 function getSignatureCandidates(signature: string): string[] {
   return signature
@@ -161,7 +114,7 @@ webhookRoutes.post("/dodo", async (c) => {
     const customerEmail = getCustomerEmail(data);
     const customerId = getCustomerId(data);
     const subscriptionId = (data.subscription_id ?? data.subscriptionId) as string | undefined;
-    const plan = getPlanFromWebhookData(data);
+    const plan = getPlanFromDodoData(data);
 
     if (!plan || !customerEmail) {
       console.warn("[webhook] Missing plan or customer_email", data);

@@ -23,6 +23,7 @@ import { Login } from "@/pages/Login";
 import { useAuth, getSignInUrl, isHomeDomain } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { usePlan } from "@/hooks/usePlan";
+import { api } from "@/lib/api";
 
 const HOME_URL =
   import.meta.env.VITE_HOME_URL ||
@@ -162,16 +163,48 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
  */
 function PlanPage() {
   const navigate = useNavigate();
-  const payment = new URLSearchParams(window.location.search).get("payment");
+  const searchParams = new URLSearchParams(window.location.search);
+  const payment = searchParams.get("payment");
+  const subscriptionId = searchParams.get("subscription_id");
+  const dodoStatus = searchParams.get("status");
   const isAwaitingPayment = payment === "success";
   const [confirmationTimedOut, setConfirmationTimedOut] = useState(false);
   const [confirmationRetry, setConfirmationRetry] = useState(0);
+  const [confirmationFailed, setConfirmationFailed] = useState(false);
+  const confirmationStartedRef = useRef(false);
   const plan = usePlan({ refetchInterval: isAwaitingPayment ? 3000 : false });
 
   useEffect(() => {
     if (plan.isLoading || plan.isError || plan.tier === "trial") return;
     navigate(isAwaitingPayment ? "/onboarding" : "/dashboard", { replace: true });
   }, [isAwaitingPayment, navigate, plan.isError, plan.isLoading, plan.tier]);
+
+  useEffect(() => {
+    if (
+      !isAwaitingPayment ||
+      !subscriptionId ||
+      dodoStatus !== "active" ||
+      plan.isLoading ||
+      plan.isError ||
+      plan.tier !== "trial" ||
+      confirmationStartedRef.current
+    ) {
+      return;
+    }
+
+    confirmationStartedRef.current = true;
+    setConfirmationFailed(false);
+    api
+      .post("/api/me/confirm-subscription", { subscription_id: subscriptionId })
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ["me"] });
+        plan.refetch();
+      })
+      .catch((error) => {
+        console.error("Failed to confirm Dodo subscription", error);
+        setConfirmationFailed(true);
+      });
+  }, [dodoStatus, isAwaitingPayment, plan, subscriptionId]);
 
   useEffect(() => {
     if (!isAwaitingPayment || plan.tier !== "trial" || plan.isError) {
@@ -186,11 +219,13 @@ function PlanPage() {
 
   function retryConfirmation() {
     setConfirmationTimedOut(false);
+    setConfirmationFailed(false);
+    confirmationStartedRef.current = false;
     setConfirmationRetry((current) => current + 1);
     plan.refetch();
   }
 
-  if (isAwaitingPayment && confirmationTimedOut && plan.tier === "trial" && !plan.isError) {
+  if (isAwaitingPayment && (confirmationTimedOut || confirmationFailed) && plan.tier === "trial" && !plan.isError) {
     return <PaymentConfirmationDelayed onRetry={retryConfirmation} />;
   }
 
