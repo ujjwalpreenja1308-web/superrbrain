@@ -12,13 +12,106 @@ const PRODUCT_PLAN_MAP: Record<string, string> = {
   [process.env.DODO_PRODUCT_PRO_MONTHLY ?? "pro_monthly"]: "pro",
 };
 
-function verifyDodoSignature(body: string, signature: string, secret: string): boolean {
+const VALID_PLANS = new Set(["starter", "growth", "pro"]);
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  return value as Record<string, unknown>;
+}
+
+function getCustomer(data: Record<string, unknown>): Record<string, unknown> | undefined {
+  return asRecord(data.customer);
+}
+
+function getMetadata(data: Record<string, unknown>): Record<string, string> | undefined {
+  const rootMetadata = asRecord(data.metadata);
+  const customerMetadata = asRecord(getCustomer(data)?.metadata);
+  const metadata = { ...customerMetadata, ...rootMetadata };
+  return Object.keys(metadata).length > 0 ? (metadata as Record<string, string>) : undefined;
+}
+
+function getCustomerEmail(data: Record<string, unknown>): string | undefined {
+  return (data.customer_email ?? data.email ?? getCustomer(data)?.email) as string | undefined;
+}
+
+function getCustomerId(data: Record<string, unknown>): string | undefined {
+  return (data.customer_id ?? data.customerId ?? getCustomer(data)?.customer_id ?? getCustomer(data)?.customerId) as string | undefined;
+}
+
+function getPlanFromWebhookData(data: Record<string, unknown>): string | undefined {
+  const productId =
+    (data.product_id ?? data.productId) as string | undefined ??
+    ((data.product_cart as { product_id?: string; productId?: string }[] | undefined)?.[0]?.product_id) ??
+    ((data.product_cart as { product_id?: string; productId?: string }[] | undefined)?.[0]?.productId);
+
+  if (productId && PRODUCT_PLAN_MAP[productId]) return PRODUCT_PLAN_MAP[productId];
+
+  const metadataPlan = getMetadata(data)?.plan;
+  if (metadataPlan && VALID_PLANS.has(metadataPlan)) return metadataPlan;
+
+  return undefined;
+}
+
+function getSignatureCandidates(signature: string): string[] {
+  return signature
+    .split(/\s+/)
+    .flatMap((part) => part.split(","))
+    .map((part) => part.trim())
+    .filter((part) => part && !/^v\d+$/i.test(part))
+    .map((part) => part.replace(/^v\d+=/i, "").replace(/^sha256=/i, ""));
+}
+
+function decodeWebhookSecret(secret: string): Buffer {
+  const trimmed = secret.trim();
+  if (trimmed.startsWith("whsec_")) {
+    return Buffer.from(trimmed.slice("whsec_".length), "base64");
+  }
+  return Buffer.from(trimmed, "utf8");
+}
+
+function safeEqual(a: Buffer, b: Buffer): boolean {
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+function matchesSignature(digest: Buffer, candidates: string[]): boolean {
+  for (const candidate of candidates) {
+    if (/^[a-f0-9]{64}$/i.test(candidate) && safeEqual(digest, Buffer.from(candidate, "hex"))) {
+      return true;
+    }
+
+    try {
+      if (safeEqual(digest, Buffer.from(candidate, "base64"))) {
+        return true;
+      }
+    } catch {
+      // Ignore malformed signature candidates and keep checking.
+    }
+  }
+
+  return false;
+}
+
+function verifyDodoSignature(
+  body: string,
+  signature: string,
+  secret: string,
+  webhookId?: string,
+  webhookTimestamp?: string
+): boolean {
   try {
-    const hmac = createHmac("sha256", secret);
-    hmac.update(body);
-    const expected = hmac.digest("hex");
-    const sig = signature.startsWith("sha256=") ? signature.slice(7) : signature;
-    return timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(sig, "hex"));
+    const candidates = getSignatureCandidates(signature);
+    if (candidates.length === 0) return false;
+
+    if (webhookId && webhookTimestamp) {
+      const signedPayload = `${webhookId}.${webhookTimestamp}.${body}`;
+      const digest = createHmac("sha256", decodeWebhookSecret(secret)).update(signedPayload).digest();
+      if (matchesSignature(digest, candidates)) return true;
+    }
+
+    // Backward compatibility for any old manually configured Dodo signature
+    // format that signed only the raw body as a hex digest.
+    const legacyDigest = createHmac("sha256", secret).update(body).digest();
+    return matchesSignature(legacyDigest, candidates);
   } catch {
     return false;
   }
@@ -34,15 +127,16 @@ webhookRoutes.post("/dodo", async (c) => {
   // Read raw body for signature verification
   const rawBody = await c.req.text();
   const signature = c.req.header("webhook-signature") ?? c.req.header("x-dodo-signature") ?? "";
+  const webhookId = c.req.header("webhook-id") ?? c.req.header("x-dodo-id") ?? undefined;
+  const webhookTimestamp =
+    c.req.header("webhook-timestamp") ?? c.req.header("x-dodo-timestamp") ?? undefined;
 
-  if (!verifyDodoSignature(rawBody, signature, webhookSecret)) {
+  if (!verifyDodoSignature(rawBody, signature, webhookSecret, webhookId, webhookTimestamp)) {
     console.warn("[webhook] Invalid Dodo signature");
     return c.json({ error: "Invalid signature" }, 401);
   }
 
   // Replay protection: reject webhooks older than 5 minutes
-  const webhookTimestamp =
-    c.req.header("webhook-timestamp") ?? c.req.header("x-dodo-timestamp");
   if (webhookTimestamp) {
     const ts = parseInt(webhookTimestamp, 10);
     if (!Number.isNaN(ts) && Math.abs(Date.now() / 1000 - ts) > 300) {
@@ -64,24 +158,18 @@ webhookRoutes.post("/dodo", async (c) => {
   // payment.succeeded — activate plan
   if (eventType === "payment.succeeded" || eventType === "subscription.active") {
     const data = (event.data ?? event) as Record<string, unknown>;
-    const productId = (data.product_id ?? data.productId) as string | undefined;
-    const customerEmail = (data.customer_email ?? data.email) as string | undefined;
-    const customerId = (data.customer_id ?? data.customerId) as string | undefined;
+    const customerEmail = getCustomerEmail(data);
+    const customerId = getCustomerId(data);
     const subscriptionId = (data.subscription_id ?? data.subscriptionId) as string | undefined;
+    const plan = getPlanFromWebhookData(data);
 
-    if (!productId || !customerEmail) {
-      console.warn("[webhook] Missing product_id or customer_email", data);
-      return c.json({ received: true });
-    }
-
-    const plan = PRODUCT_PLAN_MAP[productId];
-    if (!plan) {
-      console.warn(`[webhook] Unknown product_id: ${productId}`);
+    if (!plan || !customerEmail) {
+      console.warn("[webhook] Missing plan or customer_email", data);
       return c.json({ received: true });
     }
 
     // Prefer user_id from metadata (fast, O(1)) — fall back to email scan
-    const metadataUserId = (data.metadata as Record<string, string> | undefined)?.user_id;
+    const metadataUserId = getMetadata(data)?.user_id;
 
     let user: { id: string; email?: string; user_metadata: Record<string, unknown> } | undefined;
 
@@ -134,8 +222,8 @@ webhookRoutes.post("/dodo", async (c) => {
   // subscription.cancelled — downgrade to trial
   if (eventType === "subscription.cancelled" || eventType === "subscription.expired") {
     const data = (event.data ?? event) as Record<string, unknown>;
-    const customerEmail = (data.customer_email ?? data.email) as string | undefined;
-    const metadataUserId = (data.metadata as Record<string, string> | undefined)?.user_id;
+    const customerEmail = getCustomerEmail(data);
+    const metadataUserId = getMetadata(data)?.user_id;
 
     let user: { id: string; user_metadata: Record<string, unknown> } | undefined;
 

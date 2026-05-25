@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { AppShell } from "@/components/AppShell";
@@ -164,12 +164,35 @@ function PlanPage() {
   const navigate = useNavigate();
   const payment = new URLSearchParams(window.location.search).get("payment");
   const isAwaitingPayment = payment === "success";
+  const [confirmationTimedOut, setConfirmationTimedOut] = useState(false);
+  const [confirmationRetry, setConfirmationRetry] = useState(0);
   const plan = usePlan({ refetchInterval: isAwaitingPayment ? 3000 : false });
 
   useEffect(() => {
     if (plan.isLoading || plan.isError || plan.tier === "trial") return;
     navigate(isAwaitingPayment ? "/onboarding" : "/dashboard", { replace: true });
   }, [isAwaitingPayment, navigate, plan.isError, plan.isLoading, plan.tier]);
+
+  useEffect(() => {
+    if (!isAwaitingPayment || plan.tier !== "trial" || plan.isError) {
+      setConfirmationTimedOut(false);
+      return;
+    }
+
+    setConfirmationTimedOut(false);
+    const timeout = window.setTimeout(() => setConfirmationTimedOut(true), 45_000);
+    return () => window.clearTimeout(timeout);
+  }, [confirmationRetry, isAwaitingPayment, plan.isError, plan.tier]);
+
+  function retryConfirmation() {
+    setConfirmationTimedOut(false);
+    setConfirmationRetry((current) => current + 1);
+    plan.refetch();
+  }
+
+  if (isAwaitingPayment && confirmationTimedOut && plan.tier === "trial" && !plan.isError) {
+    return <PaymentConfirmationDelayed onRetry={retryConfirmation} />;
+  }
 
   if (plan.isLoading || (isAwaitingPayment && plan.tier === "trial" && !plan.isError)) {
     return (
@@ -191,6 +214,31 @@ function PlanPage() {
   }
 
   return <PlanChooser />;
+}
+
+function PaymentConfirmationDelayed({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-6">
+      <div className="max-w-sm space-y-4 text-center">
+        <h2 className="text-xl font-semibold">Payment is taking longer to confirm</h2>
+        <p className="text-sm text-muted-foreground">
+          Your checkout may have succeeded, but billing has not activated your account yet. Retry in a moment, or contact support if this keeps happening.
+        </p>
+        <button
+          onClick={onRetry}
+          className="inline-flex rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          Retry confirmation
+        </button>
+        <p className="text-xs text-muted-foreground">
+          Need help?{" "}
+          <a href="mailto:support@covable.app" className="underline underline-offset-2 hover:text-foreground">
+            support@covable.app
+          </a>
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function PlanStatusError({ onRetry }: { onRetry: () => void }) {

@@ -31,7 +31,8 @@ function buildCheckoutUrl(plan: string, email: string, userId: string): string {
   const params = new URLSearchParams({
     email,
     "metadata[user_id]": userId,
-    redirect_url: `${HOME_URL}/plan?payment=success`,
+    "metadata[plan]": plan,
+    redirect_url: `${HOME_URL}/plan?payment=success&plan=${encodeURIComponent(plan)}`,
     cancel_url: `${HOME_URL}/plan?payment=cancelled`,
   });
   return `https://checkout.dodopayments.com/buy/${productId}?${params.toString()}`;
