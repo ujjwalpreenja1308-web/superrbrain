@@ -57,6 +57,21 @@ function hasSearchSignal(text: string): boolean {
   );
 }
 
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function hasBrandSignal(text: string, brand: BrandWithPending | undefined): boolean {
+  const names = [
+    brand?.name,
+    ...(brand?.competitors?.map((competitor) => competitor.name) ?? []),
+  ]
+    .filter((name): name is string => Boolean(name?.trim()))
+    .map((name) => name.trim());
+
+  return names.some((name) => new RegExp(`\\b${escapeRegex(name)}\\b`, "i").test(text));
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function SearchForceBadge() {
@@ -334,6 +349,8 @@ export function Prompts() {
   // ── Stats ─────────────────────────────────────────────────────────────────
   const activeCount = working.filter((p) => p.is_active).length;
   const webSearchCount = working.filter((p) => hasSearchSignal(p.text)).length;
+  const brandedCount = working.filter((p) => hasBrandSignal(p.text, brand)).length;
+  const humanQueryCount = working.length - brandedCount;
 
   // ── Filter ────────────────────────────────────────────────────────────────
   const filteredWorking =
@@ -423,6 +440,14 @@ export function Prompts() {
           <span>
             <span className="font-medium text-foreground">{activeCount}</span> of {working.length}{" "}
             active · {plan.maxPrompts} included
+          </span>
+          <span className="text-border">·</span>
+          <span>
+            <span className="font-medium text-foreground">{humanQueryCount}</span> human queries
+          </span>
+          <span className="text-border">·</span>
+          <span>
+            <span className="font-medium text-foreground">{brandedCount}</span> branded queries
           </span>
           <span className="text-border">·</span>
           <button

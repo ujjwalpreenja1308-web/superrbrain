@@ -125,9 +125,9 @@ export function PlanChooser({ onSkip }: { onSkip?: () => void }) {
               <td style={featuredTd}><span style={{ color: "#C8F53C", fontSize: 12 }}>Soon</span></td>
               <td style={tdStyle}><span style={{ color: "#C8F53C", fontSize: 12 }}>Soon</span></td>
             </tr>
-            <Row label="Reddit keywords tracked" starter="—" growth="5" pro="10" starterMuted />
-            <Row label="Subreddits monitored" starter="—" growth="2" pro="4" starterMuted />
-            <Row label="Max Reddit posts tracked / month" starter="—" growth="~200" pro="800+" starterMuted />
+            <Row label="Reddit keywords when released" starter="—" growth="5" pro="10" starterMuted />
+            <Row label="Subreddits when released" starter="—" growth="2" pro="4" starterMuted />
+            <Row label="Reddit posts / month when released" starter="—" growth="~200" pro="800+" starterMuted />
             <Row label="Support" starter="Email" growth="Priority" pro="Dedicated" />
             {/* CTAs */}
             <tr>

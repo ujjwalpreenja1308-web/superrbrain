@@ -393,7 +393,7 @@ function RedditEngineComingSoon() {
         </Badge>
         <h1 className="mb-2 text-2xl font-semibold tracking-tight">Reddit Engine</h1>
         <p className="mb-6 text-sm leading-6 text-muted-foreground">
-          We're polishing the Reddit workflow before opening it back up.
+          We're polishing Reddit monitoring before opening it back up. Your AI citation map still tracks Reddit sources today.
         </p>
         <a
           href="/dashboard"

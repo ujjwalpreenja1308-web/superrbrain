@@ -14,7 +14,7 @@ import { useActiveBrand } from "@/hooks/useActiveBrand";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { RefreshCw, Loader2, Eye, AlertTriangle, Radio, Trophy } from "lucide-react";
+import { RefreshCw, Loader2, Eye, AlertTriangle, Radio, Trophy, CheckCircle2 } from "lucide-react";
 
 function DashboardSkeleton() {
   return (
@@ -52,6 +52,64 @@ function DashboardSkeleton() {
   );
 }
 
+function FirstRunPanel({
+  status,
+  onRun,
+  isStarting,
+}: {
+  status: string;
+  onRun: () => void;
+  isStarting: boolean;
+}) {
+  const isWorking = status === "pending" || status === "onboarding" || status === "running";
+
+  return (
+    <div className="flex min-h-[48vh] items-center justify-center rounded-xl border border-border bg-card/50 px-6 py-10">
+      <div className="w-full max-w-lg text-center">
+        <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10">
+          {isWorking ? (
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          ) : (
+            <CheckCircle2 className="h-6 w-6 text-primary" />
+          )}
+        </div>
+        <h2 className="mb-2 text-xl font-semibold">
+          {isWorking ? "Your first scan is getting ready" : "Ready for your first scan"}
+        </h2>
+        <p className="mx-auto mb-6 max-w-sm text-sm leading-6 text-muted-foreground">
+          {isWorking
+            ? "We are preparing prompts, firing them at AI search, and collecting the citations that shape your visibility."
+            : "Run your first AI visibility scan to populate scores, competitors, citations, and opportunities."}
+        </p>
+        <div className="mb-6 grid grid-cols-3 gap-2 text-[11px]">
+          {["Prompts", "AI responses", "Citation map"].map((label, index) => (
+            <div
+              key={label}
+              className={`rounded-lg border px-2 py-2 ${
+                isWorking && index === 1
+                  ? "border-primary/30 bg-primary/10 text-primary"
+                  : "border-border bg-background/60 text-muted-foreground"
+              }`}
+            >
+              {label}
+            </div>
+          ))}
+        </div>
+        {!isWorking && (
+          <Button onClick={onRun} disabled={isStarting} className="gap-2">
+            {isStarting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Start first scan
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function Dashboard() {
   const navigate = useNavigate();
   const { activeBrand: brand, activeBrandId: brandId, brands, isLoading: brandsLoading } = useActiveBrand();
@@ -73,15 +131,19 @@ export function Dashboard() {
   }, [brandsLoading, meLoading, brands.length, me?.plan, navigate]);
 
   const { data: brandDetail } = useBrand(brandId);
-  const { data: citations, isError: citError, refetch: refetchCitations } = useCitations(brandId);
-  const { data: gaps, isError: gapError, refetch: refetchGaps } = useGaps(brandId);
-  const { data: report, isError: reportError, refetch: refetchReport } = useReport(brandId);
+  const { data: citations, isLoading: citationsLoading, isError: citError, refetch: refetchCitations } = useCitations(brandId);
+  const { data: gaps, isLoading: gapsLoading, isError: gapError, refetch: refetchGaps } = useGaps(brandId);
+  const { data: report, isLoading: reportLoading, isError: reportError, refetch: refetchReport } = useReport(brandId);
   const runMonitoring = useRunMonitoring(brandId ?? "");
 
   const activeBrandDetail = brandDetail ?? brand;
   const isRunning = activeBrandDetail?.status === "running" || activeBrandDetail?.status === "onboarding";
 
   if (brandsLoading || !brandId || !activeBrandDetail) {
+    return <DashboardSkeleton />;
+  }
+
+  if (citationsLoading || gapsLoading || reportLoading) {
     return <DashboardSkeleton />;
   }
 
@@ -105,6 +167,7 @@ export function Dashboard() {
 
   const totalPrompts = report?.engine_breakdown?.reduce((sum, e) => sum + e.total, 0) ?? 0;
   const brandMentionedCount = report?.engine_breakdown?.reduce((sum, e) => sum + e.mentioned, 0) ?? 0;
+  const hasReportData = totalPrompts > 0 || (citations?.length ?? 0) > 0 || (gaps?.length ?? 0) > 0;
 
   const topCompetitor = competitorRanking[0];
   const scoreColor = visibilityScore >= 60
@@ -129,8 +192,8 @@ export function Dashboard() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => runMonitoring.mutate()}
-          disabled={isRunning || runMonitoring.isPending}
+          disabled
+          title="Manual re-runs are disabled to keep scan volume controlled."
           className="h-8 text-xs"
         >
           {isRunning ? (
@@ -181,32 +244,40 @@ export function Dashboard() {
       )}
 
       {/* Main content — fills remaining height, no outer scroll */}
-      <div className="flex-1 grid gap-4 lg:grid-cols-3 min-h-0">
-        {/* Left column: chart + citation map stacked */}
-        <div className="lg:col-span-2 flex flex-col gap-4 min-h-0">
-          <div className="shrink-0">
-            <CompetitorVisibilityChart
-              brandName={activeBrandDetail.name || "You"}
-              brandMentionedCount={brandMentionedCount}
-              competitorRanking={competitorRanking}
-              totalPrompts={totalPrompts}
-            />
+      {hasReportData ? (
+        <div className="flex-1 grid gap-4 lg:grid-cols-3 min-h-0">
+          {/* Left column: chart + citation map stacked */}
+          <div className="lg:col-span-2 flex flex-col gap-4 min-h-0">
+            <div className="shrink-0">
+              <CompetitorVisibilityChart
+                brandName={activeBrandDetail.name || "You"}
+                brandMentionedCount={brandMentionedCount}
+                competitorRanking={competitorRanking}
+                totalPrompts={totalPrompts}
+              />
+            </div>
+            {/* Citation map scrolls internally */}
+            <div className="flex-1 min-h-0">
+              <CitationMap
+                citations={citations ?? []}
+                brandName={activeBrandDetail.name || ""}
+                totalPrompts={totalPrompts}
+              />
+            </div>
           </div>
-          {/* Citation map scrolls internally */}
-          <div className="flex-1 min-h-0">
-            <CitationMap
-              citations={citations ?? []}
-              brandName={activeBrandDetail.name || ""}
-              totalPrompts={totalPrompts}
-            />
-          </div>
-        </div>
 
-        {/* Right column: opportunities */}
-        <div className="min-h-0 overflow-y-auto">
-          <TopOpportunities gaps={gaps ?? []} brandId={brandId} />
+          {/* Right column: opportunities */}
+          <div className="min-h-0 overflow-y-auto">
+            <TopOpportunities gaps={gaps ?? []} brandId={brandId} />
+          </div>
         </div>
-      </div>
+      ) : (
+        <FirstRunPanel
+          status={activeBrandDetail.status}
+          onRun={() => runMonitoring.mutate()}
+          isStarting={runMonitoring.isPending}
+        />
+      )}
     </div>
   );
 }

@@ -118,10 +118,27 @@ export function Onboarding() {
     { icon: Sparkles, text: "Generating AI prompts..." },
     { icon: BarChart3, text: "Building your profile..." },
   ];
+  const progressStep = step === "url" || step === "analyzing" ? 0 : step === "prompts" ? 1 : 2;
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 bg-background">
       <div className="w-full max-w-md">
+        <div className="mb-8 grid grid-cols-3 gap-2">
+          {["Website", "Prompts", "First scan"].map((label, index) => (
+            <div
+              key={label}
+              className={`rounded-lg border px-3 py-2 text-center text-[11px] font-medium transition-colors ${
+                index === progressStep
+                  ? "border-primary/30 bg-primary/10 text-primary"
+                  : index < progressStep
+                  ? "border-primary/15 bg-primary/5 text-foreground"
+                  : "border-border bg-card/40 text-muted-foreground"
+              }`}
+            >
+              {label}
+            </div>
+          ))}
+        </div>
 
         {/* URL Step */}
         {step === "url" && (
@@ -345,7 +362,7 @@ export function Onboarding() {
             <div className="mb-6">
               <h2 className="text-xl font-semibold mb-1">Review search prompts</h2>
               <p className="text-sm text-muted-foreground">
-                These are the queries we'll fire at AI engines. Toggle, edit, or add your own.
+                We start with up to {generatedPromptLimit} generated prompts. You can add more later in Prompt Manager if your plan allows it.
               </p>
             </div>
 
