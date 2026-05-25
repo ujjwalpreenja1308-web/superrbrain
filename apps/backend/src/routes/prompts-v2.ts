@@ -7,14 +7,26 @@ import {
   createPromptV2Schema,
   updatePromptV2Schema,
   seedPromptsV2Schema,
+  PLAN_LIMITS,
 } from "@covable/shared";
 import {
   prioritizePrompts,
   seedPromptsFromBrand,
 } from "../services/prompt-intelligence.service.js";
+import { checkPromptLimit, getPlanTier } from "../middleware/requirePlan.js";
 import type { AppVariables } from "../types.js";
 
 const app = new Hono<{ Variables: AppVariables }>();
+
+async function getPromptV2Count(brandId: string): Promise<number> {
+  const { count, error } = await supabaseAdmin
+    .from("prompts_v2")
+    .select("id", { count: "exact", head: true })
+    .eq("brand_id", brandId);
+
+  if (error) throw new AppError(500, "Failed to check prompt limit");
+  return count ?? 0;
+}
 
 // GET /api/prompts-v2?brand_id=X&min_gap_score=0&intent=comparison
 app.get("/", async (c) => {
@@ -67,6 +79,9 @@ app.post("/", async (c) => {
     .single();
 
   if (!brand) throw new AppError(404, "Brand not found");
+
+  const currentCount = await getPromptV2Count(parsed.data.brand_id);
+  await checkPromptLimit(userId, parsed.data.brand_id, currentCount + 1);
 
   const { data, error } = await supabaseAdmin
     .from("prompts_v2")
@@ -172,6 +187,9 @@ app.post("/seed", async (c) => {
 
     if (!brand) throw new AppError(404, "Brand not found");
 
+    const currentCount = await getPromptV2Count(csvParsed.data.brand_id);
+    await checkPromptLimit(userId, csvParsed.data.brand_id, currentCount + csvParsed.data.prompts.length);
+
     const rows = csvParsed.data.prompts.map((p) => ({
       brand_id: csvParsed.data.brand_id,
       text: p.text,
@@ -204,7 +222,12 @@ app.post("/seed", async (c) => {
 
   if (!brand) throw new AppError(404, "Brand not found");
 
-  const inserted = await seedPromptsFromBrand(brandParsed.data.brand_id);
+  const tier = await getPlanTier(userId);
+  const maxPrompts = PLAN_LIMITS[tier].maxPrompts;
+  const currentCount = await getPromptV2Count(brandParsed.data.brand_id);
+  await checkPromptLimit(userId, brandParsed.data.brand_id, currentCount + 1);
+
+  const inserted = await seedPromptsFromBrand(brandParsed.data.brand_id, maxPrompts - currentCount);
   return c.json({ inserted });
 });
 

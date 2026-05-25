@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
+import { PLAN_LIMITS } from "@covable/shared";
 
 const HOME_URL =
   import.meta.env.VITE_HOME_URL ||
@@ -110,9 +111,9 @@ export function PlanChooser({ onSkip }: { onSkip?: () => void }) {
             </tr>
             <Row
               label="Tracked prompts / brand"
-              starter="50"
-              growth="50"
-              pro="50"
+              starter={String(PLAN_LIMITS.starter.maxPrompts)}
+              growth={String(PLAN_LIMITS.growth.maxPrompts)}
+              pro={String(PLAN_LIMITS.pro.maxPrompts)}
             />
             <CheckRow label="ChatGPT response analysis" starter growth pro />
             <tr>

@@ -48,11 +48,13 @@ export async function generatePrompts(
   brandName: string,
   category: string,
   description: string,
-  competitors: { name: string }[]
+  competitors: { name: string }[],
+  count = 10
 ): Promise<GeneratedPrompt[]> {
   const competitorNames = competitors.map((c) => c.name).join(", ");
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().toLocaleString("en-US", { month: "long" });
+  const promptCount = Math.max(1, Math.min(count, 100));
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -79,7 +81,7 @@ BANNED PATTERNS (do NOT use — these never trigger web search):
 - "How to use X" — tutorial
 - "Features of X" — product info
 
-Generate exactly 50 prompts across these 5 categories (10 prompts each), ALL written from the POV of an ecommerce buyer:
+Generate exactly ${promptCount} prompts across these 5 categories as evenly as possible, ALL written from the POV of an ecommerce buyer:
 
 CATEGORY 1 - "best_for": Best product/brand for a specific buyer type or use case
   Good: "Best ${category} to buy in ${currentYear} for [specific buyer type or use case]?"
@@ -137,5 +139,5 @@ Current date: ${currentMonth} ${currentYear}`,
   if (!content) throw new Error("No response from GPT-4o mini");
 
   const parsed = JSON.parse(content);
-  return parsed.prompts as GeneratedPrompt[];
+  return (parsed.prompts as GeneratedPrompt[]).slice(0, promptCount);
 }

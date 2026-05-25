@@ -27,8 +27,7 @@ export type BrandStatus = (typeof BRAND_STATUSES)[number];
 export const GAP_STATUSES = ["open", "addressed"] as const;
 export type GapStatus = (typeof GAP_STATUSES)[number];
 
-export const MAX_PROMPTS_PER_BRAND = 50;
-export const DEFAULT_PROMPT_COUNT = 50;
+export const DEFAULT_PROMPT_COUNT = 10;
 
 export type PlanTier = "trial" | "starter" | "growth" | "pro";
 
@@ -51,7 +50,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     label: "Trial",
     price: null,
     maxBrands: 1,
-    maxPrompts: MAX_PROMPTS_PER_BRAND,
+    maxPrompts: 10,
     hasReddit: false,
     maxKeywords: 0,
     maxSubreddits: 0,
@@ -63,7 +62,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     label: "Starter",
     price: 9,
     maxBrands: 1,
-    maxPrompts: MAX_PROMPTS_PER_BRAND,
+    maxPrompts: 10,
     hasReddit: false,
     maxKeywords: 0,
     maxSubreddits: 0,
@@ -75,7 +74,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     label: "Growth",
     price: 29,
     maxBrands: 1,
-    maxPrompts: MAX_PROMPTS_PER_BRAND,
+    maxPrompts: 25,
     hasReddit: true,
     maxKeywords: 5,
     maxSubreddits: 2,
@@ -87,7 +86,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     label: "Pro",
     price: 79,
     maxBrands: 1,
-    maxPrompts: MAX_PROMPTS_PER_BRAND,
+    maxPrompts: 100,
     hasReddit: true,
     maxKeywords: 10,
     maxSubreddits: 4,

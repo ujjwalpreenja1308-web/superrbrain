@@ -3,6 +3,8 @@ import { supabaseAdmin } from "../lib/supabase.js";
 import { firePromptBatch } from "../services/ai-engine.service.js";
 import { enrichCitation, extractBrandsFromResponse } from "../services/citation.service.js";
 import { computeReport } from "../services/scoring.service.js";
+import { getPlanTier } from "../middleware/requirePlan.js";
+import { PLAN_LIMITS } from "@covable/shared";
 
 export const runMonitoring = task({
   id: "run-monitoring",
@@ -24,13 +26,17 @@ export const runMonitoring = task({
 
       if (!brand) throw new Error("Brand not found");
 
-      const { data: prompts } = await supabaseAdmin
+      const tier = await getPlanTier(brand.user_id);
+      const maxPrompts = PLAN_LIMITS[tier].maxPrompts;
+
+      const { data: promptRows } = await supabaseAdmin
         .from("prompts")
         .select("*")
         .eq("brand_id", brandId)
         .eq("is_active", true);
 
-      if (!prompts?.length) throw new Error("No active prompts");
+      const prompts = (promptRows ?? []).slice(0, maxPrompts);
+      if (!prompts.length) throw new Error("No active prompts");
 
       const competitors = (brand.competitors as { name: string }[]) || [];
       const location = {

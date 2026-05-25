@@ -126,7 +126,7 @@ export async function prioritizePrompts(brandId: string): Promise<void> {
   }
 }
 
-export async function seedPromptsFromBrand(brandId: string): Promise<number> {
+export async function seedPromptsFromBrand(brandId: string, maxNewRows?: number): Promise<number> {
   const { data: brand } = await supabaseAdmin
     .from("brands")
     .select("name, category, competitors")
@@ -173,7 +173,9 @@ export async function seedPromptsFromBrand(brandId: string): Promise<number> {
     .eq("brand_id", brandId);
 
   const existingTexts = new Set((existing ?? []).map((r) => r.text.toLowerCase()));
-  const newRows = rows.filter((r) => !existingTexts.has(r.text.toLowerCase()));
+  const newRows = rows
+    .filter((r) => !existingTexts.has(r.text.toLowerCase()))
+    .slice(0, maxNewRows);
 
   if (!newRows.length) return 0;
 

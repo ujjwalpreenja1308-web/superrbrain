@@ -5,6 +5,8 @@ import {
   extractBrandData,
   generatePrompts,
 } from "../services/prompt-generator.service.js";
+import { getPlanTier } from "../middleware/requirePlan.js";
+import { PLAN_LIMITS } from "@covable/shared";
 
 export const onboardBrand = task({
   id: "onboard-brand",
@@ -21,11 +23,13 @@ export const onboardBrand = task({
       // 1. Fetch brand URL
       const { data: brand } = await supabaseAdmin
         .from("brands")
-        .select("url")
+        .select("url, user_id")
         .eq("id", brandId)
         .single();
 
       if (!brand) throw new Error("Brand not found");
+      const tier = await getPlanTier(brand.user_id);
+      const promptLimit = PLAN_LIMITS[tier].maxPrompts;
 
       // 2. Scrape the brand website
       const scraped = await scrapeUrl(brand.url);
@@ -50,7 +54,8 @@ export const onboardBrand = task({
         extracted.name,
         extracted.category,
         extracted.description,
-        extracted.competitors
+        extracted.competitors,
+        promptLimit
       );
 
       // 6. Insert prompts with category

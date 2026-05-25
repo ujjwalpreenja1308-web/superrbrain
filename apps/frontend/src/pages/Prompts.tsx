@@ -247,6 +247,10 @@ export function Prompts() {
   }
 
   function handleAdd() {
+    if (activeCount >= plan.maxPrompts) {
+      toast.error(`Your ${plan.label} plan allows up to ${plan.maxPrompts} active prompts.`);
+      return;
+    }
     sync([...working, { text: "", is_active: true, category: null, dirty: true }]);
   }
 
@@ -255,6 +259,10 @@ export function Prompts() {
   }
 
   function handleToggle(idx: number) {
+    if (!working[idx]?.is_active && activeCount >= plan.maxPrompts) {
+      toast.error(`Your ${plan.label} plan allows up to ${plan.maxPrompts} active prompts.`);
+      return;
+    }
     sync(working.map((p, i) => (i === idx ? { ...p, is_active: !p.is_active } : p)));
   }
 
@@ -266,6 +274,11 @@ export function Prompts() {
     const valid = working.filter((p) => p.text.trim());
     if (!valid.length) {
       toast.error("Add at least one prompt before saving.");
+      return;
+    }
+    const nextActiveCount = valid.filter((p) => p.is_active).length;
+    if (nextActiveCount > plan.maxPrompts) {
+      toast.error(`Your ${plan.label} plan allows up to ${plan.maxPrompts} active prompts.`);
       return;
     }
     try {
@@ -369,7 +382,17 @@ export function Prompts() {
             )}
             {isRegenerating ? "Generating…" : "Regenerate with AI"}
           </Button>
-          <Button size="sm" variant="outline" onClick={handleAdd}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleAdd}
+            disabled={activeCount >= plan.maxPrompts}
+            title={
+              activeCount >= plan.maxPrompts
+                ? `Your ${plan.label} plan allows up to ${plan.maxPrompts} active prompts`
+                : "Add a prompt"
+            }
+          >
             <Plus className="h-4 w-4" />
             Add prompt
           </Button>
@@ -399,7 +422,7 @@ export function Prompts() {
         <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
           <span>
             <span className="font-medium text-foreground">{activeCount}</span> of {working.length}{" "}
-            active
+            active · {plan.maxPrompts} included
           </span>
           <span className="text-border">·</span>
           <button
@@ -540,7 +563,12 @@ export function Prompts() {
                 <Sparkles className="h-4 w-4" />
                 Generate with AI
               </Button>
-              <Button size="sm" variant="outline" onClick={handleAdd}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleAdd}
+                disabled={activeCount >= plan.maxPrompts}
+              >
                 <Plus className="h-4 w-4" />
                 Add manually
               </Button>

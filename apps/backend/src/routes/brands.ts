@@ -3,7 +3,7 @@ import { createBrandSchema } from "@covable/shared";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { AppError } from "../middleware/error.js";
 import { tasks } from "@trigger.dev/sdk/v3";
-import { getPlanTier } from "../middleware/requirePlan.js";
+import { checkPromptLimit, getPlanTier } from "../middleware/requirePlan.js";
 import { isLocalDevBypassEnabled } from "../lib/env.js";
 import { PLAN_LIMITS } from "@covable/shared";
 import type { AppVariables } from "../types.js";
@@ -179,6 +179,7 @@ app.post("/:id/ingest", async (c) => {
     .eq("id", brandId);
 
   if (Array.isArray(prompts) && prompts.length > 0) {
+    await checkPromptLimit(userId, brandId, prompts.length);
     await supabaseAdmin.from("prompts").delete().eq("brand_id", brandId);
     await supabaseAdmin.from("prompts").insert(
       prompts.map((p: { text: string; category?: string }) => ({

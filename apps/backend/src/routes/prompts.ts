@@ -1,9 +1,9 @@
 import { Hono } from "hono";
-import { updatePromptsSchema } from "@covable/shared";
+import { PLAN_LIMITS, updatePromptsSchema } from "@covable/shared";
 import { z } from "zod";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { AppError } from "../middleware/error.js";
-import { checkPromptLimit } from "../middleware/requirePlan.js";
+import { checkPromptLimit, getPlanTier } from "../middleware/requirePlan.js";
 import { generatePrompts } from "../services/prompt-generator.service.js";
 import type { AppVariables } from "../types.js";
 
@@ -174,11 +174,14 @@ app.post("/:id/prompts/regenerate", async (c) => {
   }
 
   // Generate new prompts via AI
+  const tier = await getPlanTier(userId);
+  const promptLimit = PLAN_LIMITS[tier].maxPrompts;
   const generated = await generatePrompts(
     brand.name,
     brand.category,
     brand.description,
-    brand.competitors ?? []
+    brand.competitors ?? [],
+    promptLimit
   );
 
   // Delete all existing prompts for this brand

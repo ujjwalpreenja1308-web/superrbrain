@@ -5,6 +5,7 @@ import { PromptEditor } from "@/components/PromptEditor";
 import { useCreateBrand, useBrand, usePrompts, useUpdatePrompts, useRunMonitoring } from "@/hooks/useBrand";
 import { Globe, Loader2, ArrowRight, Sparkles, Search, BarChart3, CheckCircle2, Check, ChevronDown } from "lucide-react";
 import { api } from "@/lib/api";
+import { usePlan } from "@/hooks/usePlan";
 
 export function Onboarding() {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export function Onboarding() {
   );
   const updatePrompts = useUpdatePrompts(brandId ?? "");
   const runMonitoring = useRunMonitoring(brandId ?? "");
+  const plan = usePlan();
   const regions = regionsData?.regions ?? [];
   const hasRegions = regions.length > 0;
   const selectedRegion = regions.find((region) => region.code === country);
@@ -106,6 +108,7 @@ export function Onboarding() {
   const handleStartMonitoring = async () => {
     setStep("running");
     await runMonitoring.mutateAsync();
+    navigate("/dashboard", { replace: true });
   };
 
   const analyzeSteps = [
@@ -350,6 +353,7 @@ export function Onboarding() {
                 prompts={prompts}
                 onSave={handleSavePrompts}
                 saving={updatePrompts.isPending}
+                maxActivePrompts={plan.maxPrompts}
               />
             </div>
 

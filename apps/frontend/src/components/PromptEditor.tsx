@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Check, X } from "lucide-react";
 import type { Prompt } from "@covable/shared";
+import { toast } from "sonner";
 
 interface PromptEditorProps {
   prompts: Prompt[];
@@ -10,15 +11,22 @@ interface PromptEditorProps {
     prompts: { id?: string; text: string; is_active: boolean }[]
   ) => void;
   saving?: boolean;
+  maxActivePrompts?: number;
 }
 
-export function PromptEditor({ prompts, onSave, saving }: PromptEditorProps) {
+export function PromptEditor({ prompts, onSave, saving, maxActivePrompts }: PromptEditorProps) {
   const [items, setItems] = useState<{ id?: string; text: string; is_active: boolean }[]>(
     prompts.map((p) => ({ id: p.id, text: p.text, is_active: p.is_active }))
   );
   const [newPrompt, setNewPrompt] = useState("");
 
   const toggle = (index: number) => {
+    const item = items[index];
+    const activeCount = items.filter((p) => p.is_active).length;
+    if (item && !item.is_active && maxActivePrompts && activeCount >= maxActivePrompts) {
+      toast.error(`You can keep up to ${maxActivePrompts} active prompts on your plan.`);
+      return;
+    }
     setItems((prev) =>
       prev.map((item, i) =>
         i === index ? { ...item, is_active: !item.is_active } : item
@@ -32,6 +40,11 @@ export function PromptEditor({ prompts, onSave, saving }: PromptEditorProps) {
 
   const add = () => {
     if (!newPrompt.trim()) return;
+    const activeCount = items.filter((p) => p.is_active).length;
+    if (maxActivePrompts && activeCount >= maxActivePrompts) {
+      toast.error(`You can keep up to ${maxActivePrompts} active prompts on your plan.`);
+      return;
+    }
     setItems((prev) => [
       ...prev,
       { text: newPrompt.trim(), is_active: true },
@@ -91,7 +104,14 @@ export function PromptEditor({ prompts, onSave, saving }: PromptEditorProps) {
       </div>
 
       <Button
-        onClick={() => onSave(items)}
+        onClick={() => {
+          const activeCount = items.filter((p) => p.is_active).length;
+          if (maxActivePrompts && activeCount > maxActivePrompts) {
+            toast.error(`You can keep up to ${maxActivePrompts} active prompts on your plan.`);
+            return;
+          }
+          onSave(items);
+        }}
         disabled={saving}
         className="w-full"
       >
