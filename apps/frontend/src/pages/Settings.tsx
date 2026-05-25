@@ -178,7 +178,7 @@ export function Settings() {
         { label: "1 brand", included: true },
         { label: "Gap detection", included: true },
         { label: "Email support", included: true },
-        { label: "Reddit tracking", included: false },
+        { label: "Reddit tracking (coming soon)", included: false },
       ],
     },
     {
@@ -189,7 +189,7 @@ export function Settings() {
       features: [
         { label: `${PLAN_LIMITS.growth.maxPrompts} tracked prompts / brand`, included: true },
         { label: "ChatGPT response analysis", included: true },
-        { label: `Reddit tracking (${PLAN_LIMITS.growth.maxKeywords} keywords, ${PLAN_LIMITS.growth.maxSubreddits} subreddits)`, included: true },
+        { label: `Reddit tracking coming soon (${PLAN_LIMITS.growth.maxKeywords} keywords, ${PLAN_LIMITS.growth.maxSubreddits} subreddits)`, included: true },
         { label: "~200 posts tracked / month", included: true },
         { label: "Priority support", included: true },
         { label: "Competitor tracking", included: false },
@@ -203,7 +203,7 @@ export function Settings() {
       features: [
         { label: `${PLAN_LIMITS.pro.maxPrompts} tracked prompts / brand`, included: true },
         { label: "ChatGPT response analysis", included: true },
-        { label: `Reddit tracking (${PLAN_LIMITS.pro.maxKeywords} keywords, ${PLAN_LIMITS.pro.maxSubreddits} subreddits)`, included: true },
+        { label: `Reddit tracking coming soon (${PLAN_LIMITS.pro.maxKeywords} keywords, ${PLAN_LIMITS.pro.maxSubreddits} subreddits)`, included: true },
         { label: `${PLAN_LIMITS.pro.maxPostsPerMonth}+ posts tracked / month`, included: true },
         { label: "Competitor tracking", included: true },
         { label: "Dedicated support", included: true },

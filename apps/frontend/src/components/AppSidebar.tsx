@@ -31,6 +31,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
@@ -39,7 +40,7 @@ import {
 
 const mainNavItems = [
   { title: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
-  { title: "Reddit Engine", to: "/gap-queue", icon: ListChecks },
+  { title: "Reddit Engine", to: "/gap-queue", icon: ListChecks, comingSoon: true },
   { title: "Prompts", to: "/prompts", icon: MessageSquare },
   { title: "Outcomes", to: "/outcomes", icon: TrendingUp },
 ];
@@ -151,18 +152,41 @@ export function AppSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNavItems.map((item) => (
-                <SidebarMenuItem key={item.to}>
-                  <NavLink to={item.to}>
-                    {({ isActive }) => (
-                      <SidebarMenuButton isActive={isActive} tooltip={item.title}>
-                        <item.icon className="size-4" />
+              {mainNavItems.map((item) => {
+                const Icon = item.icon;
+
+                if (item.comingSoon) {
+                  return (
+                    <SidebarMenuItem key={item.to}>
+                      <SidebarMenuButton
+                        type="button"
+                        disabled
+                        tooltip={`${item.title} - coming soon`}
+                        className="opacity-70"
+                      >
+                        <Icon className="size-4" />
                         <span>{item.title}</span>
                       </SidebarMenuButton>
-                    )}
-                  </NavLink>
-                </SidebarMenuItem>
-              ))}
+                      <SidebarMenuBadge className="right-2 bg-primary/10 px-1.5 text-[10px] uppercase text-primary">
+                        Soon
+                      </SidebarMenuBadge>
+                    </SidebarMenuItem>
+                  );
+                }
+
+                return (
+                  <SidebarMenuItem key={item.to}>
+                    <NavLink to={item.to}>
+                      {({ isActive }) => (
+                        <SidebarMenuButton isActive={isActive} tooltip={item.title}>
+                          <Icon className="size-4" />
+                          <span>{item.title}</span>
+                        </SidebarMenuButton>
+                      )}
+                    </NavLink>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

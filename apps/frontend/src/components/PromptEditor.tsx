@@ -12,19 +12,29 @@ interface PromptEditorProps {
   ) => void;
   saving?: boolean;
   maxActivePrompts?: number;
+  maxActivePromptsMessage?: string;
 }
 
-export function PromptEditor({ prompts, onSave, saving, maxActivePrompts }: PromptEditorProps) {
+export function PromptEditor({
+  prompts,
+  onSave,
+  saving,
+  maxActivePrompts,
+  maxActivePromptsMessage,
+}: PromptEditorProps) {
   const [items, setItems] = useState<{ id?: string; text: string; is_active: boolean }[]>(
     prompts.map((p) => ({ id: p.id, text: p.text, is_active: p.is_active }))
   );
   const [newPrompt, setNewPrompt] = useState("");
+  const limitMessage =
+    maxActivePromptsMessage ??
+    (maxActivePrompts ? `You can keep up to ${maxActivePrompts} active prompts on your plan.` : "");
 
   const toggle = (index: number) => {
     const item = items[index];
     const activeCount = items.filter((p) => p.is_active).length;
     if (item && !item.is_active && maxActivePrompts && activeCount >= maxActivePrompts) {
-      toast.error(`You can keep up to ${maxActivePrompts} active prompts on your plan.`);
+      toast.error(limitMessage);
       return;
     }
     setItems((prev) =>
@@ -42,7 +52,7 @@ export function PromptEditor({ prompts, onSave, saving, maxActivePrompts }: Prom
     if (!newPrompt.trim()) return;
     const activeCount = items.filter((p) => p.is_active).length;
     if (maxActivePrompts && activeCount >= maxActivePrompts) {
-      toast.error(`You can keep up to ${maxActivePrompts} active prompts on your plan.`);
+      toast.error(limitMessage);
       return;
     }
     setItems((prev) => [
@@ -107,7 +117,7 @@ export function PromptEditor({ prompts, onSave, saving, maxActivePrompts }: Prom
         onClick={() => {
           const activeCount = items.filter((p) => p.is_active).length;
           if (maxActivePrompts && activeCount > maxActivePrompts) {
-            toast.error(`You can keep up to ${maxActivePrompts} active prompts on your plan.`);
+            toast.error(limitMessage);
             return;
           }
           onSave(items);

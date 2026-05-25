@@ -37,6 +37,8 @@ import {
 import { toast } from "sonner";
 import type { RedditPost } from "@covable/shared";
 
+const REDDIT_ENGINE_ENABLED = import.meta.env.VITE_REDDIT_ENGINE_ENABLED === "true";
+
 // ── Automode Disclaimer Modal ─────────────────────────────────────────────────
 
 function AutomodeModal({ onAccept, onCancel }: { onAccept: () => void; onCancel: () => void }) {
@@ -379,7 +381,34 @@ function StepDots({ total, current }: { total: number; current: number }) {
 
 type OnboardingStep = "keywords" | "subreddits" | "scanning" | "results";
 
+function RedditEngineComingSoon() {
+  return (
+    <div className="flex min-h-[70vh] items-center justify-center px-4">
+      <div className="w-full max-w-md text-center">
+        <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10">
+          <Clock className="h-6 w-6 text-primary" />
+        </div>
+        <Badge className="mb-4 border-primary/20 bg-primary/10 text-primary hover:bg-primary/10">
+          Coming soon
+        </Badge>
+        <h1 className="mb-2 text-2xl font-semibold tracking-tight">Reddit Engine</h1>
+        <p className="mb-6 text-sm leading-6 text-muted-foreground">
+          We're polishing the Reddit workflow before opening it back up.
+        </p>
+        <a
+          href="/dashboard"
+          className="inline-flex items-center justify-center rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground"
+        >
+          Back to dashboard
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export function GapQueue() {
+  if (!REDDIT_ENGINE_ENABLED) return <RedditEngineComingSoon />;
+
   const [searchParams] = useSearchParams();
   const { activeBrand: brand } = useActiveBrand();
   const plan = usePlan();

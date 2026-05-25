@@ -29,7 +29,7 @@ export const onboardBrand = task({
 
       if (!brand) throw new Error("Brand not found");
       const tier = await getPlanTier(brand.user_id);
-      const promptLimit = PLAN_LIMITS[tier].maxPrompts;
+      const promptLimit = Math.min(PLAN_LIMITS[tier].maxPrompts, 25);
 
       // 2. Scrape the brand website
       const scraped = await scrapeUrl(brand.url);

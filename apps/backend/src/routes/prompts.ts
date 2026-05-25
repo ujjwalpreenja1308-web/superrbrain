@@ -175,7 +175,7 @@ app.post("/:id/prompts/regenerate", async (c) => {
 
   // Generate new prompts via AI
   const tier = await getPlanTier(userId);
-  const promptLimit = PLAN_LIMITS[tier].maxPrompts;
+  const promptLimit = Math.min(PLAN_LIMITS[tier].maxPrompts, 25);
   const generated = await generatePrompts(
     brand.name,
     brand.category,

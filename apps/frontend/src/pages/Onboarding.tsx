@@ -32,6 +32,7 @@ export function Onboarding() {
   const updatePrompts = useUpdatePrompts(brandId ?? "");
   const runMonitoring = useRunMonitoring(brandId ?? "");
   const plan = usePlan();
+  const generatedPromptLimit = Math.min(plan.maxPrompts, 25);
   const regions = regionsData?.regions ?? [];
   const hasRegions = regions.length > 0;
   const selectedRegion = regions.find((region) => region.code === country);
@@ -253,7 +254,7 @@ export function Onboarding() {
 
             {/* Footer hint */}
             <p className="text-center text-xs text-muted-foreground/50 mt-6">
-              Takes under 2 minutes · No credit card required
+              Takes under 2 minutes
             </p>
           </div>
         )}
@@ -353,7 +354,8 @@ export function Onboarding() {
                 prompts={prompts}
                 onSave={handleSavePrompts}
                 saving={updatePrompts.isPending}
-                maxActivePrompts={plan.maxPrompts}
+                maxActivePrompts={generatedPromptLimit}
+                maxActivePromptsMessage={`AI onboarding starts with up to ${generatedPromptLimit} prompts. You can add more later from Prompt Manager if your plan allows it.`}
               />
             </div>
 

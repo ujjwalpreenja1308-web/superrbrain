@@ -55,6 +55,8 @@ export async function generatePrompts(
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().toLocaleString("en-US", { month: "long" });
   const promptCount = Math.max(1, Math.min(count, 100));
+  const brandedPromptLimit = Math.floor(promptCount * 0.4);
+  const unbrandedPromptMinimum = promptCount - brandedPromptLimit;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -87,31 +89,41 @@ CATEGORY 1 - "best_for": Best product/brand for a specific buyer type or use cas
   Good: "Best ${category} to buy in ${currentYear} for [specific buyer type or use case]?"
   Good: "Which ${category} brand is actually worth buying right now for [pain point]?"
   Focus: match product to buyer — gifting, budget shoppers, professionals, first-timers, etc.
+  Usually unbranded: ask by need, budget, location, use case, risk, or outcome instead of naming a brand.
 
 CATEGORY 2 - "comparison": Head-to-head brand/product comparisons with purchase framing
   Good: "[Competitor A] vs [Competitor B] — which should I buy in ${currentYear}?"
   Good: "Is [Competitor] still the best ${category} to order in ${currentYear} or are there better options?"
   Focus: buyers comparing 2-3 brands before checkout
+  Branded quota lives mostly here.
 
 CATEGORY 3 - "reviews": Recent buyer/customer reviews with freshness signals
   Good: "Honest ${currentYear} buyer reviews of [Competitor] — is it worth it?"
   Good: "What are customers saying about [Competitor] in ${currentMonth} ${currentYear}? Real experiences?"
   Focus: post-purchase validation, trust signals, quality concerns
+  Mix branded and unbranded review queries, such as "recent buyer complaints about ${category}".
 
 CATEGORY 4 - "reddit_community": Reddit purchase advice threads (forces live search for recent buying discussions)
   Good: "Reddit ${currentYear}: best ${category} to buy — what's everyone recommending?"
   Good: "Is [Competitor] worth buying? What does Reddit say in ${currentYear}?"
   Focus: social proof, community buying recommendations
+  Mostly unbranded community questions. Use named competitors only sparingly.
 
 CATEGORY 5 - "price_value": Pricing, deals, and value-for-money with live signals
   Good: "Best price for ${category} in ${currentYear} — where should I order from?"
   Good: "Is [Competitor] worth the price in ${currentYear}? Current deals and discount codes?"
   Focus: cost-conscious buyers looking for best value or deals before purchasing
+  Mostly unbranded: compare prices, budgets, value tiers, warranties, subscriptions, shipping, or alternatives.
 
 Rules:
 - Every prompt must sound like a real shopper about to buy, not a researcher
 - Do NOT mention the brand name "${brandName}" in any prompt
 - Vary competitors mentioned: ${competitorNames}
+- Balance human intent vs named-brand intent:
+  - At least ${unbrandedPromptMinimum} prompts must be unbranded human queries that do not mention any brand or competitor name.
+  - At most ${brandedPromptLimit} prompts may mention named competitors/brands.
+  - Use named competitors only when a real buyer would naturally compare or validate a known option.
+  - Unbranded prompts should feel like actual buyer questions: "best for [use case]", "worth it for [buyer type]", "what should I buy if [constraint]", "current options for [problem]".
 - Tailor to the specific product/industry — a supplement buyer asks differently than a furniture buyer
 - Include specific buyer contexts: gifting, bulk buying, first purchase, repeat purchase, budget vs premium
 

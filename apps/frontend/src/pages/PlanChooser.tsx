@@ -119,11 +119,11 @@ export function PlanChooser({ onSkip }: { onSkip?: () => void }) {
             <tr>
               <td style={{ ...tdStyle, color: "#8A8A82", fontWeight: 400 }}>
                 Reddit tracking
-                <div style={{ fontSize: 10, color: "#8A8A82", opacity: 0.5, fontWeight: 400, marginTop: 2 }}>Track what people are saying about your brand and keywords</div>
+                <div style={{ fontSize: 10, color: "#8A8A82", opacity: 0.5, fontWeight: 400, marginTop: 2 }}>Coming soon while we polish the engine</div>
               </td>
               <td style={tdStyle}><span style={{ color: "#4A4A44" }}>×</span></td>
-              <td style={featuredTd}><span style={{ color: "#C8F53C" }}>✓</span></td>
-              <td style={tdStyle}><span style={{ color: "#C8F53C" }}>✓</span></td>
+              <td style={featuredTd}><span style={{ color: "#C8F53C", fontSize: 12 }}>Soon</span></td>
+              <td style={tdStyle}><span style={{ color: "#C8F53C", fontSize: 12 }}>Soon</span></td>
             </tr>
             <Row label="Reddit keywords tracked" starter="—" growth="5" pro="10" starterMuted />
             <Row label="Subreddits monitored" starter="—" growth="2" pro="4" starterMuted />
