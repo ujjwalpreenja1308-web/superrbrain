@@ -1,4 +1,5 @@
 import { AppError } from "../middleware/error.js";
+import { PLAN_LIMITS } from "@covable/shared";
 
 export const PRODUCT_PLAN_MAP: Record<string, string> = {
   [process.env.DODO_PRODUCT_STARTER_MONTHLY ?? "starter_monthly"]: "starter",
@@ -42,6 +43,15 @@ export function getPlanFromDodoData(data: Record<string, unknown>): string | und
 
   const metadataPlan = getMetadata(data)?.plan;
   if (metadataPlan && VALID_PLANS.has(metadataPlan)) return metadataPlan;
+
+  const recurringAmount = data.recurring_pre_tax_amount;
+  const currency = data.currency;
+  if (typeof recurringAmount === "number" && (!currency || currency === "USD")) {
+    for (const plan of ["starter", "growth", "pro"] as const) {
+      const price = PLAN_LIMITS[plan].price;
+      if (price !== null && recurringAmount === price * 100) return plan;
+    }
+  }
 
   return undefined;
 }
