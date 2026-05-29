@@ -1,0 +1,36 @@
+TOPIC SUMMARY
+AI crawler access determines whether AI search and answer systems can discover, retrieve, and use public website content.
+
+KEY FACTS
+Robots.txt, noindex tags, canonical tags, firewalls, CDNs, and bot controls can affect AI search visibility.
+OpenAI documents multiple bots including GPTBot, ChatGPT-User, and OAI-SearchBot.
+Google documents controls for AI features and snippets through existing search controls.
+Cloudflare provides controls that can allow or block AI crawlers.
+
+DEFINITIONS
+AI crawler access: the rules and infrastructure conditions that determine whether AI systems can access public content.
+Robots.txt: a site-level file that gives crawler instructions.
+Noindex: a page-level directive that tells compliant crawlers not to index a page.
+Citation gap: a source or page where competitors appear and your brand is missing.
+
+COMMON QUESTIONS
+Should I allow AI crawlers?
+Does blocking crawlers hurt visibility?
+Which OpenAI bots matter?
+Is robots.txt enough?
+Can Cloudflare block AI crawlers?
+
+DIRECT ANSWERS
+Allow discovery for public evidence pages if AI visibility is the goal.
+Block or gate private, paid, account, or sensitive content.
+Audit robots.txt, noindex, CDN bot settings, firewall events, and rendered content after site changes.
+
+ENTITY RELATIONSHIPS
+OpenAI bots, Google AI features, Perplexity, Cloudflare AI crawler controls, robots.txt, and noindex rules all influence content discoverability.
+Covable measures whether access and content changes translate into actual AI answer visibility.
+
+IMPORTANT TAKEAWAYS
+AI crawler policy should be selective, not all-or-nothing.
+Public proof should be discoverable.
+Private value should remain protected.
+Access is upstream; the real outcome is whether answer engines cite or mention the brand.

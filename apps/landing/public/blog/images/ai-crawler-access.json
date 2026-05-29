@@ -1,0 +1,25 @@
+{
+  "slug": "ai-crawler-access",
+  "title": "AI Crawler Access: How to Stay Visible in AI Search",
+  "category": "AI search",
+  "prompt": "Create a premium editorial hero image for a Covable blog article. Article title: AI Crawler Access: How to Stay Visible in AI Search. Category: AI search. Brand style: dark black SaaS aesthetic, refined technical composition, lime green accent, subtle grid, abstract citation graph, trusted web sources flowing into AI answer surfaces. Composition: safe margins, centered subject, no cropped elements, no readable words, no logos, no people, no screenshots, no generic stock illustration. Use a cinematic but minimal product-marketing look suitable for an SEO/AEO article featured image.",
+  "request": {
+    "model": "gpt-image-1-mini",
+    "size": "1024x1024",
+    "quality": "low"
+  },
+  "usage": {
+    "input_tokens": 122,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 122
+    },
+    "output_tokens": 272,
+    "output_tokens_details": {
+      "image_tokens": 272,
+      "text_tokens": 0
+    },
+    "total_tokens": 394
+  },
+  "generatedAt": "2026-05-29T16:01:47.420Z"
+}

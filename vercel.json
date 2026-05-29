@@ -27,6 +27,11 @@
       "has": [{ "type": "host", "value": "www.covable.app" }],
       "destination": "https://covable.app/$1",
       "permanent": true
+    },
+    {
+      "source": "/blogs",
+      "destination": "/blogs/",
+      "permanent": true
     }
   ],
   "rewrites": [
@@ -41,6 +46,8 @@
     },
     { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/terms", "destination": "/terms.html" },
+    { "source": "/blogs", "destination": "/blogs/index.html" },
+    { "source": "/blogs/", "destination": "/blogs/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

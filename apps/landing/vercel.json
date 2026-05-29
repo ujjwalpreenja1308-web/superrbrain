@@ -1,9 +1,14 @@
 {
   "buildCommand": "vite build",
   "outputDirectory": "dist",
+  "redirects": [
+    { "source": "/blogs", "destination": "/blogs/", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/terms", "destination": "/terms.html" },
+    { "source": "/blogs", "destination": "/blogs/index.html" },
+    { "source": "/blogs/", "destination": "/blogs/index.html" },
     { "source": "/ascii", "destination": "/ascii.html" },
     { "source": "/auth", "destination": "/auth.html" },
     { "source": "/auth/sign-in", "destination": "/auth.html" },

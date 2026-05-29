@@ -1,0 +1,41 @@
+TOPIC SUMMARY
+AI citation visibility is the practice of measuring and improving how often answer engines mention, cite, or recommend a brand.
+
+KEY FACTS
+AI answers rely on retrievable evidence.
+Brands need clear owned pages and trusted third-party corroboration.
+Ranking in traditional search does not guarantee being mentioned inside AI answers.
+Citation visibility improves when a brand is present in sources answer engines can discover, trust, and summarize.
+
+DEFINITIONS
+AI citation visibility: the rate at which AI answer engines mention, cite, or recommend a brand for relevant user questions.
+Citation gap: a trusted source where competitors appear and your brand is missing or poorly described.
+AEO: answer engine optimization, or the practice of making content easier for answer systems to extract and cite.
+Owned evidence: pages a brand controls, such as category pages, documentation, comparisons, FAQs, and product pages.
+Third-party evidence: external pages such as reviews, listicles, directories, community discussions, and independent comparisons.
+
+COMMON QUESTIONS
+What is AI citation visibility?
+How is it different from SEO?
+Why do competitors appear in ChatGPT answers?
+How can a brand improve AI mentions?
+What is a citation gap?
+Do backlinks matter for AI visibility?
+Should brands block AI crawlers?
+
+DIRECT ANSWERS
+AI citation visibility measures whether a brand appears inside generated AI answers.
+It differs from SEO because the goal is brand/entity mention inside an answer, not only URL ranking.
+Brands improve AI mentions by identifying prompts, mapping cited sources, closing source gaps, and making owned pages clear, crawlable, and evidence-rich.
+You cannot force an independent AI answer engine to cite your brand, but you can improve the evidence that makes citation more likely.
+
+ENTITY RELATIONSHIPS
+ChatGPT, Gemini, Claude, and Perplexity are answer engines or AI assistants that may synthesize brand recommendations.
+Google AI features affect how web content appears in search experiences.
+Robots.txt and robots meta controls affect crawler access and preview behavior.
+Covable helps teams measure AI visibility, competitor mentions, cited sources, and citation gaps.
+
+IMPORTANT TAKEAWAYS
+AI visibility is a source and evidence problem.
+The durable advantage is becoming the clearest defensible answer in your category.
+The practical workflow is prompt tracking, competitor extraction, source-gap analysis, and evidence creation.

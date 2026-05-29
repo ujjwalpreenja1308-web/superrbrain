@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Crawler Access: How to Stay Visible in AI Search</title>
+  <meta name="description" content="Learn how robots.txt, AI crawler rules, and Cloudflare settings affect whether ChatGPT, Perplexity, and AI answer engines can see your site." />
+  <link rel="canonical" href="https://covable.app/blogs/ai-crawler-access/" />
+  <meta name="robots" content="index, follow" />
+
+  <meta property="og:title" content="AI Crawler Access: How to Stay Visible in AI Search" />
+  <meta property="og:description" content="Learn how robots.txt, AI crawler rules, and Cloudflare settings affect whether ChatGPT, Perplexity, and AI answer engines can see your site." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://covable.app/blogs/ai-crawler-access/" />
+  <meta property="og:image" content="https://covable.app/blog/images/ai-crawler-access.png" />
+  <meta property="og:site_name" content="Covable" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="AI Crawler Access: How to Stay Visible in AI Search" />
+  <meta name="twitter:description" content="Learn how robots.txt, AI crawler rules, and Cloudflare settings affect whether ChatGPT, Perplexity, and AI answer engines can see your site." />
+  <meta name="twitter:image" content="https://covable.app/blog/images/ai-crawler-access.png" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        "headline": "AI Crawler Access: How to Stay Visible in AI Search",
+        "description": "Learn how robots.txt, AI crawler rules, and Cloudflare settings affect whether ChatGPT, Perplexity, and AI answer engines can see your site.",
+        "datePublished": "2026-05-29",
+        "dateModified": "2026-05-29",
+        "image": "https://covable.app/blog/images/ai-crawler-access.png",
+        "author": { "@type": "Organization", "name": "Covable" },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Covable",
+          "logo": { "@type": "ImageObject", "url": "https://covable.app/logo.svg" }
+        },
+        "mainEntityOfPage": "https://covable.app/blogs/ai-crawler-access/"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://covable.app/" },
+          { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://covable.app/blogs/" },
+          { "@type": "ListItem", "position": 3, "name": "AI Crawler Access", "item": "https://covable.app/blogs/ai-crawler-access/" }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          { "@type": "Question", "name": "What is AI crawler access?", "acceptedAnswer": { "@type": "Answer", "text": "AI crawler access is the set of robots.txt, bot, firewall, and rendering rules that determine whether AI search systems can discover and use your public web content." } },
+          { "@type": "Question", "name": "Should I allow AI crawlers?", "acceptedAnswer": { "@type": "Answer", "text": "If your goal is visibility in AI answers, you should deliberately allow the crawlers and search bots tied to discovery while blocking bots that do not match your risk tolerance." } },
+          { "@type": "Question", "name": "Does blocking AI crawlers hurt AI visibility?", "acceptedAnswer": { "@type": "Answer", "text": "Blocking crawlers can reduce discovery and retrieval opportunities for AI search systems, especially for fresh or public marketing content." } },
+          { "@type": "Question", "name": "Which OpenAI bots matter for visibility?", "acceptedAnswer": { "@type": "Answer", "text": "OpenAI documents user agents including GPTBot, ChatGPT-User, and OAI-SearchBot. Each has different uses, so review the documentation before allowing or blocking them." } },
+          { "@type": "Question", "name": "Can Cloudflare block AI crawlers?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Cloudflare provides AI crawler controls and bot-management settings that can affect whether AI systems can access your content." } },
+          { "@type": "Question", "name": "Is robots.txt enough?", "acceptedAnswer": { "@type": "Answer", "text": "Robots.txt is important, but firewalls, bot rules, JavaScript rendering, noindex tags, canonical tags, and page quality also affect discoverability." } },
+          { "@type": "Question", "name": "Should gated content be available to AI crawlers?", "acceptedAnswer": { "@type": "Answer", "text": "Usually no. Keep private, paid, or sensitive material gated. Make public educational and product-discovery pages accessible if visibility is the goal." } },
+          { "@type": "Question", "name": "How often should we audit crawler access?", "acceptedAnswer": { "@type": "Answer", "text": "Audit crawler access after site migrations, CDN or firewall changes, robots.txt edits, and at least quarterly for marketing sites." } },
+          { "@type": "Question", "name": "How do I test whether AI crawlers can access a page?", "acceptedAnswer": { "@type": "Answer", "text": "Check robots.txt, response codes, noindex directives, canonical tags, firewall events, server logs, and whether important content is visible in raw HTML or rendered pages." } },
+          { "@type": "Question", "name": "How does Covable relate to crawler access?", "acceptedAnswer": { "@type": "Answer", "text": "Covable measures whether your brand appears in AI answers. Crawler access is one upstream condition that can affect whether your evidence is discoverable." } }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="preload" as="font" href="/fonts/PPEditorialNew-Ultralight.woff" type="font/woff" crossorigin />
+  <link rel="preload" as="font" href="/fonts/SFPRODISPLAYREGULAR.woff" type="font/woff" crossorigin />
+  <link rel="stylesheet" href="/styles/base.css" />
+  <link rel="stylesheet" href="/styles/components.css" />
+  <link rel="stylesheet" href="/styles/layout.css" />
+  <link rel="stylesheet" href="/styles/blog.css" />
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="nav-logo"><img src="/logo.svg" alt="Covable" width="26" height="26"></a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/blogs/">Blog</a></li>
+      <li><a href="/#pricing">Pricing</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="/auth/sign-in" class="btn-secondary nav-btn-signin" style="padding: 8px 16px; font-size: 12px;"><span class="nav-btn-text">Sign in</span><svg class="nav-btn-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></a>
+      <a href="/auth/sign-up" class="btn-primary nav-btn-start" style="padding: 8px 16px; font-size: 12px;"><span class="nav-btn-text">Get started</span><svg class="nav-btn-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+    </div>
+  </div>
+</nav>
+
+<main class="article-page">
+  <div class="container">
+    <article class="article-shell">
+      <a class="article-back" href="/blogs/">Back to blog</a>
+      <p class="article-meta">AI search · May 29, 2026</p>
+      <h1 class="article-title">AI crawler access: how to stay visible in AI search</h1>
+      <p class="article-dek">AI crawler access determines whether answer engines can discover your public evidence. If your robots.txt, CDN, or bot rules block the wrong agents, your best pages can be technically live and still invisible to AI search.</p>
+
+      <img class="article-featured-image" src="/blog/images/ai-crawler-access.png" alt="Abstract technical map of AI crawlers discovering website content for AI search visibility" width="1024" height="1024" />
+
+      <div class="article-hero-card" aria-label="Article summary">
+        <div class="article-hero-cell"><span>Intent</span><strong>Solution aware</strong></div>
+        <div class="article-hero-cell"><span>Primary keyword</span><strong>AI crawler access</strong></div>
+        <div class="article-hero-cell"><span>Outcome</span><strong>Stay discoverable</strong></div>
+      </div>
+
+      <div class="article-content">
+        <section class="article-callout">
+          <strong>TL;DR:</strong> If you want visibility in AI search, audit robots.txt, noindex tags, CDN bot controls, and server responses for the crawlers tied to discovery. Allow the agents that help public content get found, block the agents that create risk, and keep private content private.
+        </section>
+
+        <h2>What AI crawler access means</h2>
+        <p>AI crawler access is the practical question of whether AI search and answer systems can reach, render, and understand your public pages. It includes robots.txt, user-agent rules, noindex directives, Cloudflare or CDN bot settings, firewalls, rate limits, canonical tags, and whether the important content is actually available to crawlers.</p>
+        <p>For a marketing team, this is not a philosophical debate about training data. It is an operational visibility problem. If a page explains your product category, compares alternatives, or answers buyer questions, blocking discovery can reduce the chance that answer engines use that page as evidence.</p>
+
+        <h2>What most people get wrong</h2>
+        <p>Most teams treat “AI crawlers” as one bucket. They either block everything because it feels safer, or allow everything because they want visibility. Both choices are too blunt.</p>
+        <p>OpenAI, for example, documents different bots for different purposes, including <a href="https://platform.openai.com/docs/bots" rel="noopener">GPTBot, ChatGPT-User, and OAI-SearchBot</a>. Google documents how site owners can control previews and crawling for <a href="https://developers.google.com/search/docs/appearance/ai-features" rel="noopener">AI features in Search</a>. Cloudflare also exposes <a href="https://developers.cloudflare.com/bots/concepts/bot/ai-crawlers/" rel="noopener">AI crawler controls</a>. The right policy depends on which content should be discoverable and which access risks you are unwilling to accept.</p>
+
+        <div class="article-block">
+          <strong>Citation-worthy statement:</strong> AI crawler policy should not be “allow all” or “block all.” It should be a content-access policy: public proof should be discoverable, private value should stay protected.
+        </div>
+
+        <h2>The crawler access decision framework</h2>
+        <table class="article-table">
+          <thead>
+            <tr>
+              <th>Content type</th>
+              <th>Default posture</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Public educational pages</td>
+              <td>Allow discovery</td>
+              <td>These pages help answer engines understand your category and expertise.</td>
+            </tr>
+            <tr>
+              <td>Product and feature pages</td>
+              <td>Allow discovery</td>
+              <td>They define what your company does and who it is relevant for.</td>
+            </tr>
+            <tr>
+              <td>Customer docs meant for public search</td>
+              <td>Usually allow</td>
+              <td>Documentation can become strong evidence for technical product fit.</td>
+            </tr>
+            <tr>
+              <td>Paid content, private dashboards, account data</td>
+              <td>Block or gate</td>
+              <td>Visibility value does not justify privacy or revenue leakage.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>A practical audit workflow</h2>
+        <h3>1. List the pages that should influence AI answers</h3>
+        <p>Start with category pages, comparison pages, pricing pages, documentation, high-intent blog posts, and pages that explain your product in concrete terms. These are your evidence pages.</p>
+
+        <h3>2. Check robots.txt by user agent</h3>
+        <p>Review rules for search bots, AI search bots, and broad AI crawlers. Do not assume one rule covers every system. A single broad disallow can block more than intended.</p>
+
+        <h3>3. Inspect page-level directives</h3>
+        <p>Look for `noindex`, `nosnippet`, `max-snippet`, canonical conflicts, blocked scripts, or pages that require interaction before the main answer appears. Google’s <a href="https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag" rel="noopener">robots meta tag documentation</a> is the primary reference here.</p>
+
+        <h3>4. Review CDN and firewall behavior</h3>
+        <p>Cloudflare, WAF rules, bot-fight modes, and rate limits can override your robots.txt intentions. Check firewall events for legitimate crawlers that receive challenges, 403s, or JavaScript interstitials.</p>
+
+        <h3>5. Measure the downstream answer</h3>
+        <p>Access is only upstream. The real test is whether your brand appears in answers for relevant prompts. Covable helps connect crawler and content decisions to actual AI visibility: prompts, cited sources, competitor mentions, and citation gaps.</p>
+
+        <h2>Checklist: keep public pages visible</h2>
+        <ul>
+          <li>Robots.txt allows discovery for the AI/search agents you intentionally support.</li>
+          <li>Important pages return 200 status codes without bot challenges.</li>
+          <li>Important content appears in crawlable HTML or reliable rendered output.</li>
+          <li>Canonical tags point to the page you want cited.</li>
+          <li>No accidental `noindex` exists on blog, product, or comparison pages.</li>
+          <li>CDN bot controls are documented and reviewed after every security change.</li>
+          <li>Private content remains gated and blocked.</li>
+          <li>AI answer visibility is measured after access changes.</li>
+        </ul>
+
+        <h2>Tradeoffs to make deliberately</h2>
+        <p>Allowing AI discovery can improve visibility, but it is not free of risk. Some publishers worry about content reuse, server load, unclear attribution, or training use. Blocking everything can protect content, but it can also make public marketing pages less discoverable in AI search.</p>
+        <p>The mature posture is selective access. Make your public evidence easy to find. Keep sensitive material gated. Review each crawler’s documented purpose. Track whether visibility actually improves.</p>
+
+        <h2>FAQ</h2>
+        <dl class="article-faq">
+          <dt>What is AI crawler access?</dt>
+          <dd>AI crawler access is the set of robots.txt, bot, firewall, and rendering rules that determine whether AI search systems can discover and use your public web content.</dd>
+          <dt>Should I allow AI crawlers?</dt>
+          <dd>If your goal is visibility in AI answers, you should deliberately allow the crawlers and search bots tied to discovery while blocking bots that do not match your risk tolerance.</dd>
+          <dt>Does blocking AI crawlers hurt AI visibility?</dt>
+          <dd>Blocking crawlers can reduce discovery and retrieval opportunities for AI search systems, especially for fresh or public marketing content.</dd>
+          <dt>Which OpenAI bots matter for visibility?</dt>
+          <dd>OpenAI documents user agents including GPTBot, ChatGPT-User, and OAI-SearchBot. Each has different uses, so review the documentation before allowing or blocking them.</dd>
+          <dt>Can Cloudflare block AI crawlers?</dt>
+          <dd>Yes. Cloudflare provides AI crawler controls and bot-management settings that can affect whether AI systems can access your content.</dd>
+          <dt>Is robots.txt enough?</dt>
+          <dd>Robots.txt is important, but firewalls, bot rules, JavaScript rendering, noindex tags, canonical tags, and page quality also affect discoverability.</dd>
+          <dt>Should gated content be available to AI crawlers?</dt>
+          <dd>Usually no. Keep private, paid, or sensitive material gated. Make public educational and product-discovery pages accessible if visibility is the goal.</dd>
+          <dt>How often should we audit crawler access?</dt>
+          <dd>Audit crawler access after site migrations, CDN or firewall changes, robots.txt edits, and at least quarterly for marketing sites.</dd>
+          <dt>How do I test whether AI crawlers can access a page?</dt>
+          <dd>Check robots.txt, response codes, noindex directives, canonical tags, firewall events, server logs, and whether important content is visible in raw HTML or rendered pages.</dd>
+          <dt>How does Covable relate to crawler access?</dt>
+          <dd>Covable measures whether your brand appears in AI answers. Crawler access is one upstream condition that can affect whether your evidence is discoverable.</dd>
+        </dl>
+
+        <h2>Key takeaways</h2>
+        <ul>
+          <li>AI crawler access is an upstream condition for AI search visibility.</li>
+          <li>Do not blindly allow or block all AI agents.</li>
+          <li>Make public evidence discoverable and keep private content protected.</li>
+          <li>Robots.txt, noindex, CDNs, firewalls, and rendering all matter.</li>
+          <li>Measure the answer layer after access changes; access alone does not guarantee citations.</li>
+        </ul>
+      </div>
+    </article>
+  </div>
+</main>
+
+<footer class="blog-footer">
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+      <a href="/" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;"><img src="/logo.svg" alt="Covable" width="22" height="22" /><span style="font-size: 13px; font-weight: 500; color: var(--text-primary);">covable</span></a>
+      <div style="display: flex; gap: 32px; flex-wrap: wrap;">
+        <a href="/blogs/" style="font-size: 12px; color: var(--accent); transition: color 120ms ease;">Blog</a>
+        <a href="/privacy" style="font-size: 12px; color: var(--text-tertiary); transition: color 120ms ease;">Privacy</a>
+        <a href="/terms" style="font-size: 12px; color: var(--text-tertiary); transition: color 120ms ease;">Terms</a>
+        <a href="mailto:hello@covable.app" style="font-size: 12px; color: var(--text-tertiary); transition: color 120ms ease;">Contact</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="/scripts/navbar.js"></script>
+</body>
+</html>

@@ -14,6 +14,17 @@ function inlineAsciiPlugin() {
   }
 }
 
+function getBlogInputs() {
+  const blogsDir = path.resolve(__dirname, 'blogs')
+  if (!fs.existsSync(blogsDir)) return {}
+
+  return Object.fromEntries(
+    fs.readdirSync(blogsDir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .filter((entry) => fs.existsSync(path.join(blogsDir, entry.name, 'index.html')))
+      .map((entry) => [`blog-${entry.name}`, path.join(blogsDir, entry.name, 'index.html')])
+  )
+}
 
 export default defineConfig(({ mode }) => {
   // Load env from root and from frontend app (for Supabase keys)
@@ -35,6 +46,8 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         input: {
           main: path.resolve(__dirname, 'index.html'),
+          blogs: path.resolve(__dirname, 'blogs/index.html'),
+          ...getBlogInputs(),
           auth: path.resolve(__dirname, 'auth.html'),
           privacy: path.resolve(__dirname, 'privacy.html'),
           terms: path.resolve(__dirname, 'terms.html'),

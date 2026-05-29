@@ -1,0 +1,63 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">AI citation visibility map</title>
+  <desc id="desc">Abstract Covable-style image showing trusted sources flowing into AI answers and brand mentions.</desc>
+  <rect width="1200" height="630" fill="#0A0A09"/>
+  <rect x="36" y="36" width="1128" height="558" rx="28" fill="#111110" stroke="#252522" stroke-width="2"/>
+  <g opacity="0.5">
+    <path d="M120 170H1080" stroke="#252522"/>
+    <path d="M120 315H1080" stroke="#252522"/>
+    <path d="M120 460H1080" stroke="#252522"/>
+    <path d="M280 96V534" stroke="#252522"/>
+    <path d="M520 96V534" stroke="#252522"/>
+    <path d="M760 96V534" stroke="#252522"/>
+    <path d="M1000 96V534" stroke="#252522"/>
+  </g>
+
+  <g font-family="SF Pro Display, Inter, Arial, sans-serif">
+    <text x="96" y="116" fill="#C8F53C" font-size="17" font-weight="600" letter-spacing="0.14em">COVABLE</text>
+    <text x="96" y="148" fill="#8A8A82" font-size="13" letter-spacing="0.12em">AI CITATION VISIBILITY</text>
+  </g>
+
+  <circle cx="600" cy="315" r="92" fill="#0A0A09" stroke="#C8F53C" stroke-width="3"/>
+  <circle cx="600" cy="315" r="138" stroke="#3A3A36" stroke-width="2" stroke-dasharray="9 14"/>
+  <circle cx="600" cy="315" r="188" stroke="#252522" stroke-width="2" stroke-dasharray="4 16"/>
+  <path d="M600 223V407" stroke="#C8F53C" stroke-width="3"/>
+  <path d="M508 315H692" stroke="#C8F53C" stroke-width="3"/>
+  <circle cx="600" cy="315" r="14" fill="#C8F53C"/>
+
+  <g>
+    <rect x="136" y="210" width="232" height="84" rx="12" fill="#0A0A09" stroke="#3A3A36"/>
+    <text x="164" y="246" fill="#F0EFE8" font-family="SF Pro Display, Inter, Arial, sans-serif" font-size="20">Trusted sources</text>
+    <text x="164" y="274" fill="#8A8A82" font-family="SF Pro Display, Inter, Arial, sans-serif" font-size="14">reviews, lists, forums</text>
+    <path d="M368 252C438 252 482 282 516 302" stroke="#C8F53C" stroke-width="3" opacity="0.7"/>
+  </g>
+
+  <g>
+    <rect x="832" y="210" width="232" height="84" rx="12" fill="#0A0A09" stroke="#3A3A36"/>
+    <text x="860" y="246" fill="#F0EFE8" font-family="SF Pro Display, Inter, Arial, sans-serif" font-size="20">AI answers</text>
+    <text x="860" y="274" fill="#8A8A82" font-family="SF Pro Display, Inter, Arial, sans-serif" font-size="14">synthesized choices</text>
+    <path d="M684 302C722 282 770 252 832 252" stroke="#C8F53C" stroke-width="3" opacity="0.7"/>
+  </g>
+
+  <g>
+    <rect x="136" y="338" width="232" height="84" rx="12" fill="#0A0A09" stroke="#3A3A36"/>
+    <text x="164" y="374" fill="#F0EFE8" font-family="SF Pro Display, Inter, Arial, sans-serif" font-size="20">Citation gaps</text>
+    <text x="164" y="402" fill="#8A8A82" font-family="SF Pro Display, Inter, Arial, sans-serif" font-size="14">where competitors appear</text>
+    <path d="M368 380C432 362 482 338 516 326" stroke="#C8F53C" stroke-width="3" opacity="0.55"/>
+  </g>
+
+  <g>
+    <rect x="832" y="338" width="232" height="84" rx="12" fill="#0A0A09" stroke="#3A3A36"/>
+    <text x="860" y="374" fill="#F0EFE8" font-family="SF Pro Display, Inter, Arial, sans-serif" font-size="20">Brand mentions</text>
+    <text x="860" y="402" fill="#8A8A82" font-family="SF Pro Display, Inter, Arial, sans-serif" font-size="14">recommendation surface</text>
+    <path d="M684 328C724 350 774 380 832 380" stroke="#C8F53C" stroke-width="3" opacity="0.55"/>
+  </g>
+
+  <g opacity="0.95">
+    <circle cx="516" cy="302" r="6" fill="#C8F53C"/>
+    <circle cx="684" cy="328" r="6" fill="#C8F53C"/>
+    <circle cx="760" cy="170" r="5" fill="#8A8A82"/>
+    <circle cx="1000" cy="460" r="5" fill="#8A8A82"/>
+    <circle cx="280" cy="460" r="5" fill="#8A8A82"/>
+  </g>
+</svg>

@@ -10,4 +10,4 @@ Allow: /
 User-agent: GPTBot
 Allow: /
 
-Sitemap: https://covable.com/sitemap.xml
+Sitemap: https://covable.app/sitemap.xml
