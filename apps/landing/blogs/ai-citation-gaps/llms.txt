@@ -1,0 +1,35 @@
+TOPIC SUMMARY
+AI citation gaps are sources or answer patterns where competitors are mentioned, cited, or recommended while a brand is missing.
+
+KEY FACTS
+Citation gaps are not the same as backlink gaps.
+Citation gaps identify missing evidence across owned pages, third-party pages, reviews, directories, forums, documentation, and comparison resources.
+The practical workflow is prompt collection, source capture, competitor-only source detection, prioritization, and gap closure.
+
+DEFINITIONS
+AI citation gap: a trusted source or answer surface where competitors appear and your brand does not.
+Owned gap: a missing or weak page on your own site that prevents answer engines from understanding your brand.
+Third-party gap: an external source that mentions competitors but does not mention your brand.
+Prompt set: a group of buyer-intent questions used to test AI answer visibility.
+
+COMMON QUESTIONS
+What is an AI citation gap?
+How do I find AI citation gaps?
+Are citation gaps the same as backlink gaps?
+Which sources create citation gaps?
+How should citation gaps be prioritized?
+How does Covable help?
+
+DIRECT ANSWERS
+Find AI citation gaps by running buyer-intent prompts, saving cited sources, marking competitor-only sources, and prioritizing the gaps by intent, source quality, competitor density, and feasibility.
+Close AI citation gaps with clearer owned pages, legitimate third-party inclusion, better documentation, review coverage, and community participation where appropriate.
+
+ENTITY RELATIONSHIPS
+ChatGPT, Perplexity, Gemini, and Claude can surface answers influenced by source evidence.
+OpenAI bots, Google robots controls, and FAQPage structured data relate to content discovery and extraction.
+Covable measures prompts, cited sources, competitor mentions, and missing-source patterns.
+
+IMPORTANT TAKEAWAYS
+AI citation gaps are source gaps.
+The goal is not to manipulate AI answers but to make category evidence more complete.
+High-quality prioritization prevents citation-gap work from becoming spam.

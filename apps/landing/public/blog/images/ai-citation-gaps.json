@@ -1,0 +1,25 @@
+{
+  "slug": "ai-citation-gaps",
+  "title": "AI Citation Gaps: Find Sources That Mention Rivals",
+  "category": "AI visibility",
+  "prompt": "Create a premium editorial hero image for a Covable blog article. Article title: AI Citation Gaps: Find Sources That Mention Rivals. Category: AI visibility. Brand style: dark black SaaS aesthetic, refined technical composition, lime green accent, subtle grid, abstract citation graph, trusted web sources flowing into AI answer surfaces. Composition: safe margins, centered subject, no cropped elements, no readable words, no logos, no people, no screenshots, no generic stock illustration. Use a cinematic but minimal product-marketing look suitable for an SEO/AEO article featured image.",
+  "request": {
+    "model": "gpt-image-1-mini",
+    "size": "1024x1024",
+    "quality": "low"
+  },
+  "usage": {
+    "input_tokens": 121,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 121
+    },
+    "output_tokens": 272,
+    "output_tokens_details": {
+      "image_tokens": 272,
+      "text_tokens": 0
+    },
+    "total_tokens": 393
+  },
+  "generatedAt": "2026-05-30T14:07:49.497Z"
+}
