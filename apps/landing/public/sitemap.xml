@@ -26,6 +26,11 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://covable.app/blogs/track-chatgpt-brand-mentions/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://covable.app/privacy</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>

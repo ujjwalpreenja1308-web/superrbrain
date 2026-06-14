@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">ChatGPT brand visibility measurement</title>
+  <desc id="desc">A dark Covable dashboard showing the path from prompts to mentions, citations, visits, and conversions.</desc>
+  <rect width="1024" height="1024" fill="#0a0a0a"/>
+  <rect x="64" y="64" width="896" height="896" rx="8" fill="#10110f" stroke="#2d3029" stroke-width="2"/>
+  <g stroke="#252821" stroke-width="1">
+    <path d="M64 256h896M64 512h896M64 768h896"/>
+    <path d="M256 64v896M512 64v896M768 64v896"/>
+  </g>
+  <text x="112" y="146" fill="#c9fa43" font-family="Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="2">AI MEASUREMENT</text>
+  <text x="112" y="202" fill="#f1f2ed" font-family="Arial, sans-serif" font-size="42" font-weight="600">Track the full visibility chain</text>
+  <g font-family="Arial, sans-serif">
+    <g transform="translate(112 348)">
+      <rect width="168" height="150" rx="8" fill="#151614" stroke="#3b3e36"/>
+      <text x="24" y="45" fill="#8c9087" font-size="15">01</text>
+      <text x="24" y="88" fill="#f1f2ed" font-size="24" font-weight="600">Prompts</text>
+      <text x="24" y="118" fill="#8c9087" font-size="15">buyer questions</text>
+    </g>
+    <g transform="translate(322 348)">
+      <rect width="168" height="150" rx="8" fill="#151614" stroke="#3b3e36"/>
+      <text x="24" y="45" fill="#8c9087" font-size="15">02</text>
+      <text x="24" y="88" fill="#f1f2ed" font-size="24" font-weight="600">Mentions</text>
+      <text x="24" y="118" fill="#8c9087" font-size="15">brand presence</text>
+    </g>
+    <g transform="translate(532 348)">
+      <rect width="168" height="150" rx="8" fill="#151614" stroke="#c9fa43"/>
+      <text x="24" y="45" fill="#c9fa43" font-size="15">03</text>
+      <text x="24" y="88" fill="#f1f2ed" font-size="24" font-weight="600">Citations</text>
+      <text x="24" y="118" fill="#8c9087" font-size="15">source evidence</text>
+    </g>
+    <g transform="translate(742 348)">
+      <rect width="168" height="150" rx="8" fill="#151614" stroke="#3b3e36"/>
+      <text x="24" y="45" fill="#8c9087" font-size="15">04</text>
+      <text x="24" y="88" fill="#f1f2ed" font-size="24" font-weight="600">Outcomes</text>
+      <text x="24" y="118" fill="#8c9087" font-size="15">visits + revenue</text>
+    </g>
+  </g>
+  <path d="M196 564C300 638 388 584 474 648S654 716 828 610" fill="none" stroke="#c9fa43" stroke-width="5"/>
+  <path d="M196 650C312 604 398 710 506 662S706 548 828 670" fill="none" stroke="#74796c" stroke-width="3" stroke-dasharray="10 12"/>
+  <g fill="#c9fa43"><circle cx="196" cy="564" r="9"/><circle cx="474" cy="648" r="9"/><circle cx="828" cy="610" r="9"/></g>
+  <text x="112" y="836" fill="#f1f2ed" font-family="Arial, sans-serif" font-size="32" font-weight="600">Mention ≠ citation ≠ conversion</text>
+  <text x="112" y="882" fill="#8c9087" font-family="Arial, sans-serif" font-size="20">Measure each event separately. Connect them carefully.</text>
+</svg>

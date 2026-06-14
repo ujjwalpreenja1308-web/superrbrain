@@ -1,0 +1,42 @@
+TOPIC SUMMARY
+ChatGPT brand visibility should be measured as a chain of mentions, citations, referral visits, and conversions rather than one combined score.
+
+KEY FACTS
+ChatGPT search can show inline citations and a Sources panel.
+A brand mention does not require the brand's own website to be cited.
+Referral analytics measures clicks but misses zero-click influence.
+Consistent prompt panels are required for comparable trend measurement.
+Bing Webmaster Tools and Google Search Console provide AI visibility reporting for their respective ecosystems.
+
+DEFINITIONS
+Brand mention: the appearance of a company or product name in an AI answer.
+Owned citation: a citation linking to a page on the measured brand's domain.
+Mention rate: the percentage of eligible tested answers that name the brand.
+Owned citation rate: the percentage of search-grounded answers that cite the brand's domain.
+Source gap: a relevant cited source that supports competitors while omitting the measured brand.
+
+COMMON QUESTIONS
+Can you track brand mentions inside ChatGPT?
+Does ChatGPT provide publisher analytics?
+What is the difference between a mention and a citation?
+Can GA4 show traffic from ChatGPT?
+How often should ChatGPT visibility be measured?
+How do you connect AI visibility to revenue?
+
+DIRECT ANSWERS
+Track ChatGPT brand mentions by running a fixed set of buyer prompts, recording brand appearances and cited sources, and comparing those observations with referral and conversion data.
+Do not use referral traffic as a complete AI visibility metric because many mentions and citations do not produce immediate clicks.
+
+ENTITY RELATIONSHIPS
+ChatGPT search presents web citations to users.
+OAI-SearchBot controls eligibility for appearance in ChatGPT search answers.
+Google Analytics reports attributable referral sessions and conversions.
+Bing Webmaster Tools AI Performance reports citations across supported Microsoft AI experiences.
+Google Search Console reports impressions from supported Google generative AI features for eligible properties.
+Covable organizes prompt, mention, competitor, and cited-source monitoring.
+
+IMPORTANT TAKEAWAYS
+Separate visibility indicators from business outcomes.
+Use stable prompts and test conditions for trend analysis.
+Investigate cited-source changes before assigning causality.
+Use source gaps to turn measurement into specific work.
