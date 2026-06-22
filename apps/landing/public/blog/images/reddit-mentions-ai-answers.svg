@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Reddit mentions feeding AI answers</title>
+  <desc id="desc">A dark Covable-style diagram showing community threads, source gaps, and AI answer visibility.</desc>
+  <rect width="1024" height="1024" fill="#0a0a0a"/>
+  <rect x="68" y="68" width="888" height="888" rx="10" fill="#10110f" stroke="#2f332b" stroke-width="2"/>
+  <g stroke="#252821" stroke-width="1">
+    <path d="M68 244h888M68 424h888M68 604h888M68 784h888"/>
+    <path d="M244 68v888M424 68v888M604 68v888M784 68v888"/>
+  </g>
+  <text x="116" y="148" fill="#c9fa43" font-family="Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="2">COMMUNITY SIGNALS</text>
+  <text x="116" y="204" fill="#f2f3ed" font-family="Arial, sans-serif" font-size="42" font-weight="600">Reddit mentions in AI answers</text>
+  <g font-family="Arial, sans-serif">
+    <g transform="translate(116 322)">
+      <rect width="238" height="118" rx="8" fill="#151614" stroke="#3b3f35"/>
+      <text x="24" y="48" fill="#f2f3ed" font-size="26" font-weight="600">Threads</text>
+      <text x="24" y="82" fill="#8d9288" font-size="17">buyer questions</text>
+    </g>
+    <g transform="translate(116 506)">
+      <rect width="238" height="118" rx="8" fill="#151614" stroke="#3b3f35"/>
+      <text x="24" y="48" fill="#f2f3ed" font-size="26" font-weight="600">Competitors</text>
+      <text x="24" y="82" fill="#8d9288" font-size="17">named in context</text>
+    </g>
+    <g transform="translate(116 690)">
+      <rect width="238" height="118" rx="8" fill="#151614" stroke="#3b3f35"/>
+      <text x="24" y="48" fill="#f2f3ed" font-size="26" font-weight="600">Source gaps</text>
+      <text x="24" y="82" fill="#8d9288" font-size="17">missing evidence</text>
+    </g>
+    <g transform="translate(650 414)">
+      <rect width="258" height="180" rx="10" fill="#151614" stroke="#c9fa43"/>
+      <text x="28" y="58" fill="#c9fa43" font-size="18" font-weight="700" letter-spacing="2">AI ANSWER</text>
+      <text x="28" y="104" fill="#f2f3ed" font-size="29" font-weight="600">Mention quality</text>
+      <text x="28" y="142" fill="#8d9288" font-size="17">depends on credible context</text>
+    </g>
+  </g>
+  <path d="M354 380C470 360 548 410 650 475" fill="none" stroke="#c9fa43" stroke-width="4"/>
+  <path d="M354 565C476 552 538 536 650 512" fill="none" stroke="#74796c" stroke-width="3" stroke-dasharray="10 12"/>
+  <path d="M354 750C486 694 544 596 650 555" fill="none" stroke="#c9fa43" stroke-width="4"/>
+  <circle cx="512" cy="512" r="64" fill="none" stroke="#c9fa43" stroke-width="4"/>
+  <circle cx="512" cy="512" r="10" fill="#c9fa43"/>
+  <text x="116" y="882" fill="#f2f3ed" font-family="Arial, sans-serif" font-size="30" font-weight="600">Earn relevance. Do not manufacture it.</text>
+</svg>

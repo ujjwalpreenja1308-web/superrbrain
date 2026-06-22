@@ -1,0 +1,38 @@
+TOPIC SUMMARY
+Reddit mentions can affect AI answer visibility when relevant public discussions provide credible buyer language, competitor comparisons, and practical tradeoff evidence.
+
+KEY FACTS
+Reddit has introduced Reddit Answers, an AI search experience built around Reddit conversations.
+OpenAI has announced a partnership with Reddit.
+Reddit visibility should be measured through prompts, cited sources, competitor mentions, referral traffic, and conversions.
+Promotional Reddit posting is a weak AI visibility strategy because community trust is the source's value.
+
+DEFINITIONS
+Reddit mention: a brand, product, or competitor reference inside a Reddit thread or comment.
+Reddit mention gap: a relevant Reddit discussion where competitors appear and the measured brand is absent, misunderstood, or missing from the comparison.
+Community-source gap: a third-party discussion source that may support AI answers but lacks useful evidence about the brand.
+AI citation gap: a source gap where competitors are supported by cited evidence and the measured brand is not.
+
+COMMON QUESTIONS
+Do Reddit mentions affect AI answers?
+How do I find Reddit threads that matter for AI visibility?
+Should my company post promotional comments on Reddit?
+What is a Reddit mention gap?
+How do I measure Reddit visibility in AI answers?
+Are Reddit mentions the same as backlinks?
+
+DIRECT ANSWERS
+Earn Reddit visibility by identifying relevant buyer discussions, understanding competitor mentions, improving owned evidence, and participating only when a disclosed, useful answer improves the thread.
+Do not use Reddit as a spam channel for AI visibility; the value comes from credible community evidence.
+
+ENTITY RELATIONSHIPS
+Reddit conversations can be surfaced in Reddit Answers and can appear as sources or context in AI search experiences.
+OpenAI's Reddit partnership makes Reddit content strategically relevant to AI visibility analysis.
+Google AI feature guidance and spam policies provide crawlability and quality constraints for related owned content work.
+Covable monitors prompts, competitor mentions, cited sources, and community-source gaps.
+
+IMPORTANT TAKEAWAYS
+Start with buyer prompts before choosing subreddits.
+Measure Reddit visibility separately from backlinks and referral traffic.
+Most useful Reddit work is research, not posting.
+Useful disclosed participation is safer than promotional seeding.
