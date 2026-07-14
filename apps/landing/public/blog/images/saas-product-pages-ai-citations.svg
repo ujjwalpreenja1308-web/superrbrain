@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">SaaS product page structured for AI citations</title>
+  <desc id="desc">A dark Covable-style technical diagram of page sections feeding AI citations.</desc>
+  <rect width="1024" height="1024" fill="#0a0a0a"/>
+  <rect x="72" y="72" width="880" height="880" rx="10" fill="#10110f" stroke="#2f332b" stroke-width="2"/>
+  <g stroke="#252821" stroke-width="1">
+    <path d="M72 256h880M72 512h880M72 768h880"/>
+    <path d="M256 72v880M512 72v880M768 72v880"/>
+  </g>
+  <text x="120" y="148" fill="#c9fa43" font-family="Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="2">AEO PRODUCT PAGE</text>
+  <text x="120" y="205" fill="#f2f3ed" font-family="Arial, sans-serif" font-size="42" font-weight="600">Make the evidence easy to cite</text>
+  <g font-family="Arial, sans-serif">
+    <g transform="translate(124 320)">
+      <rect width="250" height="122" rx="8" fill="#151614" stroke="#3b3f35"/>
+      <text x="24" y="48" fill="#f2f3ed" font-size="25" font-weight="600">Category</text>
+      <text x="24" y="84" fill="#8d9288" font-size="17">what the product is</text>
+    </g>
+    <g transform="translate(124 504)">
+      <rect width="250" height="122" rx="8" fill="#151614" stroke="#3b3f35"/>
+      <text x="24" y="48" fill="#f2f3ed" font-size="25" font-weight="600">Evidence</text>
+      <text x="24" y="84" fill="#8d9288" font-size="17">proof, workflows, docs</text>
+    </g>
+    <g transform="translate(124 688)">
+      <rect width="250" height="122" rx="8" fill="#151614" stroke="#3b3f35"/>
+      <text x="24" y="48" fill="#f2f3ed" font-size="25" font-weight="600">Tradeoffs</text>
+      <text x="24" y="84" fill="#8d9288" font-size="17">fit, limits, alternatives</text>
+    </g>
+    <g transform="translate(640 400)">
+      <rect width="250" height="214" rx="10" fill="#151614" stroke="#c9fa43"/>
+      <text x="28" y="58" fill="#c9fa43" font-size="18" font-weight="700" letter-spacing="2">AI CITATION</text>
+      <text x="28" y="106" fill="#f2f3ed" font-size="30" font-weight="600">Clear source</text>
+      <text x="28" y="146" fill="#8d9288" font-size="17">crawlable, specific,</text>
+      <text x="28" y="174" fill="#8d9288" font-size="17">structured, verifiable</text>
+    </g>
+  </g>
+  <path d="M374 381C480 358 556 410 640 462" fill="none" stroke="#c9fa43" stroke-width="4"/>
+  <path d="M374 565C486 552 540 520 640 506" fill="none" stroke="#74796c" stroke-width="3" stroke-dasharray="10 12"/>
+  <path d="M374 749C486 706 552 590 640 552" fill="none" stroke="#c9fa43" stroke-width="4"/>
+  <circle cx="512" cy="512" r="66" fill="none" stroke="#c9fa43" stroke-width="4"/>
+  <circle cx="512" cy="512" r="10" fill="#c9fa43"/>
+  <text x="120" y="884" fill="#f2f3ed" font-family="Arial, sans-serif" font-size="30" font-weight="600">Reduce ambiguity. Increase citation value.</text>
+</svg>

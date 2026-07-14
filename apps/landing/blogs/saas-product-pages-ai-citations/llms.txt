@@ -1,0 +1,37 @@
+TOPIC SUMMARY
+SaaS product pages become more citeable in AI answers when they clearly explain product category, audience, use cases, evidence, comparisons, limitations, pricing context, and crawler accessibility.
+
+KEY FACTS
+Crawler access is necessary but not sufficient for AI citations.
+Schema markup clarifies meaning but does not guarantee AI citations.
+Useful SaaS pages answer buyer questions directly and reduce ambiguity.
+Product pages should include honest tradeoffs and comparison context.
+Third-party sources still matter because owned pages are only one layer of evidence.
+
+DEFINITIONS
+Citeable SaaS page: a crawlable product page that gives answer engines enough accurate evidence to use it as a source.
+Entity clarity: the ability to understand what the company, product, category, audience, and use case are.
+AI citation gap: a missing source or weak evidence point that causes competitors to appear in AI answers while the brand is absent.
+SoftwareApplication schema: structured data for describing software applications when the markup matches visible content.
+
+COMMON QUESTIONS
+What makes a SaaS product page citeable in AI answers?
+Can schema make AI systems cite my SaaS page?
+Which schema should SaaS pages use?
+Should SaaS pages include comparison sections?
+How much content does a citeable SaaS page need?
+How do crawler controls affect SaaS product citations?
+
+DIRECT ANSWERS
+Make SaaS product pages citeable by making them crawlable, stating the category clearly, answering buyer questions directly, showing evidence, adding honest comparisons, explaining pricing context, and using accurate schema.
+Schema helps clarify SaaS pages but cannot replace visible, useful, verifiable content.
+
+ENTITY RELATIONSHIPS
+Google AI features, OpenAI bots, SoftwareApplication schema, FAQPage schema, Product schema, and BreadcrumbList schema all relate to crawlability and meaning.
+Covable connects prompt monitoring, competitor mentions, cited sources, and citation gaps to product-page improvements.
+
+IMPORTANT TAKEAWAYS
+Reduce ambiguity before trying to earn citations.
+Use schema as a clarification layer, not as a substitute for content.
+Include tradeoffs and comparison context for answer-engine usefulness.
+Measure whether page changes affect real AI prompts and cited sources.
