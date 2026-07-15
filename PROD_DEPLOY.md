@@ -47,7 +47,7 @@ Required backend environment variables:
 NODE_ENV=production
 PORT=3001
 FRONTEND_URL=https://home.covable.app
-BACKEND_URL=https://covable-backend.onrender.com
+BACKEND_URL=https://superrbrain.onrender.com
 
 SUPABASE_URL=https://xxx.supabase.co
 SUPABASE_ANON_KEY=eyJ...
@@ -112,7 +112,7 @@ dist
 Environment variables:
 
 ```bash
-VITE_API_URL=https://covable-backend.onrender.com
+VITE_API_URL=https://superrbrain.onrender.com
 VITE_SUPABASE_URL=https://xxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
 VITE_HOME_URL=https://home.covable.app
@@ -181,7 +181,7 @@ apps/backend/supabase/migrations/016_runtime_state_columns.sql
 Backend:
 
 ```bash
-curl https://covable-backend.onrender.com/health
+curl https://superrbrain.onrender.com/health
 ```
 
 Expected response:
