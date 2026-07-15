@@ -11,12 +11,25 @@ import {
   saveBrandPrompts,
   scrapeBrandWebsite,
 } from "../services/onboard-brand.service.js";
+import {
+  analyzeMonitoringCitations,
+  completeMonitoringRun,
+  markMonitoringRunError,
+  prepareMonitoringRun,
+  runMonitoringQueries,
+  saveMonitoringResponses,
+} from "../services/run-monitoring.service.js";
 
 const app = new Hono();
-const payloadSchema = z.object({ brandId: z.string().uuid() });
-type Payload = z.infer<typeof payloadSchema>;
+const onboardPayloadSchema = z.object({ brandId: z.string().uuid() });
+type OnboardPayload = z.infer<typeof onboardPayloadSchema>;
+const monitoringPayloadSchema = z.object({
+  brandId: z.string().uuid(),
+  runId: z.string().uuid(),
+});
+type MonitoringPayload = z.infer<typeof monitoringPayloadSchema>;
 
-const onboardBrandWorkflow = serve<Payload>(
+const onboardBrandWorkflow = serve<OnboardPayload>(
   async (context) => {
     const { brandId } = context.requestPayload;
 
@@ -45,13 +58,13 @@ const onboardBrandWorkflow = serve<Payload>(
     return { success: true, brandName: extracted.name, promptCount };
   },
   {
-    schema: payloadSchema,
+    schema: onboardPayloadSchema,
     env: process.env,
     url: process.env.BACKEND_URL
       ? `${process.env.BACKEND_URL.replace(/\/$/, "")}/workflows/onboard-brand`
       : undefined,
     failureFunction: async ({ context, failResponse, failStack }) => {
-      const parsed = payloadSchema.safeParse(context.requestPayload);
+      const parsed = onboardPayloadSchema.safeParse(context.requestPayload);
       if (parsed.success) {
         await markBrandOnboardingError(parsed.data.brandId);
       }
@@ -65,6 +78,59 @@ const onboardBrandWorkflow = serve<Payload>(
   },
 );
 
+const runMonitoringWorkflow = serve<MonitoringPayload>(
+  async (context) => {
+    const { brandId, runId } = context.requestPayload;
+
+    const run = await context.run("prepare-monitoring-run", () =>
+      prepareMonitoringRun(brandId, runId),
+    );
+    const results = await context.run("run-bright-data-searches", () =>
+      runMonitoringQueries(run),
+    );
+    const responseCount = await context.run("save-ai-responses", () =>
+      saveMonitoringResponses(run, results),
+    );
+    const citationAnalysis = await context.run(
+      "analyze-monitoring-citations",
+      () => analyzeMonitoringCitations(run, results),
+    );
+    const report = await context.run("complete-monitoring-run", () =>
+      completeMonitoringRun(run),
+    );
+
+    return {
+      success: true,
+      runId,
+      responseCount,
+      ...citationAnalysis,
+      visibilityScore: report.visibility_score,
+      gapScore: report.gap_score,
+    };
+  },
+  {
+    schema: monitoringPayloadSchema,
+    env: process.env,
+    url: process.env.BACKEND_URL
+      ? `${process.env.BACKEND_URL.replace(/\/$/, "")}/workflows/run-monitoring`
+      : undefined,
+    failureFunction: async ({ context, failResponse, failStack }) => {
+      const parsed = monitoringPayloadSchema.safeParse(context.requestPayload);
+      if (parsed.success) {
+        await markMonitoringRunError(parsed.data.brandId);
+      }
+      console.error("Monitoring workflow failed", {
+        brandId: parsed.success ? parsed.data.brandId : "invalid-payload",
+        runId: parsed.success ? parsed.data.runId : "invalid-payload",
+        error: failResponse,
+        stack: failStack,
+      });
+      return "Monitoring failed and the brand was marked for retry.";
+    },
+  },
+);
+
 app.post("/onboard-brand", onboardBrandWorkflow);
+app.post("/run-monitoring", runMonitoringWorkflow);
 
 export { app as workflowRoutes };

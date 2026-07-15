@@ -2,6 +2,7 @@ import { Client } from "@upstash/workflow";
 import { requireEnv } from "./env.js";
 
 export const ONBOARD_BRAND_WORKFLOW_PATH = "/workflows/onboard-brand";
+export const RUN_MONITORING_WORKFLOW_PATH = "/workflows/run-monitoring";
 
 let workflowClient: Client | undefined;
 
@@ -18,10 +19,24 @@ export function getOnboardBrandWorkflowUrl(): string {
   return `${backendUrl}${ONBOARD_BRAND_WORKFLOW_PATH}`;
 }
 
+export function getRunMonitoringWorkflowUrl(): string {
+  const backendUrl = requireEnv("BACKEND_URL").replace(/\/$/, "");
+  return `${backendUrl}${RUN_MONITORING_WORKFLOW_PATH}`;
+}
+
 export async function dispatchBrandOnboarding(brandId: string) {
   return getWorkflowClient().trigger({
     url: getOnboardBrandWorkflowUrl(),
     body: { brandId },
+    retries: 3,
+    retryDelay: "max(1000, pow(2, retried) * 1000)",
+  });
+}
+
+export async function dispatchMonitoringRun(brandId: string, runId: string) {
+  return getWorkflowClient().trigger({
+    url: getRunMonitoringWorkflowUrl(),
+    body: { brandId, runId },
     retries: 3,
     retryDelay: "max(1000, pow(2, retried) * 1000)",
   });

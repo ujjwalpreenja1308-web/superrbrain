@@ -2,8 +2,10 @@ import { Hono } from "hono";
 import { AI_ENGINES, createBrandSchema } from "@covable/shared";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { AppError } from "../middleware/error.js";
-import { tasks } from "@trigger.dev/sdk/v3";
-import { dispatchBrandOnboarding } from "../lib/qstash.js";
+import {
+  dispatchBrandOnboarding,
+  dispatchMonitoringRun,
+} from "../lib/qstash.js";
 import { isBrandOnboardingStale } from "../lib/onboarding-state.js";
 import { checkPromptLimit, getPlanTier } from "../middleware/requirePlan.js";
 import { isLocalDevBypassEnabled } from "../lib/env.js";
@@ -602,9 +604,9 @@ app.post("/:id/run", async (c) => {
 
   const runId = crypto.randomUUID();
   try {
-    await tasks.trigger("run-monitoring", { brandId, runId });
+    await dispatchMonitoringRun(brandId, runId);
   } catch (err) {
-    console.error("Failed to trigger run-monitoring job:", err);
+    console.error("Failed to dispatch monitoring workflow:", err);
     await supabaseAdmin
       .from("brands")
       .update({ status: brand.status })

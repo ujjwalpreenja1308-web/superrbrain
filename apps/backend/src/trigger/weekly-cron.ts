@@ -1,5 +1,6 @@
-import { schedules, tasks } from "@trigger.dev/sdk/v3";
+import { schedules } from "@trigger.dev/sdk/v3";
 import { supabaseAdmin } from "../lib/supabase.js";
+import { dispatchMonitoringRun } from "../lib/qstash.js";
 
 export const weeklyCron = schedules.task({
   id: "weekly-monitoring-cron",
@@ -132,10 +133,7 @@ export const weeklyCron = schedules.task({
 
     let triggered = 0;
     for (const brand of brands) {
-      await tasks.trigger("run-monitoring", {
-        brandId: brand.id,
-        runId: crypto.randomUUID(),
-      });
+      await dispatchMonitoringRun(brand.id, crypto.randomUUID());
       triggered++;
     }
 

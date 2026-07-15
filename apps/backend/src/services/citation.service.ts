@@ -1,4 +1,5 @@
 import type { SourceType } from "@covable/shared";
+import { ollamaJsonCompletion } from "../lib/ollama.js";
 
 export interface CitationAnalysis {
   url: string;
@@ -66,18 +67,17 @@ export function normalizeUrlForComparison(input: string): string {
 }
 
 /**
- * Use GPT to extract actual brand/company names mentioned in an AI response.
+ * Use the configured Ollama Cloud model to extract actual brand/company names
+ * mentioned in an AI response.
  * This replaces naive string-matching against a predefined competitor list.
  */
 export async function extractBrandsFromResponse(
   responseText: string,
   brandName: string,
 ): Promise<{ name: string; frequency: number }[]> {
-  const { openai } = await import("../lib/openai.js");
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    response_format: { type: "json_object" },
+  const raw = await ollamaJsonCompletion<{ brands?: unknown }>({
     temperature: 0,
+    maxTokens: 1000,
     messages: [
       {
         role: "system",
@@ -92,8 +92,7 @@ Rules:
       { role: "user", content: responseText.slice(0, 3000) },
     ],
   });
-  const raw = JSON.parse(response.choices[0].message.content || "{}");
-  const names: unknown[] = Array.isArray(raw.brands) ? raw.brands : [];
+  const names: unknown[] = Array.isArray(raw?.brands) ? raw.brands : [];
   const normalizedBrand = brandName.trim().toLowerCase();
   return [
     ...new Set(
