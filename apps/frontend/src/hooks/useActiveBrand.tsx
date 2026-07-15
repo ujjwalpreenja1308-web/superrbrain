@@ -2,7 +2,8 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 import { useBrands } from "@/hooks/useBrand";
 import type { Brand } from "@covable/shared";
 
-const STORAGE_KEY = "covable_brand_id";
+export const ACTIVE_BRAND_STORAGE_KEY = "covable_brand_id";
+export const ONBOARDING_BRAND_STORAGE_KEY = "covable_onboarding_brand_id";
 
 interface ActiveBrandContextValue {
   activeBrand: Brand | undefined;
@@ -17,7 +18,7 @@ const ActiveBrandContext = createContext<ActiveBrandContextValue | null>(null);
 export function ActiveBrandProvider({ children }: { children: ReactNode }) {
   const { data: brands, isLoading } = useBrands();
   const [selectedId, setSelectedId] = useState<string | null>(
-    () => localStorage.getItem(STORAGE_KEY)
+    () => localStorage.getItem(ACTIVE_BRAND_STORAGE_KEY)
   );
 
   // If stored ID doesn't match any brand, fall back to first
@@ -28,16 +29,16 @@ export function ActiveBrandProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (activeBrand?.id && activeBrand.id !== selectedId) {
       setSelectedId(activeBrand.id);
-      localStorage.setItem(STORAGE_KEY, activeBrand.id);
+      localStorage.setItem(ACTIVE_BRAND_STORAGE_KEY, activeBrand.id);
     } else if (brands && brands.length === 0 && selectedId !== null) {
       setSelectedId(null);
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(ACTIVE_BRAND_STORAGE_KEY);
     }
   }, [activeBrand?.id, brands, selectedId]);
 
   function setActiveBrandId(id: string) {
     setSelectedId(id);
-    localStorage.setItem(STORAGE_KEY, id);
+    localStorage.setItem(ACTIVE_BRAND_STORAGE_KEY, id);
   }
 
   return (

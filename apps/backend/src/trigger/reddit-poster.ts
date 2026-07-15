@@ -1,6 +1,5 @@
 import { task } from "@trigger.dev/sdk/v3";
 import { supabaseAdmin } from "../lib/supabase.js";
-import { postRedditComment } from "../services/composio.service.js";
 import { checkGuardrails } from "../services/reddit-guardrails.service.js";
 
 /**
@@ -51,6 +50,13 @@ export const redditPosterTask = task({
         .eq("id", redditPostId);
       return { skipped: true, reason: "Could not extract Reddit post ID" };
     }
+
+    // Reddit is still under development. Load its legacy Composio SDK only
+    // when this task actually executes so it cannot break unrelated workers
+    // (such as brand onboarding) during Trigger's task indexing step.
+    const { postRedditComment } = await import(
+      "../services/composio.service.js"
+    );
 
     // Post the comment via Composio
     const result = await postRedditComment(userId, thingId, post.ai_reply);

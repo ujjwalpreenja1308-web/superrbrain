@@ -1,6 +1,9 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useActiveBrand } from "@/hooks/useActiveBrand";
+import {
+  ONBOARDING_BRAND_STORAGE_KEY,
+  useActiveBrand,
+} from "@/hooks/useActiveBrand";
 import {
   LayoutDashboard,
   ListChecks,
@@ -59,6 +62,7 @@ export function AppSidebar() {
   const { activeBrand, brands, setActiveBrandId } = useActiveBrand();
 
   function handleAddBrand() {
+    localStorage.removeItem(ONBOARDING_BRAND_STORAGE_KEY);
     navigate("/onboarding");
   }
 

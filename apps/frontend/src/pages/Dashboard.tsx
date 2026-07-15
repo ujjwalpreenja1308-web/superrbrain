@@ -10,7 +10,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useBrand, useRunMonitoring } from "@/hooks/useBrand";
 import { useCitations, useGaps, useReport } from "@/hooks/useReport";
-import { useActiveBrand } from "@/hooks/useActiveBrand";
+import {
+  ONBOARDING_BRAND_STORAGE_KEY,
+  useActiveBrand,
+} from "@/hooks/useActiveBrand";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -137,6 +140,33 @@ export function Dashboard() {
 
   const activeBrandDetail = brandDetail ?? brand;
   const isRunning = activeBrandDetail?.status === "running" || activeBrandDetail?.status === "onboarding";
+
+  useEffect(() => {
+    if (!brandId || !activeBrandDetail) return;
+
+    const onboardingBrandId = localStorage.getItem(
+      ONBOARDING_BRAND_STORAGE_KEY,
+    );
+
+    if (
+      activeBrandDetail.status === "ready" &&
+      onboardingBrandId === brandId
+    ) {
+      localStorage.removeItem(ONBOARDING_BRAND_STORAGE_KEY);
+      return;
+    }
+
+    const isUnfinishedOnboarding =
+      activeBrandDetail.status === "pending" ||
+      activeBrandDetail.status === "onboarding" ||
+      (activeBrandDetail.status === "error" &&
+        (onboardingBrandId === brandId || !activeBrandDetail.name));
+
+    if (isUnfinishedOnboarding) {
+      localStorage.setItem(ONBOARDING_BRAND_STORAGE_KEY, brandId);
+      navigate("/onboarding", { replace: true });
+    }
+  }, [activeBrandDetail, brandId, navigate]);
 
   if (brandsLoading || !brandId || !activeBrandDetail) {
     return <DashboardSkeleton />;

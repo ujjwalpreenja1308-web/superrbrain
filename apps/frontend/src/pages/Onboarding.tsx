@@ -24,13 +24,19 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { usePlan } from "@/hooks/usePlan";
+import {
+  ACTIVE_BRAND_STORAGE_KEY,
+  ONBOARDING_BRAND_STORAGE_KEY,
+} from "@/hooks/useActiveBrand";
 
 export function Onboarding() {
   const navigate = useNavigate();
   const [url, setUrl] = useState("");
   const [country, setCountry] = useState("");
   const [regionOpen, setRegionOpen] = useState(false);
-  const [brandId, setBrandId] = useState<string | null>(null);
+  const [brandId, setBrandId] = useState<string | null>(() =>
+    localStorage.getItem(ONBOARDING_BRAND_STORAGE_KEY),
+  );
   const regionRef = useRef<HTMLDivElement>(null);
 
   const { data: regionsData } = useQuery({
@@ -41,7 +47,11 @@ export function Onboarding() {
 
   const [step, setStep] = useState<
     "url" | "analyzing" | "prompts" | "running" | "error"
-  >("url");
+  >(() =>
+    localStorage.getItem(ONBOARDING_BRAND_STORAGE_KEY)
+      ? "analyzing"
+      : "url",
+  );
   const [urlFocused, setUrlFocused] = useState(false);
   const [analyzePhase, setAnalyzePhase] = useState(0);
 
@@ -119,7 +129,8 @@ export function Onboarding() {
         url: normalizeUrl(url),
         country: country || undefined,
       });
-      localStorage.setItem("covable_brand_id", result.id);
+      localStorage.setItem(ACTIVE_BRAND_STORAGE_KEY, result.id);
+      localStorage.setItem(ONBOARDING_BRAND_STORAGE_KEY, result.id);
       setBrandId(result.id);
       setStep("analyzing");
     } catch {
@@ -137,6 +148,7 @@ export function Onboarding() {
     setStep("running");
     try {
       await runMonitoring.mutateAsync();
+      localStorage.removeItem(ONBOARDING_BRAND_STORAGE_KEY);
       navigate("/dashboard", { replace: true });
     } catch {
       setStep("prompts");
