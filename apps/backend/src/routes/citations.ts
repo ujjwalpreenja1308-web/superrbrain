@@ -2,23 +2,9 @@ import { Hono } from "hono";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { AppError } from "../middleware/error.js";
 import type { AppVariables } from "../types.js";
+import { normalizeUrlForComparison } from "../services/citation.service.js";
 
 const app = new Hono<{ Variables: AppVariables }>();
-
-function normalizeCitationUrl(input: string) {
-  try {
-    const url = new URL(input);
-    url.hash = "";
-    for (const key of Array.from(url.searchParams.keys())) {
-      if (key.startsWith("utm_") || ["fbclid", "gclid"].includes(key)) {
-        url.searchParams.delete(key);
-      }
-    }
-    return url.toString();
-  } catch {
-    return input;
-  }
-}
 
 // GET /api/brands/:id/citations
 app.get("/:id/citations", async (c) => {
@@ -35,13 +21,16 @@ app.get("/:id/citations", async (c) => {
   if (!brand) throw new AppError(404, "Brand not found");
 
   // Get the latest run_id
-  const { data: latestResponse } = await supabaseAdmin
-    .from("ai_responses")
-    .select("run_id")
-    .eq("brand_id", brandId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
+  const { data: latestResponse, error: latestResponseError } =
+    await supabaseAdmin
+      .from("ai_responses")
+      .select("run_id")
+      .eq("brand_id", brandId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+  if (latestResponseError)
+    throw new AppError(500, "Failed to load latest monitoring run");
 
   const runId = latestResponse?.run_id;
   if (!runId) return c.json([]);
@@ -59,7 +48,7 @@ app.get("/:id/citations", async (c) => {
   // responses cited this exact source, not how often the whole domain appeared.
   const citationsByUrl = new Map<string, typeof citations>();
   for (const cit of citations ?? []) {
-    const key = normalizeCitationUrl(cit.url);
+    const key = normalizeUrlForComparison(cit.url);
     const existing = citationsByUrl.get(key) ?? [];
     existing.push(cit);
     citationsByUrl.set(key, existing);
@@ -69,14 +58,18 @@ app.get("/:id/citations", async (c) => {
     const [first] = group;
     const brands = new Map<string, { name: string; frequency: number }>();
     for (const cit of group) {
-      const mentioned = Array.isArray(cit.brands_mentioned) ? cit.brands_mentioned : [];
+      const mentioned = Array.isArray(cit.brands_mentioned)
+        ? cit.brands_mentioned
+        : [];
       for (const brand of mentioned) {
         if (typeof brand?.name !== "string") continue;
         const key = brand.name.toLowerCase();
         const existing = brands.get(key);
         brands.set(key, {
           name: existing?.name ?? brand.name,
-          frequency: (existing?.frequency ?? 0) + (typeof brand.frequency === "number" ? brand.frequency : 1),
+          frequency:
+            (existing?.frequency ?? 0) +
+            (typeof brand.frequency === "number" ? brand.frequency : 1),
         });
       }
     }

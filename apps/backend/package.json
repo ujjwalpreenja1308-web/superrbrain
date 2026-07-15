@@ -9,7 +9,7 @@
     "build": "pnpm --filter @covable/shared build && tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "vitest run --config vitest.config.ts"
+    "test:e2e": "pnpm --filter @covable/shared build && vitest run --config vitest.config.ts"
   },
   "dependencies": {
     "@covable/shared": "workspace:*",

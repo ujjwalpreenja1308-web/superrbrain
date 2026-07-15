@@ -90,3 +90,37 @@ export async function retrieveDodoSubscription(subscriptionId: string): Promise<
 
   return asRecord(await response.json()) ?? {};
 }
+
+export async function cancelDodoSubscription(subscriptionId: string): Promise<void> {
+  const apiKey = process.env.DODO_PAYMENTS_API_KEY;
+  if (!apiKey) {
+    console.error("[dodo] DODO_PAYMENTS_API_KEY not set");
+    throw new AppError(500, "Billing cancellation is not configured");
+  }
+
+  const response = await fetch(
+    `${getDodoApiBaseUrl()}/subscriptions/${encodeURIComponent(subscriptionId)}`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        status: "cancelled",
+        cancel_reason: "cancelled_by_customer",
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    console.error("[dodo] Failed to cancel subscription", {
+      subscriptionId,
+      status: response.status,
+      body: body.slice(0, 500),
+    });
+    throw new AppError(502, "Could not cancel billing subscription");
+  }
+}

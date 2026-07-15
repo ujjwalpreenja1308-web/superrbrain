@@ -30,8 +30,8 @@ function buildCheckoutUrl(plan: string, email: string, userId: string): string {
   if (!productId) return "#";
   const params = new URLSearchParams({
     email,
-    "metadata[user_id]": userId,
-    "metadata[plan]": plan,
+    metadata_user_id: userId,
+    metadata_plan: plan,
     redirect_url: `${HOME_URL}/plan?payment=success&plan=${encodeURIComponent(plan)}`,
     cancel_url: `${HOME_URL}/plan?payment=cancelled`,
   });
@@ -42,17 +42,15 @@ interface PlanCardProps {
   tier: PlanTier;
   name: string;
   monthlyPrice: number;
-  annualMonthlyPrice: number;
   features: { label: string; included: boolean }[];
   isPopular?: boolean;
   isCurrent: boolean;
-  isAnnual: boolean;
   userEmail: string;
   userId: string;
 }
 
-function PlanCard({ tier, name, monthlyPrice, annualMonthlyPrice, features, isPopular, isCurrent, isAnnual, userEmail, userId }: PlanCardProps) {
-  const price = isAnnual ? annualMonthlyPrice : monthlyPrice;
+function PlanCard({ tier, name, monthlyPrice, features, isPopular, isCurrent, userEmail, userId }: PlanCardProps) {
+  const price = monthlyPrice;
   const checkoutUrl = buildCheckoutUrl(tier, userEmail, userId);
 
   const isStarter = tier === "starter";
@@ -89,11 +87,6 @@ function PlanCard({ tier, name, monthlyPrice, annualMonthlyPrice, features, isPo
             <span className="text-xs text-muted-foreground">/mo</span>
           </div>
         </div>
-        {isAnnual && (
-          <p className="text-[10px] text-muted-foreground mt-1">
-            Billed ${monthlyPrice * 10}/yr · save ${(monthlyPrice - annualMonthlyPrice) * 12}/yr
-          </p>
-        )}
       </CardHeader>
 
       <CardContent className="flex flex-col flex-1 gap-4">
@@ -166,12 +159,11 @@ export function Settings() {
     }
   }
 
-  const plans: { tier: PlanTier; name: string; monthly: number; annual: number; features: { label: string; included: boolean }[] }[] = [
+  const plans: { tier: PlanTier; name: string; monthly: number; features: { label: string; included: boolean }[] }[] = [
     {
       tier: "starter",
       name: "Starter",
       monthly: PLAN_LIMITS.starter.price!,
-      annual: PLAN_LIMITS.starter.price!,
       features: [
         { label: `${PLAN_LIMITS.starter.maxPrompts} tracked prompts / brand`, included: true },
         { label: "ChatGPT response analysis", included: true },
@@ -185,7 +177,6 @@ export function Settings() {
       tier: "growth",
       name: "Growth",
       monthly: PLAN_LIMITS.growth.price!,
-      annual: PLAN_LIMITS.growth.price!,
       features: [
         { label: `${PLAN_LIMITS.growth.maxPrompts} tracked prompts / brand`, included: true },
         { label: "ChatGPT response analysis", included: true },
@@ -199,7 +190,6 @@ export function Settings() {
       tier: "pro",
       name: "Pro",
       monthly: PLAN_LIMITS.pro.price!,
-      annual: PLAN_LIMITS.pro.price!,
       features: [
         { label: `${PLAN_LIMITS.pro.maxPrompts} tracked prompts / brand`, included: true },
         { label: "ChatGPT response analysis", included: true },
@@ -210,12 +200,6 @@ export function Settings() {
       ],
     },
   ];
-
-  const [isAnnual, setIsAnnual] = useState(false);
-
-  function toggleBilling(annual: boolean) {
-    setIsAnnual(annual);
-  }
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -302,9 +286,13 @@ export function Settings() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">{PLAN_LIMITS[plan.tier].label}</p>
+                  <p className="font-medium">
+                    {plan.isSuperAdmin ? "Superadmin" : PLAN_LIMITS[plan.tier].label}
+                  </p>
                   <p className="text-xs text-muted-foreground">
-                    {plan.tier === "trial"
+                    {plan.isSuperAdmin
+                      ? "Full access · unlimited companies"
+                      : plan.tier === "trial"
                       ? "3-day trial · upgrade to keep access"
                       : `$${plan.price}/mo · cancel anytime`}
                   </p>
@@ -313,7 +301,7 @@ export function Settings() {
                   variant="outline"
                   className={plan.tier === "trial" ? "border-yellow-500/50 text-yellow-500" : "border-primary/50 text-primary"}
                 >
-                  {plan.tier === "trial" ? "Trial" : "Active"}
+                  {plan.isSuperAdmin ? "Superadmin" : plan.tier === "trial" ? "Trial" : "Active"}
                 </Badge>
               </div>
 
@@ -322,19 +310,25 @@ export function Settings() {
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>Brands</span>
-                    <span>{brands.length} / {plan.maxBrands}</span>
+                    <span>
+                      {brands.length} / {plan.isSuperAdmin ? "Unlimited" : plan.maxBrands}
+                    </span>
                   </div>
                   <div className="h-1 rounded-full bg-secondary overflow-hidden">
                     <div
                       className="h-full bg-primary rounded-full"
-                      style={{ width: `${Math.min((brands.length / plan.maxBrands) * 100, 100)}%` }}
+                      style={{
+                        width: plan.isSuperAdmin
+                          ? "0%"
+                          : `${Math.min((brands.length / plan.maxBrands) * 100, 100)}%`,
+                      }}
                     />
                   </div>
                 </div>
               </div>
 
               {/* Cancel button — only for paid plans */}
-              {plan.tier !== "trial" && (
+              {plan.tier !== "trial" && !plan.isSuperAdmin && (
                 <div className="mt-4 pt-4 border-t border-border">
                   <button
                     onClick={handleCancelPlan}
@@ -351,34 +345,6 @@ export function Settings() {
             </CardContent>
           </Card>
 
-          {/* Monthly / Annual toggle */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => toggleBilling(false)}
-              className={cn(
-                "text-xs px-3 py-1.5 rounded-full border transition-colors",
-                !isAnnual ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground"
-              )}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => toggleBilling(true)}
-              className={cn(
-                "text-xs px-3 py-1.5 rounded-full border transition-colors flex items-center gap-1.5",
-                isAnnual ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground"
-              )}
-            >
-              Annual
-              <span className={cn(
-                "text-[10px] px-1.5 py-0.5 rounded",
-                isAnnual ? "bg-white/20" : "bg-primary/10 text-primary"
-              )}>
-                Save 17%
-              </span>
-            </button>
-          </div>
-
           {/* Plan cards */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {plans.map((p) => (
@@ -387,11 +353,9 @@ export function Settings() {
                 tier={p.tier}
                 name={p.name}
                 monthlyPrice={p.monthly}
-                annualMonthlyPrice={p.annual}
                 features={p.features}
                 isPopular={p.tier === "growth"}
                 isCurrent={plan.tier === p.tier}
-                isAnnual={isAnnual}
                 userEmail={user?.email ?? ""}
                 userId={user?.id ?? ""}
               />

@@ -3,19 +3,23 @@ import { supabaseAdmin } from "../lib/supabase.js";
 
 export async function computeReport(
   brandId: string,
-  runId: string
+  runId: string,
 ): Promise<VisibilityReport> {
   // Fetch all responses for this run
-  const { data: responses } = await supabaseAdmin
+  const { data: responses, error: responsesError } = await supabaseAdmin
     .from("ai_responses")
     .select("*")
     .eq("brand_id", brandId)
     .eq("run_id", runId);
+  if (responsesError)
+    throw new Error(
+      `Failed to load monitoring responses: ${responsesError.message}`,
+    );
 
   const allResponses = responses || [];
   const totalResponses = allResponses.length;
   const brandMentionedCount = allResponses.filter(
-    (r) => r.brand_mentioned
+    (r) => r.brand_mentioned,
   ).length;
 
   // Visibility score: percentage of responses where brand appeared
@@ -25,10 +29,7 @@ export async function computeReport(
       : 0;
 
   // Engine breakdown
-  const engineMap = new Map<
-    string,
-    { total: number; mentioned: number }
-  >();
+  const engineMap = new Map<string, { total: number; mentioned: number }>();
   for (const r of allResponses) {
     const entry = engineMap.get(r.engine) || { total: 0, mentioned: 0 };
     entry.total++;
@@ -42,19 +43,19 @@ export async function computeReport(
       total: stats.total,
       mentioned: stats.mentioned,
       score:
-        stats.total > 0
-          ? Math.round((stats.mentioned / stats.total) * 100)
-          : 0,
-    })
+        stats.total > 0 ? Math.round((stats.mentioned / stats.total) * 100) : 0,
+    }),
   );
 
   // Gap score: count of unique high-impact gaps
-  const { data: gaps } = await supabaseAdmin
+  const { data: gaps, error: gapsError } = await supabaseAdmin
     .from("citation_gaps")
     .select("*")
     .eq("brand_id", brandId)
     .eq("run_id", runId)
     .order("opportunity_score", { ascending: false });
+  if (gapsError)
+    throw new Error(`Failed to load citation gaps: ${gapsError.message}`);
 
   const allGaps = gaps || [];
   const gap_score = allGaps.length;
@@ -66,13 +67,15 @@ export async function computeReport(
   const promptIds = new Set(allResponses.map((r) => r.prompt_id));
 
   // Last run timestamp
-  const last_run_at =
-    allResponses.length > 0
-      ? allResponses[allResponses.length - 1].created_at
-      : null;
+  const last_run_at = allResponses.reduce<string | null>((latest, response) => {
+    if (!response.created_at) return latest;
+    return !latest || response.created_at > latest
+      ? response.created_at
+      : latest;
+  }, null);
 
   // Update brand with latest scores
-  await supabaseAdmin
+  const { error: updateError } = await supabaseAdmin
     .from("brands")
     .update({
       latest_visibility_score: visibility_score,
@@ -81,6 +84,8 @@ export async function computeReport(
       updated_at: new Date().toISOString(),
     })
     .eq("id", brandId);
+  if (updateError)
+    throw new Error(`Failed to save visibility report: ${updateError.message}`);
 
   return {
     visibility_score,

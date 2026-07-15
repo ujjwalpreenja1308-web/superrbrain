@@ -1,29 +1,30 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { AppShell } from "@/components/AppShell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Onboarding } from "@/pages/Onboarding";
-import { Dashboard } from "@/pages/Dashboard";
-import { GapQueue } from "@/pages/GapQueue";
-import { ContentWorkbench } from "@/pages/ContentWorkbench";
-import { Outcomes } from "@/pages/Outcomes";
-import { Settings } from "@/pages/Settings";
-import { Help } from "@/pages/Help";
-import { Prompts } from "@/pages/Prompts";
-import { PlanChooser } from "@/pages/PlanChooser";
-import { ContentMoat } from "@/pages/ContentMoat";
-import { PromptLab } from "@/pages/PromptLab";
-import { PagesList } from "@/pages/PagesList";
-import { PageEditor } from "@/pages/PageEditor";
-import { Publishers } from "@/pages/Publishers";
-import { ReinforcementQueue } from "@/pages/ReinforcementQueue";
-import { Login } from "@/pages/Login";
 import { useAuth, getSignInUrl, isHomeDomain } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { usePlan } from "@/hooks/usePlan";
 import { api } from "@/lib/api";
+
+const Onboarding = lazy(() => import("@/pages/Onboarding").then((module) => ({ default: module.Onboarding })));
+const Dashboard = lazy(() => import("@/pages/Dashboard").then((module) => ({ default: module.Dashboard })));
+const GapQueue = lazy(() => import("@/pages/GapQueue").then((module) => ({ default: module.GapQueue })));
+const ContentWorkbench = lazy(() => import("@/pages/ContentWorkbench").then((module) => ({ default: module.ContentWorkbench })));
+const Outcomes = lazy(() => import("@/pages/Outcomes").then((module) => ({ default: module.Outcomes })));
+const Settings = lazy(() => import("@/pages/Settings").then((module) => ({ default: module.Settings })));
+const Help = lazy(() => import("@/pages/Help").then((module) => ({ default: module.Help })));
+const Prompts = lazy(() => import("@/pages/Prompts").then((module) => ({ default: module.Prompts })));
+const PlanChooser = lazy(() => import("@/pages/PlanChooser").then((module) => ({ default: module.PlanChooser })));
+const ContentMoat = lazy(() => import("@/pages/ContentMoat").then((module) => ({ default: module.ContentMoat })));
+const PromptLab = lazy(() => import("@/pages/PromptLab").then((module) => ({ default: module.PromptLab })));
+const PagesList = lazy(() => import("@/pages/PagesList").then((module) => ({ default: module.PagesList })));
+const PageEditor = lazy(() => import("@/pages/PageEditor").then((module) => ({ default: module.PageEditor })));
+const Publishers = lazy(() => import("@/pages/Publishers").then((module) => ({ default: module.Publishers })));
+const ReinforcementQueue = lazy(() => import("@/pages/ReinforcementQueue").then((module) => ({ default: module.ReinforcementQueue })));
+const Login = lazy(() => import("@/pages/Login").then((module) => ({ default: module.Login })));
 
 const HOME_URL =
   import.meta.env.VITE_HOME_URL ||
@@ -110,7 +111,6 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
   if (import.meta.env.DEV) return <>{children}</>;
 
   const plan = usePlan();
-  const navigate = useNavigate();
   const location = useLocation();
 
   // Still loading — don't flash the gate
@@ -150,8 +150,7 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
       );
     }
     // Active trial — redirect to /plan to pick a plan
-    navigate("/plan", { replace: true });
-    return null;
+    return <Navigate to="/plan" replace />;
   }
 
   return <>{children}</>;
@@ -204,7 +203,16 @@ function PlanPage() {
         console.error("Failed to confirm Dodo subscription", error);
         setConfirmationFailed(true);
       });
-  }, [dodoStatus, isAwaitingPayment, plan, subscriptionId]);
+  }, [
+    confirmationRetry,
+    dodoStatus,
+    isAwaitingPayment,
+    plan.isError,
+    plan.isLoading,
+    plan.refetch,
+    plan.tier,
+    subscriptionId,
+  ]);
 
   useEffect(() => {
     if (!isAwaitingPayment || plan.tier !== "trial" || plan.isError) {
@@ -421,7 +429,9 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ErrorBoundary>
-          <AppRoutes />
+          <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-background"><div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>}>
+            <AppRoutes />
+          </Suspense>
         </ErrorBoundary>
       </BrowserRouter>
       <Toaster position="top-right" richColors />

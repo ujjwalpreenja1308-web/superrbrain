@@ -12,10 +12,13 @@ interface MeResponse {
   trial_expires_at: string | null;
   current_period_end: string | null;
   dodo_subscription_id: string | null;
+  is_superadmin?: boolean;
+  max_brands?: number | null;
 }
 
 export interface UsePlanResult extends PlanLimits {
   tier: PlanTier;
+  isSuperAdmin: boolean;
   trialExpired: boolean;
   trialExpiresAt: Date | null;
   hasAccess: boolean;
@@ -42,6 +45,7 @@ export function usePlan(options: UsePlanOptions = {}): UsePlanResult {
 
   const rawTier = me?.plan ?? "trial";
   const tier = (rawTier in PLAN_LIMITS ? rawTier : "trial") as PlanTier;
+  const isSuperAdmin = me?.is_superadmin === true;
 
   const trialExpiresAt = me?.trial_expires_at ? new Date(me.trial_expires_at) : null;
   const trialExpired = tier === "trial" && trialExpiresAt !== null && trialExpiresAt < new Date();
@@ -53,7 +57,11 @@ export function usePlan(options: UsePlanOptions = {}): UsePlanResult {
 
   return {
     ...PLAN_LIMITS[tier],
+    maxBrands: isSuperAdmin
+      ? Number.MAX_SAFE_INTEGER
+      : me?.max_brands ?? PLAN_LIMITS[tier].maxBrands,
     tier,
+    isSuperAdmin,
     trialExpired,
     trialExpiresAt,
     hasAccess,

@@ -14,7 +14,10 @@ import {
 // === Brands ===
 
 export const createBrandSchema = z.object({
-  url: z.string().url("Please enter a valid URL"),
+  url: z.string().url("Please enter a valid URL").refine((value) => {
+    const protocol = new URL(value).protocol;
+    return protocol === "http:" || protocol === "https:";
+  }, "Brand URL must use HTTP or HTTPS"),
   country: z.string().length(2).optional(),
   city: z.string().optional(),
 });

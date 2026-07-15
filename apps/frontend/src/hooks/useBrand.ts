@@ -20,7 +20,10 @@ export function useBrand(brandId?: string) {
     queryFn: async () => {
       const brand = await api.get<Brand>(`/api/brands/${brandId}`);
 
-      const isRunning = brand.status === "onboarding" || brand.status === "running" || brand.status === "pending";
+      const isRunning =
+        brand.status === "onboarding" ||
+        brand.status === "running" ||
+        brand.status === "pending";
 
       // Transition: was running, now done → invalidate all dependent queries
       if (wasRunningRef.current && !isRunning && brandId) {
@@ -40,7 +43,9 @@ export function useBrand(brandId?: string) {
       const data = query.state.data;
       if (
         data &&
-        (data.status === "onboarding" || data.status === "running" || data.status === "pending")
+        (data.status === "onboarding" ||
+          data.status === "running" ||
+          data.status === "pending")
       ) {
         return 3000; // poll every 3s while job is running
       }
@@ -72,11 +77,52 @@ export function usePrompts(brandId?: string) {
 export function useUpdatePrompts(brandId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (prompts: { id?: string; text: string; is_active: boolean; category?: string | null }[]) =>
-      api.put<Prompt[]>(`/api/brands/${brandId}/prompts`, { prompts }),
+    mutationFn: (
+      prompts: {
+        id?: string;
+        text: string;
+        is_active: boolean;
+        category?: string | null;
+      }[],
+    ) => api.put<Prompt[]>(`/api/brands/${brandId}/prompts`, { prompts }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["prompts", brandId] });
     },
+  });
+}
+
+export function useReplacePrompts(brandId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (
+      prompts: {
+        id?: string;
+        text: string;
+        is_active: boolean;
+        category?: string | null;
+      }[],
+    ) =>
+      api.post<{ prompts: Prompt[]; count: number; replaced: boolean }>(
+        `/api/brands/${brandId}/prompts/replace`,
+        { prompts },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["prompts", brandId] });
+    },
+  });
+}
+
+export function useRetryOnboarding(brandId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      api.post<{ status: string }>(`/api/brands/${brandId}/onboard`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["brand", brandId] });
+      queryClient.invalidateQueries({ queryKey: ["brands"] });
+      toast.success("Brand analysis restarted");
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 }
 
@@ -84,7 +130,9 @@ export function useRegeneratePrompts(brandId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () =>
-      api.post<{ prompts: Prompt[]; count: number }>(`/api/brands/${brandId}/prompts/regenerate`),
+      api.post<{ prompts: Prompt[]; count: number }>(
+        `/api/brands/${brandId}/prompts/regenerate`,
+      ),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["prompts", brandId] });
       toast.success(`Generated ${data.count} search-optimized prompts`);
@@ -100,11 +148,12 @@ export function useRunMonitoring(brandId: string) {
   return useMutation({
     mutationFn: () =>
       api.post<{ run_id: string; status: string }>(
-        `/api/brands/${brandId}/run`
+        `/api/brands/${brandId}/run`,
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["brand", brandId] });
       toast.success("Monitoring started");
     },
+    onError: (err: Error) => toast.error(err.message),
   });
 }

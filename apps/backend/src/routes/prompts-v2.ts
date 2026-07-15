@@ -8,6 +8,7 @@ import {
   updatePromptV2Schema,
   seedPromptsV2Schema,
   PLAN_LIMITS,
+  PROMPT_INTENTS,
 } from "@covable/shared";
 import {
   prioritizePrompts,
@@ -36,6 +37,15 @@ app.get("/", async (c) => {
   const intent = c.req.query("intent");
 
   if (!brandId) throw new AppError(400, "brand_id is required");
+  if (!Number.isFinite(minGapScore) || minGapScore < 0 || minGapScore > 1) {
+    throw new AppError(400, "min_gap_score must be between 0 and 1");
+  }
+  if (
+    intent &&
+    !PROMPT_INTENTS.includes(intent as (typeof PROMPT_INTENTS)[number])
+  ) {
+    throw new AppError(400, "Invalid prompt intent");
+  }
 
   // Verify brand ownership
   const { data: brand } = await supabaseAdmin
@@ -93,7 +103,8 @@ app.post("/", async (c) => {
     .select()
     .single();
 
-  if (error) throw new AppError(500, `Failed to create prompt: ${error.message}`);
+  if (error)
+    throw new AppError(500, `Failed to create prompt: ${error.message}`);
 
   return c.json(data, 201);
 });
@@ -124,7 +135,8 @@ app.patch("/:id", async (c) => {
     .select()
     .single();
 
-  if (error) throw new AppError(500, `Failed to update prompt: ${error.message}`);
+  if (error)
+    throw new AppError(500, `Failed to update prompt: ${error.message}`);
 
   return c.json(data);
 });
@@ -141,9 +153,13 @@ app.delete("/:id", async (c) => {
     .single();
 
   if (!existing) throw new AppError(404, "Prompt not found");
-  if ((existing as any).brands?.user_id !== userId) throw new AppError(403, "Forbidden");
+  if ((existing as any).brands?.user_id !== userId)
+    throw new AppError(403, "Forbidden");
 
-  const { error } = await supabaseAdmin.from("prompts_v2").delete().eq("id", promptId);
+  const { error } = await supabaseAdmin
+    .from("prompts_v2")
+    .delete()
+    .eq("id", promptId);
   if (error) throw new AppError(500, "Failed to delete prompt");
 
   return c.json({ success: true });
@@ -161,11 +177,21 @@ app.post("/:id/variants/generate", async (c) => {
     .single();
 
   if (!prompt) throw new AppError(404, "Prompt not found");
-  if ((prompt as any).brands?.user_id !== userId) throw new AppError(403, "Forbidden");
+  if ((prompt as any).brands?.user_id !== userId)
+    throw new AppError(403, "Forbidden");
 
-  tasks
-    .trigger("prompt-discovery", { promptId, generateVariants: true })
-    .catch((err) => console.error("Failed to trigger prompt-discovery:", err.message));
+  try {
+    await tasks.trigger("prompt-discovery", {
+      promptId,
+      generateVariants: true,
+    });
+  } catch (err) {
+    console.error("Failed to trigger prompt-discovery:", err);
+    throw new AppError(
+      503,
+      "Failed to start variant generation. Please try again.",
+    );
+  }
 
   return c.json({ status: "triggered" });
 });
@@ -188,7 +214,11 @@ app.post("/seed", async (c) => {
     if (!brand) throw new AppError(404, "Brand not found");
 
     const currentCount = await getPromptV2Count(csvParsed.data.brand_id);
-    await checkPromptLimit(userId, csvParsed.data.brand_id, currentCount + csvParsed.data.prompts.length);
+    await checkPromptLimit(
+      userId,
+      csvParsed.data.brand_id,
+      currentCount + csvParsed.data.prompts.length,
+    );
 
     const rows = csvParsed.data.prompts.map((p) => ({
       brand_id: csvParsed.data.brand_id,
@@ -204,7 +234,8 @@ app.post("/seed", async (c) => {
       .insert(rows)
       .select("id");
 
-    if (error) throw new AppError(500, `Failed to seed prompts: ${error.message}`);
+    if (error)
+      throw new AppError(500, `Failed to seed prompts: ${error.message}`);
     return c.json({ inserted: data?.length ?? 0 });
   }
 
@@ -227,7 +258,10 @@ app.post("/seed", async (c) => {
   const currentCount = await getPromptV2Count(brandParsed.data.brand_id);
   await checkPromptLimit(userId, brandParsed.data.brand_id, currentCount + 1);
 
-  const inserted = await seedPromptsFromBrand(brandParsed.data.brand_id, maxPrompts - currentCount);
+  const inserted = await seedPromptsFromBrand(
+    brandParsed.data.brand_id,
+    maxPrompts - currentCount,
+  );
   return c.json({ inserted });
 });
 

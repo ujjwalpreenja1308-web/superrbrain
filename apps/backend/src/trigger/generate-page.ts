@@ -9,7 +9,9 @@ import {
 } from "../services/content-generation.service.js";
 import type { CompetitorBlueprintShape } from "@covable/shared";
 
-type BlueprintWithSignals = CompetitorBlueprintShape & { why_winning_signals?: string[] };
+type BlueprintWithSignals = CompetitorBlueprintShape & {
+  why_winning_signals?: string[];
+};
 
 const MAX_GENERIC_SCORE = 6;
 const MAX_REGENERATION_ATTEMPTS = 2;
@@ -25,31 +27,49 @@ export const generatePageTask = task({
     const { promptId, brandId, regenerate_focus, attempt = 1 } = payload;
 
     // Load prompt + variants
-    const { data: prompt } = await supabaseAdmin
+    const { data: prompt, error: promptError } = await supabaseAdmin
       .from("prompts_v2")
-      .select("id, text, intent, vertical, modifiers, expected_entities")
+      .select(
+        "id, brand_id, text, intent, vertical, modifiers, expected_entities",
+      )
       .eq("id", promptId)
       .single();
 
-    if (!prompt) throw new Error(`Prompt ${promptId} not found`);
+    if (promptError || !prompt) {
+      throw new Error(
+        `Prompt ${promptId} not found: ${promptError?.message ?? "missing"}`,
+      );
+    }
+    if (prompt.brand_id !== brandId) {
+      throw new Error(`Prompt ${promptId} does not belong to brand ${brandId}`);
+    }
 
-    const { data: variants } = await supabaseAdmin
+    const { data: variants, error: variantsError } = await supabaseAdmin
       .from("prompt_variants")
       .select("text")
       .eq("prompt_id", promptId)
       .limit(10);
+    if (variantsError)
+      throw new Error(
+        `Failed to load prompt variants: ${variantsError.message}`,
+      );
 
     const promptVariants = variants?.map((v) => v.text) ?? [];
 
     // Load brand
-    const { data: brand } = await supabaseAdmin
+    const { data: brand, error: brandError } = await supabaseAdmin
       .from("brands")
       .select("id, name, description, competitors")
       .eq("id", brandId)
       .single();
 
-    if (!brand) throw new Error(`Brand ${brandId} not found`);
-    if (!brand.name) throw new Error(`Brand ${brandId} has no name — run onboarding first`);
+    if (brandError || !brand) {
+      throw new Error(
+        `Brand ${brandId} not found: ${brandError?.message ?? "missing"}`,
+      );
+    }
+    if (!brand.name)
+      throw new Error(`Brand ${brandId} has no name — run onboarding first`);
 
     // Load top 3 competitor blueprints for this prompt
     const { data: urlRows } = await supabaseAdmin
@@ -66,7 +86,7 @@ export const generatePageTask = task({
         .select("schema, why_winning_signals")
         .in(
           "competitor_url_id",
-          urlRows.map((r) => r.id)
+          urlRows.map((r) => r.id),
         )
         .limit(3);
 
@@ -74,7 +94,9 @@ export const generatePageTask = task({
         if (row.schema) {
           blueprints.push({
             ...(row.schema as CompetitorBlueprintShape),
-            why_winning_signals: row.why_winning_signals as string[] | undefined,
+            why_winning_signals: row.why_winning_signals as
+              | string[]
+              | undefined,
           });
         }
       }
@@ -82,7 +104,9 @@ export const generatePageTask = task({
 
     const merged = mergeBlueprints(blueprints);
 
-    logger.info(`Generating page for "${prompt.text.slice(0, 60)}..." (attempt ${attempt})`);
+    logger.info(
+      `Generating page for "${prompt.text.slice(0, 60)}..." (attempt ${attempt})`,
+    );
 
     const generated = await generatePage({
       promptText: prompt.text,
@@ -91,6 +115,8 @@ export const generatePageTask = task({
       brandDescription: brand.description ?? "",
       merged,
       currentYear: new Date().getFullYear(),
+      revisionFocus:
+        regenerate_focus === "reduce_generic" ? "reduce_generic" : undefined,
     });
 
     // Anti-generic check
@@ -98,16 +124,19 @@ export const generatePageTask = task({
     const genericScore = await detectGenericScore(content);
     logger.info(`Generic score: ${genericScore}/10`);
 
-    if (genericScore > MAX_GENERIC_SCORE && attempt < MAX_REGENERATION_ATTEMPTS) {
-      logger.warn(`Generic score too high (${genericScore}), re-triggering with focus`);
-      tasks
-        .trigger("generate-page", {
-          promptId,
-          brandId,
-          regenerate_focus: "reduce_generic",
-          attempt: attempt + 1,
-        })
-        .catch(console.error);
+    if (
+      genericScore > MAX_GENERIC_SCORE &&
+      attempt < MAX_REGENERATION_ATTEMPTS
+    ) {
+      logger.warn(
+        `Generic score too high (${genericScore}), re-triggering with focus`,
+      );
+      await tasks.trigger("generate-page", {
+        promptId,
+        brandId,
+        regenerate_focus: "reduce_generic",
+        attempt: attempt + 1,
+      });
       return { status: "retrying", genericScore };
     }
 
@@ -137,7 +166,9 @@ export const generatePageTask = task({
     // Trigger scoring
     tasks
       .trigger("score-page", { pageId: page.id })
-      .catch((err) => console.error("Failed to trigger score-page:", err.message));
+      .catch((err) =>
+        console.error("Failed to trigger score-page:", err.message),
+      );
 
     return { pageId: page.id, genericScore, title: generated.title };
   },

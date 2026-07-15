@@ -124,9 +124,8 @@ export function Dashboard() {
   useEffect(() => {
     // Don't redirect trial users with no brands — PlanGuard shows PlanChooser first.
     // Only redirect to onboarding once we know the user has a paid plan.
-    const hasStoredBrand = Boolean(localStorage.getItem("covable_brand_id"));
-    if (!brandsLoading && !meLoading && brands.length === 0 && !hasStoredBrand && me?.plan !== "trial") {
-      navigate("/onboarding");
+    if (!brandsLoading && !meLoading && brands.length === 0 && me?.plan !== "trial") {
+      navigate("/onboarding", { replace: true });
     }
   }, [brandsLoading, meLoading, brands.length, me?.plan, navigate]);
 

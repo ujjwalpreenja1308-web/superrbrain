@@ -1,7 +1,10 @@
 import { openai } from "../lib/openai.js";
 import type { CompetitorBlueprintShape } from "@covable/shared";
+import { z } from "zod";
 
-type BlueprintInput = CompetitorBlueprintShape & { why_winning_signals?: string[] };
+type BlueprintInput = CompetitorBlueprintShape & {
+  why_winning_signals?: string[];
+};
 
 export interface MergedBlueprint {
   entities: string[];
@@ -29,10 +32,50 @@ export interface GeneratedPage {
   title: string;
   tldr: string;
   list_items: GeneratedListItem[];
-  comparison_table: { tool: string; best_for: string; pricing: string; free_tier: string }[];
+  comparison_table: {
+    tool: string;
+    best_for: string;
+    pricing: string;
+    free_tier: string;
+  }[];
   faq: GeneratedFAQ[];
   summary: string;
 }
+
+const generatedPageSchema: z.ZodType<GeneratedPage> = z.object({
+  title: z.string().min(1),
+  tldr: z.string().min(1),
+  list_items: z
+    .array(
+      z.object({
+        entity: z.string().min(1),
+        heading: z.string().min(1),
+        description: z.string().min(1),
+        use_case: z.string().min(1),
+        comparison_hook: z.string().min(1),
+      }),
+    )
+    .min(8),
+  comparison_table: z
+    .array(
+      z.object({
+        tool: z.string().min(1),
+        best_for: z.string().min(1),
+        pricing: z.string().min(1),
+        free_tier: z.string().min(1),
+      }),
+    )
+    .min(6),
+  faq: z
+    .array(
+      z.object({
+        question: z.string().min(1),
+        answer: z.string().min(1),
+      }),
+    )
+    .min(5),
+  summary: z.string().min(1),
+});
 
 export function mergeBlueprints(blueprints: BlueprintInput[]): MergedBlueprint {
   if (!blueprints.length) {
@@ -86,10 +129,20 @@ export function mergeBlueprints(blueprints: BlueprintInput[]): MergedBlueprint {
   const has_table = blueprints.some((bp) => bp.has_comparison_table);
   const avg_list_items = Math.max(
     8,
-    Math.round(blueprints.reduce((sum, bp) => sum + bp.list_items.length, 0) / blueprints.length)
+    Math.round(
+      blueprints.reduce((sum, bp) => sum + bp.list_items.length, 0) /
+        blueprints.length,
+    ),
   );
 
-  return { entities, winning_signals, required_headings, has_faq, has_table, avg_list_items };
+  return {
+    entities,
+    winning_signals,
+    required_headings,
+    has_faq,
+    has_table,
+    avg_list_items,
+  };
 }
 
 export async function generatePage(input: {
@@ -99,8 +152,17 @@ export async function generatePage(input: {
   brandDescription: string;
   merged: MergedBlueprint;
   currentYear: number;
+  revisionFocus?: "reduce_generic";
 }): Promise<GeneratedPage> {
-  const { promptText, promptVariants, brandName, brandDescription, merged, currentYear } = input;
+  const {
+    promptText,
+    promptVariants,
+    brandName,
+    brandDescription,
+    merged,
+    currentYear,
+    revisionFocus,
+  } = input;
 
   const variantList = promptVariants.slice(0, 5).join("\n- ");
   const entityList = merged.entities.slice(0, 12).join(", ");
@@ -128,7 +190,13 @@ export async function generatePage(input: {
                   use_case: { type: "string" },
                   comparison_hook: { type: "string" },
                 },
-                required: ["entity", "heading", "description", "use_case", "comparison_hook"],
+                required: [
+                  "entity",
+                  "heading",
+                  "description",
+                  "use_case",
+                  "comparison_hook",
+                ],
                 additionalProperties: false,
               },
             },
@@ -160,7 +228,14 @@ export async function generatePage(input: {
             },
             summary: { type: "string" },
           },
-          required: ["title", "tldr", "list_items", "comparison_table", "faq", "summary"],
+          required: [
+            "title",
+            "tldr",
+            "list_items",
+            "comparison_table",
+            "faq",
+            "summary",
+          ],
           additionalProperties: false,
         },
       },
@@ -176,7 +251,7 @@ STRICT OUTPUT REQUIREMENTS:
 - tldr: 2-3 sentences, restate the core answer, explicitly mention ${brandName}
 - list_items: minimum 8 items — each MUST have:
   * entity: the brand/tool name (proper noun)
-  * heading: "[Entity Name] — [descriptor]" format
+  * heading: "[Entity Name]: [descriptor]" format
   * description: 3-4 sentences, specific, concrete, no generic filler
   * use_case: one sentence — "Best for [specific use case]"
   * comparison_hook: "[Brand] outperforms [Other Brand] for [specific scenario]"
@@ -209,12 +284,21 @@ ANTI-PATTERNS (never do this):
 Brand to feature: ${brandName}
 Brand description: ${brandDescription}
 Current year: ${currentYear}
-Winning signals to incorporate: ${merged.winning_signals.join(", ")}`,
+Winning signals to incorporate: ${merged.winning_signals.join(", ")}
+${revisionFocus === "reduce_generic" ? "Revision focus: replace generic claims with specific comparisons, concrete use cases, and named evidence." : ""}`,
       },
     ],
   });
 
-  return JSON.parse(response.choices[0].message.content!) as GeneratedPage;
+  const parsed = generatedPageSchema.safeParse(
+    JSON.parse(response.choices[0].message.content || "{}"),
+  );
+  if (!parsed.success) {
+    throw new Error(
+      `Generated page did not meet the required structure: ${parsed.error.issues[0]?.message}`,
+    );
+  }
+  return parsed.data;
 }
 
 export async function detectGenericScore(content: string): Promise<number> {
@@ -258,8 +342,11 @@ Return score (1-10) and up to 3 specific reasons.`,
     ],
   });
 
-  const parsed = JSON.parse(response.choices[0].message.content!);
-  return parsed.score as number;
+  const parsed = JSON.parse(response.choices[0].message.content || "{}");
+  const score = Number(parsed.score);
+  if (!Number.isFinite(score))
+    throw new Error("Generic-content check returned an invalid score");
+  return Math.max(1, Math.min(10, score));
 }
 
 export function pageToMarkdown(page: GeneratedPage): string {
@@ -283,7 +370,9 @@ export function pageToMarkdown(page: GeneratedPage): string {
   lines.push("| Tool | Best For | Pricing | Free Tier |");
   lines.push("|------|----------|---------|-----------|");
   for (const row of page.comparison_table) {
-    lines.push(`| ${row.tool} | ${row.best_for} | ${row.pricing} | ${row.free_tier} |`);
+    lines.push(
+      `| ${row.tool} | ${row.best_for} | ${row.pricing} | ${row.free_tier} |`,
+    );
   }
   lines.push("");
 
@@ -305,50 +394,26 @@ export function pageToHtml(page: GeneratedPage): string {
   const esc = (s: string) =>
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-  const tableRows = page.comparison_table.map((row, i) =>
-    `<tr class="${i % 2 === 0 ? "row-even" : "row-odd"}">
-      <td class="tool-name">${esc(row.tool)}</td>
-      <td>${esc(row.best_for)}</td>
-      <td>${esc(row.pricing)}</td>
-      <td><span class="badge ${row.free_tier.toLowerCase().startsWith("yes") ? "badge-yes" : "badge-no"}">${esc(row.free_tier)}</span></td>
-    </tr>`
-  ).join("\n");
-
-  const listItems = page.list_items.map((item, i) =>
-    `<div class="item">
-      <div class="item-number">${String(i + 1).padStart(2, "0")}</div>
-      <div class="item-body">
-        <h3>${esc(item.heading)}</h3>
-        <p class="item-desc">${esc(item.description)}</p>
-        <div class="item-meta">
-          <span class="best-for">${esc(item.use_case)}</span>
-          <span class="hook">${esc(item.comparison_hook)}</span>
-        </div>
-      </div>
-    </div>`
-  ).join("\n");
-
-  const faqItems = page.faq.map((f) =>
-    `<details class="faq-item">
-      <summary class="faq-q">${esc(f.question)}</summary>
-      <p class="faq-a">${esc(f.answer)}</p>
-    </details>`
-  ).join("\n");
-
-  const stripDashes = (s: string) => s.replace(/[—–]/g, ",").replace(/ ,/g, ",");
+  const stripDashes = (s: string) =>
+    s.replace(/[—–]/g, ",").replace(/ ,/g, ",");
   const escD = (s: string) => esc(stripDashes(s));
 
-  const tableRowsD = page.comparison_table.map((row, i) =>
-    `<tr class="${i % 2 === 0 ? "row-even" : "row-odd"}">
+  const tableRowsD = page.comparison_table
+    .map(
+      (row, i) =>
+        `<tr class="${i % 2 === 0 ? "row-even" : "row-odd"}">
       <td class="tool-name">${escD(row.tool)}</td>
       <td>${escD(row.best_for)}</td>
       <td>${escD(row.pricing)}</td>
       <td><span class="badge ${row.free_tier.toLowerCase().startsWith("yes") ? "badge-yes" : "badge-no"}">${escD(row.free_tier)}</span></td>
-    </tr>`
-  ).join("\n");
+    </tr>`,
+    )
+    .join("\n");
 
-  const listItemsD = page.list_items.map((item, i) =>
-    `<div class="item">
+  const listItemsD = page.list_items
+    .map(
+      (item, i) =>
+        `<div class="item">
       <div class="item-number">${String(i + 1).padStart(2, "0")}</div>
       <div class="item-body">
         <h3>${escD(item.heading)}</h3>
@@ -358,15 +423,19 @@ export function pageToHtml(page: GeneratedPage): string {
           <span class="hook">${escD(item.comparison_hook)}</span>
         </div>
       </div>
-    </div>`
-  ).join("\n");
+    </div>`,
+    )
+    .join("\n");
 
-  const faqItemsD = page.faq.map((f) =>
-    `<details class="faq-item">
+  const faqItemsD = page.faq
+    .map(
+      (f) =>
+        `<details class="faq-item">
       <summary class="faq-q">${escD(f.question)}</summary>
       <p class="faq-a">${escD(f.answer)}</p>
-    </details>`
-  ).join("\n");
+    </details>`,
+    )
+    .join("\n");
 
   return `<!DOCTYPE html>
 <html lang="en">

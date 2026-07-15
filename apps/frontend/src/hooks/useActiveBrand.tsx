@@ -29,8 +29,11 @@ export function ActiveBrandProvider({ children }: { children: ReactNode }) {
     if (activeBrand?.id && activeBrand.id !== selectedId) {
       setSelectedId(activeBrand.id);
       localStorage.setItem(STORAGE_KEY, activeBrand.id);
+    } else if (brands && brands.length === 0 && selectedId !== null) {
+      setSelectedId(null);
+      localStorage.removeItem(STORAGE_KEY);
     }
-  }, [activeBrand?.id]);
+  }, [activeBrand?.id, brands, selectedId]);
 
   function setActiveBrandId(id: string) {
     setSelectedId(id);

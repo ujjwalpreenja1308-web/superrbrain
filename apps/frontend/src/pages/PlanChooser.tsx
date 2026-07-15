@@ -16,8 +16,8 @@ function buildCheckoutUrl(plan: string, email: string, userId: string): string {
   if (!productId) return "#";
   const params = new URLSearchParams({
     email,
-    "metadata[user_id]": userId,
-    "metadata[plan]": plan,
+    metadata_user_id: userId,
+    metadata_plan: plan,
     redirect_url: `${HOME_URL}/plan?payment=success&plan=${encodeURIComponent(plan)}`,
     cancel_url:   `${HOME_URL}/plan?payment=cancelled`,
   });

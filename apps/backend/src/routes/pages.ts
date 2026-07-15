@@ -25,7 +25,9 @@ app.get("/", async (c) => {
 
   let query = supabaseAdmin
     .from("pages")
-    .select("id, brand_id, prompt_id, title, tldr, cps, cps_breakdown, status, published_url, published_at, citation_rate, last_citation_check_at, created_at, updated_at")
+    .select(
+      "id, brand_id, prompt_id, title, tldr, cps, cps_breakdown, status, published_url, published_at, citation_rate, last_citation_check_at, created_at, updated_at",
+    )
     .eq("brand_id", brandId)
     .order("created_at", { ascending: false });
 
@@ -48,7 +50,8 @@ app.get("/:id", async (c) => {
     .single();
 
   if (!page) throw new AppError(404, "Page not found");
-  if ((page as any).brands?.user_id !== userId) throw new AppError(403, "Forbidden");
+  if ((page as any).brands?.user_id !== userId)
+    throw new AppError(403, "Forbidden");
 
   return c.json(page);
 });
@@ -75,7 +78,8 @@ app.patch("/:id", async (c) => {
     .single();
 
   if (!page) throw new AppError(404, "Page not found");
-  if ((page as any).brands?.user_id !== userId) throw new AppError(403, "Forbidden");
+  if ((page as any).brands?.user_id !== userId)
+    throw new AppError(403, "Forbidden");
 
   const { data, error } = await supabaseAdmin
     .from("pages")
@@ -89,7 +93,9 @@ app.patch("/:id", async (c) => {
   // Re-score after manual edit
   tasks
     .trigger("score-page", { pageId })
-    .catch((err) => console.error("Failed to trigger score-page:", err.message));
+    .catch((err) =>
+      console.error("Failed to trigger score-page:", err.message),
+    );
 
   return c.json(data);
 });
@@ -113,15 +119,34 @@ app.post("/generate", async (c) => {
     .single();
   if (!brand) throw new AppError(404, "Brand not found");
 
+  const { data: prompt } = await supabaseAdmin
+    .from("prompts_v2")
+    .select("id")
+    .eq("id", parsed.data.prompt_id)
+    .eq("brand_id", parsed.data.brand_id)
+    .single();
+  if (!prompt) throw new AppError(404, "Prompt not found for this brand");
+
   // Trigger generation immediately — it will use any existing blueprints,
   // and deconstruct-competitors runs in parallel to enrich future regenerations
-  tasks
-    .trigger("generate-page", { promptId: parsed.data.prompt_id, brandId: parsed.data.brand_id })
-    .catch((err) => console.error("Failed to trigger generate-page:", err.message));
+  try {
+    await tasks.trigger("generate-page", {
+      promptId: parsed.data.prompt_id,
+      brandId: parsed.data.brand_id,
+    });
+  } catch (err) {
+    console.error("Failed to trigger generate-page:", err);
+    throw new AppError(
+      503,
+      "Failed to start page generation. Please try again.",
+    );
+  }
 
   tasks
     .trigger("deconstruct-competitors", { promptId: parsed.data.prompt_id })
-    .catch((err) => console.error("Failed to trigger deconstruct-competitors:", err.message));
+    .catch((err) =>
+      console.error("Failed to trigger deconstruct-competitors:", err.message),
+    );
 
   return c.json({ status: "triggered" });
 });
@@ -142,11 +167,14 @@ app.post("/:id/publish", async (c) => {
     .single();
 
   if (!page) throw new AppError(404, "Page not found");
-  if ((page as any).brands?.user_id !== userId) throw new AppError(403, "Forbidden");
+  if ((page as any).brands?.user_id !== userId)
+    throw new AppError(403, "Forbidden");
 
   tasks
     .trigger("publish-page", { pageId, publisherId: parsed.data.publisher_id })
-    .catch((err) => console.error("Failed to trigger publish-page:", err.message));
+    .catch((err) =>
+      console.error("Failed to trigger publish-page:", err.message),
+    );
 
   return c.json({ status: "triggered" });
 });
@@ -163,11 +191,15 @@ app.post("/:id/score", async (c) => {
     .single();
 
   if (!page) throw new AppError(404, "Page not found");
-  if ((page as any).brands?.user_id !== userId) throw new AppError(403, "Forbidden");
+  if ((page as any).brands?.user_id !== userId)
+    throw new AppError(403, "Forbidden");
 
-  tasks
-    .trigger("score-page", { pageId })
-    .catch((err) => console.error("Failed to trigger score-page:", err.message));
+  try {
+    await tasks.trigger("score-page", { pageId });
+  } catch (err) {
+    console.error("Failed to trigger score-page:", err);
+    throw new AppError(503, "Failed to start scoring. Please try again.");
+  }
 
   return c.json({ status: "triggered" });
 });
@@ -184,13 +216,15 @@ app.get("/:id/versions", async (c) => {
     .single();
 
   if (!page) throw new AppError(404, "Page not found");
-  if ((page as any).brands?.user_id !== userId) throw new AppError(403, "Forbidden");
+  if ((page as any).brands?.user_id !== userId)
+    throw new AppError(403, "Forbidden");
 
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("page_versions")
     .select("id, cps, created_at")
     .eq("page_id", pageId)
     .order("created_at", { ascending: false });
+  if (error) throw new AppError(500, "Failed to fetch page versions");
 
   return c.json(data ?? []);
 });
@@ -207,14 +241,18 @@ app.get("/:id/citation-runs", async (c) => {
     .single();
 
   if (!page) throw new AppError(404, "Page not found");
-  if ((page as any).brands?.user_id !== userId) throw new AppError(403, "Forbidden");
+  if ((page as any).brands?.user_id !== userId)
+    throw new AppError(403, "Forbidden");
 
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("citation_runs")
-    .select("id, engine, brand_cited, brand_position, attributed_to_content, ran_at")
+    .select(
+      "id, engine, brand_cited, brand_position, attributed_to_content, ran_at",
+    )
     .eq("page_id", pageId)
     .order("ran_at", { ascending: false })
     .limit(50);
+  if (error) throw new AppError(500, "Failed to fetch citation runs");
 
   return c.json(data ?? []);
 });

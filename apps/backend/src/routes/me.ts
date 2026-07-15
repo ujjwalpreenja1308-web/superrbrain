@@ -1,8 +1,9 @@
 import { Hono } from "hono";
 import { supabaseAdmin } from "../lib/supabase.js";
-import { getCustomerEmail, getCustomerId, getMetadata, getPlanFromDodoData, retrieveDodoSubscription } from "../lib/dodo.js";
+import { cancelDodoSubscription, getCustomerEmail, getCustomerId, getMetadata, getPlanFromDodoData, retrieveDodoSubscription } from "../lib/dodo.js";
 import { AppError } from "../middleware/error.js";
 import type { AppVariables } from "../types.js";
+import { PLAN_LIMITS } from "@covable/shared";
 
 const meRoutes = new Hono<{ Variables: AppVariables }>();
 
@@ -14,6 +15,7 @@ const TRIAL_DAYS = 14;
  */
 meRoutes.get("", async (c) => {
   const userId = c.get("userId");
+  const isSuperAdmin = c.get("isSuperAdmin");
 
   const { data: sub, error: subError } = await supabaseAdmin
     .from("subscriptions")
@@ -39,34 +41,67 @@ meRoutes.get("", async (c) => {
       console.error("[me] Failed to create trial subscription", { userId, error: insertError.message });
       throw new AppError(500, "Failed to create trial");
     }
-    return c.json({ plan: "trial", status: "active", trial_expires_at: trialExpiresAt, dodo_subscription_id: null });
+    return c.json({
+      plan: isSuperAdmin ? "pro" : "trial",
+      status: "active",
+      trial_expires_at: trialExpiresAt,
+      dodo_subscription_id: null,
+      is_superadmin: isSuperAdmin,
+      max_brands: isSuperAdmin ? null : PLAN_LIMITS.trial.maxBrands,
+    });
   }
 
-  const effectivePlan = sub.plan_override ?? sub.plan;
+  const effectivePlan = String(
+    isSuperAdmin ? "pro" : sub.plan_override ?? sub.plan,
+  );
+  if (!Object.prototype.hasOwnProperty.call(PLAN_LIMITS, effectivePlan)) {
+    console.error("[me] Subscription has an invalid plan", { userId, plan: effectivePlan });
+    throw new AppError(500, "Subscription plan is invalid");
+  }
+  const effectiveTier = effectivePlan as keyof typeof PLAN_LIMITS;
 
   return c.json({
-    plan: effectivePlan,
+    plan: effectiveTier,
     status: sub.status,
     trial_expires_at: sub.trial_expires_at ?? null,
     current_period_end: sub.current_period_end ?? null,
     dodo_subscription_id: sub.dodo_subscription_id ?? null,
+    is_superadmin: isSuperAdmin,
+    max_brands: isSuperAdmin ? null : PLAN_LIMITS[effectiveTier].maxBrands,
   });
 });
 
 /**
  * POST /api/me/cancel
- * Downgrades user to trial immediately (no Dodo API call — just DB update).
- * Real cancellation should be handled via Dodo dashboard or webhook.
+ * Cancels billing with Dodo, then downgrades the local account immediately.
  */
 meRoutes.post("/cancel", async (c) => {
   const userId = c.get("userId");
 
+  const { data: subscription, error: loadError } = await supabaseAdmin
+    .from("subscriptions")
+    .select("dodo_subscription_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (loadError) throw new AppError(500, "Failed to load billing subscription");
+  if (!subscription?.dodo_subscription_id) {
+    throw new AppError(409, "No active billing subscription was found");
+  }
+
+  await cancelDodoSubscription(subscription.dodo_subscription_id);
+
   const { error } = await supabaseAdmin
     .from("subscriptions")
-    .update({ plan: "trial", status: "cancelled", updated_at: new Date().toISOString() })
+    .update({
+      plan: "trial",
+      status: "cancelled",
+      dodo_subscription_id: null,
+      current_period_end: null,
+      updated_at: new Date().toISOString(),
+    })
     .eq("user_id", userId);
 
-  if (error) return c.json({ error: "Failed to cancel plan" }, 500);
+  if (error) throw new AppError(500, "Billing was cancelled, but the local plan could not be updated");
 
   return c.json({ success: true });
 });

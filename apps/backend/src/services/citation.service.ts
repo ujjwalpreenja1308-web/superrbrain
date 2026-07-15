@@ -9,13 +9,69 @@ export interface CitationAnalysis {
   content_snippet: string;
 }
 
+export function buildCitationRows(
+  responseIds: string[],
+  brandId: string,
+  analysis: CitationAnalysis,
+  runId: string,
+) {
+  return responseIds.map((responseId) => ({
+    ai_response_id: responseId,
+    brand_id: brandId,
+    url: analysis.url,
+    domain: analysis.domain,
+    source_type: analysis.source_type,
+    title: analysis.title,
+    brands_mentioned: analysis.brands_mentioned,
+    content_snippet: analysis.content_snippet,
+    run_id: runId,
+  }));
+}
+
+export function mergeBrandMentions(
+  ...groups: { name: string; frequency: number }[][]
+): { name: string; frequency: number }[] {
+  const merged = new Map<string, { name: string; frequency: number }>();
+  for (const mention of groups.flat()) {
+    const name = mention.name.trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    const existing = merged.get(key);
+    if (existing) {
+      existing.frequency = Math.max(existing.frequency, mention.frequency);
+    } else {
+      merged.set(key, { name, frequency: Math.max(1, mention.frequency) });
+    }
+  }
+  return [...merged.values()];
+}
+
+export function normalizeUrlForComparison(input: string): string {
+  try {
+    const url = new URL(input);
+    url.hash = "";
+    for (const key of Array.from(url.searchParams.keys())) {
+      if (
+        key.toLowerCase().startsWith("utm_") ||
+        ["fbclid", "gclid"].includes(key.toLowerCase())
+      ) {
+        url.searchParams.delete(key);
+      }
+    }
+    if (url.pathname !== "/") url.pathname = url.pathname.replace(/\/+$/, "");
+    return url.toString();
+  } catch {
+    return input.trim();
+  }
+}
+
 /**
  * Use GPT to extract actual brand/company names mentioned in an AI response.
  * This replaces naive string-matching against a predefined competitor list.
  */
 export async function extractBrandsFromResponse(
   responseText: string,
-  brandName: string
+  brandName: string,
 ): Promise<{ name: string; frequency: number }[]> {
   const { openai } = await import("../lib/openai.js");
   const response = await openai.chat.completions.create({
@@ -37,8 +93,18 @@ Rules:
     ],
   });
   const raw = JSON.parse(response.choices[0].message.content || "{}");
-  const names: string[] = Array.isArray(raw.brands) ? raw.brands : [];
-  return names.map((name) => ({ name, frequency: 1 }));
+  const names: unknown[] = Array.isArray(raw.brands) ? raw.brands : [];
+  const normalizedBrand = brandName.trim().toLowerCase();
+  return [
+    ...new Set(
+      names
+        .filter((name): name is string => typeof name === "string")
+        .map((name) => name.trim())
+        .filter(
+          (name) => name.length > 0 && name.toLowerCase() !== normalizedBrand,
+        ),
+    ),
+  ].map((name) => ({ name, frequency: 1 }));
 }
 
 /**
@@ -52,7 +118,7 @@ export function enrichCitation(
   url: string,
   responseText: string,
   brandName: string,
-  competitors: { name: string }[]
+  competitors: { name: string }[],
 ): CitationAnalysis {
   let domain = "";
   try {
@@ -74,7 +140,9 @@ export function enrichCitation(
 
   // Determine which brands appear in the response text or are the cited domain itself
   const lowerText = responseText.toLowerCase();
-  const allBrands = [{ name: brandName }, ...competitors];
+  const allBrands = [{ name: brandName }, ...competitors]
+    .map((brand) => ({ name: brand.name.trim() }))
+    .filter((brand) => brand.name.length > 0);
   const brands_mentioned = allBrands
     .map((b) => {
       const count = countOccurrences(lowerText, b.name.toLowerCase());
@@ -85,11 +153,15 @@ export function enrichCitation(
   // Only check if the cited URL's domain belongs to a known competitor
   // e.g. if a competitor's own website is cited, that's a signal
   if (brands_mentioned.length === 0) {
-    const domainLower = domain.toLowerCase().replace(/\.(com|co|org|net|us|io).*$/, "");
+    const domainLower = domain
+      .toLowerCase()
+      .replace(/\.(com|co|org|net|us|io).*$/, "");
     for (const comp of competitors) {
-      const compNorm = comp.name.toLowerCase().replace(/\s+/g, "");
+      const competitorName = comp.name.trim();
+      const compNorm = competitorName.toLowerCase().replace(/\s+/g, "");
+      if (!compNorm || !domainLower) continue;
       if (domainLower.includes(compNorm) || compNorm.includes(domainLower)) {
-        brands_mentioned.push({ name: comp.name, frequency: 1 });
+        brands_mentioned.push({ name: competitorName, frequency: 1 });
         break;
       }
     }
@@ -113,14 +185,16 @@ export function enrichCitationsBatch(
   urls: string[],
   responseText: string,
   brandName: string,
-  competitors: { name: string }[]
+  competitors: { name: string }[],
 ): CitationAnalysis[] {
   return [...new Set(urls)].map((url) =>
-    enrichCitation(url, responseText, brandName, competitors)
+    enrichCitation(url, responseText, brandName, competitors),
   );
 }
 
 function countOccurrences(text: string, term: string): number {
+  if (!term) return 0;
+
   let count = 0;
   let pos = 0;
   while ((pos = text.indexOf(term, pos)) !== -1) {
@@ -141,20 +215,40 @@ const DOMAIN_RULES: { pattern: RegExp; type: SourceType }[] = [
   // Community / discussion
   { pattern: /reddit\.com|redd\.it/, type: "reddit" },
   { pattern: /youtube\.com|youtu\.be/, type: "youtube" },
-  { pattern: /twitter\.com|x\.com|instagram\.com|tiktok\.com|facebook\.com|linkedin\.com|pinterest\.com/, type: "social" },
+  {
+    pattern:
+      /twitter\.com|x\.com|instagram\.com|tiktok\.com|facebook\.com|linkedin\.com|pinterest\.com/,
+    type: "social",
+  },
   { pattern: /quora\.com/, type: "social" },
 
   // Review platforms (universal)
-  { pattern: /trustpilot|g2\.com|capterra|getapp|software advice|sourceforge|producthunt|yelp\.com|tripadvisor|glassdoor|indeed\.com|sitejabber|bbb\.org|reviewgeek|wirecutter|rtings\.com|pcmag\.com|techradar|cnet\.com|tomsguide|bestreviews|consumerreports/, type: "review_site" },
+  {
+    pattern:
+      /trustpilot|g2\.com|capterra|getapp|software advice|sourceforge|producthunt|yelp\.com|tripadvisor|glassdoor|indeed\.com|sitejabber|bbb\.org|reviewgeek|wirecutter|rtings\.com|pcmag\.com|techradar|cnet\.com|tomsguide|bestreviews|consumerreports/,
+    type: "review_site",
+  },
 
   // Marketplaces (universal e-commerce + vertical)
-  { pattern: /amazon\.|ebay\.|etsy\.|walmart\.|target\.|bestbuy\.|shopify\.|bigcommerce\.|gumroad\.|appsumo\./, type: "marketplace" },
+  {
+    pattern:
+      /amazon\.|ebay\.|etsy\.|walmart\.|target\.|bestbuy\.|shopify\.|bigcommerce\.|gumroad\.|appsumo\./,
+    type: "marketplace",
+  },
 
   // Directories / databases (universal)
-  { pattern: /wikipedia\.|crunchbase\.|owler\.|zoominfo\.|dnb\.com|clutch\.co|goodfirms\.|sortlist\.|g2\.com|alternativeto\.net|slashdot\.org/, type: "directory" },
+  {
+    pattern:
+      /wikipedia\.|crunchbase\.|owler\.|zoominfo\.|dnb\.com|clutch\.co|goodfirms\.|sortlist\.|g2\.com|alternativeto\.net|slashdot\.org/,
+    type: "directory",
+  },
 
   // News / editorial (universal — major outlets + tech + business + health)
-  { pattern: /nytimes|washingtonpost|theguardian|bbc\.|reuters|apnews|forbes|businessinsider|techcrunch|wired\.com|theverge|engadget|venturebeat|wsj\.com|bloomberg\.|ft\.com|economist\.|inc\.com|entrepreneur\.com|fastcompany|mashable|zdnet|healthline|webmd|medicalnewstoday|verywellhealth|mayoclinic|nhs\.uk/, type: "news" },
+  {
+    pattern:
+      /nytimes|washingtonpost|theguardian|bbc\.|reuters|apnews|forbes|businessinsider|techcrunch|wired\.com|theverge|engadget|venturebeat|wsj\.com|bloomberg\.|ft\.com|economist\.|inc\.com|entrepreneur\.com|fastcompany|mashable|zdnet|healthline|webmd|medicalnewstoday|verywellhealth|mayoclinic|nhs\.uk/,
+    type: "news",
+  },
 ];
 
 function classifyByDomain(domain: string): SourceType {
@@ -165,14 +259,25 @@ function classifyByDomain(domain: string): SourceType {
 }
 
 const LISTICLE_PATTERNS = [
-  /\/best[-_]/i, /\/top[-_\d]/i,
+  /\/best[-_]/i,
+  /\/top[-_\d]/i,
   /\/\d+[-_](best|top|ways|tips|supplements|brands|products|picks)/i,
-  /[-_](best|top)[-_]/i, /\/guide[-_]/i, /\/ultimate[-_]/i,
-  /\/most[-_]/i, /\/ranked/i, /\/roundup/i, /\/picks/i,
-  /\/recommended/i, /\/essentials/i, /\/awards/i,
+  /[-_](best|top)[-_]/i,
+  /\/guide[-_]/i,
+  /\/ultimate[-_]/i,
+  /\/most[-_]/i,
+  /\/ranked/i,
+  /\/roundup/i,
+  /\/picks/i,
+  /\/recommended/i,
+  /\/essentials/i,
+  /\/awards/i,
 ];
 
-export function refineSourceType(url: string, currentType: SourceType): SourceType {
+export function refineSourceType(
+  url: string,
+  currentType: SourceType,
+): SourceType {
   if (currentType !== "blog") return currentType;
   if (LISTICLE_PATTERNS.some((p) => p.test(url))) return "listicle";
   return "blog";

@@ -9,13 +9,15 @@ import type { AppVariables } from "../types.js";
 
 const app = new Hono<{ Variables: AppVariables }>();
 const immediateReplaceSchema = z.object({
-  prompts: z.array(
-    z.object({
-      text: z.string().min(1),
-      is_active: z.boolean().default(true),
-      category: z.string().nullable().optional(),
-    })
-  ).min(1),
+  prompts: z
+    .array(
+      z.object({
+        text: z.string().min(1),
+        is_active: z.boolean().default(true),
+        category: z.string().nullable().optional(),
+      }),
+    )
+    .min(1),
 });
 
 function nextMondayAt9UTC(): Date {
@@ -76,9 +78,29 @@ app.put("/:id/prompts", async (c) => {
   const activeCount = parsed.data.prompts.filter((p) => p.is_active).length;
   await checkPromptLimit(userId, brandId, activeCount);
 
+  const suppliedIds = parsed.data.prompts
+    .map((prompt) => prompt.id)
+    .filter((id): id is string => Boolean(id));
+  if (new Set(suppliedIds).size !== suppliedIds.length) {
+    throw new AppError(400, "Prompt IDs must be unique");
+  }
+  if (suppliedIds.length) {
+    const { data: ownedPrompts, error: promptOwnershipError } =
+      await supabaseAdmin
+        .from("prompts")
+        .select("id")
+        .eq("brand_id", brandId)
+        .in("id", suppliedIds);
+    if (promptOwnershipError)
+      throw new AppError(500, "Failed to validate prompts");
+    if ((ownedPrompts ?? []).length !== suppliedIds.length) {
+      throw new AppError(400, "Every prompt ID must belong to this brand");
+    }
+  }
+
   // Prompt changes are staged as pending — applied next Monday by weekly cron
   const pendingPrompts = parsed.data.prompts.map((p) => ({
-    ...(p.id ? { id: p.id } : {}),
+    id: p.id ?? crypto.randomUUID(),
     text: p.text,
     is_active: p.is_active,
     category: p.category ?? null,
@@ -88,12 +110,19 @@ app.put("/:id/prompts", async (c) => {
 
   const { error } = await supabaseAdmin
     .from("brands")
-    .update({ pending_prompts: pendingPrompts, pending_prompts_effective_at: effectiveAt })
+    .update({
+      pending_prompts: pendingPrompts,
+      pending_prompts_effective_at: effectiveAt,
+    })
     .eq("id", brandId);
 
   if (error) throw new AppError(500, "Failed to stage prompt changes");
 
-  return c.json({ pending: true, effective_at: effectiveAt, prompts: pendingPrompts });
+  return c.json({
+    pending: true,
+    effective_at: effectiveAt,
+    prompts: pendingPrompts,
+  });
 });
 
 // POST /api/brands/:id/prompts/replace — replace prompts immediately (Hermes intake path)
@@ -131,8 +160,6 @@ app.post("/:id/prompts/replace", async (c) => {
   const activeCount = normalizedPrompts.filter((p) => p.is_active).length;
   await checkPromptLimit(userId, brandId, activeCount);
 
-  await supabaseAdmin.from("prompts").delete().eq("brand_id", brandId);
-
   const inserts = normalizedPrompts.map((p) => ({
     brand_id: brandId,
     text: p.text,
@@ -140,17 +167,7 @@ app.post("/:id/prompts/replace", async (c) => {
     is_active: p.is_active,
   }));
 
-  const { data: prompts, error } = await supabaseAdmin
-    .from("prompts")
-    .insert(inserts)
-    .select();
-
-  if (error) throw new AppError(500, "Failed to replace prompts");
-
-  await supabaseAdmin
-    .from("brands")
-    .update({ pending_prompts: null, pending_prompts_effective_at: null })
-    .eq("id", brandId);
+  const prompts = await replaceBrandPrompts(brandId, inserts, true);
 
   return c.json({ prompts, count: prompts?.length ?? 0, replaced: true });
 });
@@ -170,7 +187,10 @@ app.post("/:id/prompts/regenerate", async (c) => {
   if (!brand) throw new AppError(404, "Brand not found");
 
   if (!brand.name || !brand.category || !brand.description) {
-    throw new AppError(400, "Brand data is incomplete. Please complete onboarding first.");
+    throw new AppError(
+      400,
+      "Brand data is incomplete. Please complete onboarding first.",
+    );
   }
 
   // Generate new prompts via AI
@@ -181,13 +201,9 @@ app.post("/:id/prompts/regenerate", async (c) => {
     brand.category,
     brand.description,
     brand.competitors ?? [],
-    promptLimit
+    promptLimit,
   );
 
-  // Delete all existing prompts for this brand
-  await supabaseAdmin.from("prompts").delete().eq("brand_id", brandId);
-
-  // Insert fresh set
   const inserts = generated.map((p) => ({
     brand_id: brandId,
     text: p.text,
@@ -195,14 +211,100 @@ app.post("/:id/prompts/regenerate", async (c) => {
     is_active: true,
   }));
 
-  const { data: prompts, error } = await supabaseAdmin
-    .from("prompts")
-    .insert(inserts)
-    .select();
+  if (!inserts.length) {
+    throw new AppError(502, "Prompt generation returned no prompts");
+  }
 
-  if (error) throw new AppError(500, "Failed to save regenerated prompts");
+  const prompts = await replaceBrandPrompts(brandId, inserts, true);
 
   return c.json({ prompts, count: prompts?.length ?? 0 });
 });
+
+async function replaceBrandPrompts(
+  brandId: string,
+  inserts: {
+    brand_id: string;
+    text: string;
+    category: string | null;
+    is_active: boolean;
+  }[],
+  clearPending: boolean,
+) {
+  const { data: existing, error: existingError } = await supabaseAdmin
+    .from("prompts")
+    .select("id")
+    .eq("brand_id", brandId);
+  if (existingError) throw new AppError(500, "Failed to load existing prompts");
+
+  const { data: brandState, error: brandStateError } = await supabaseAdmin
+    .from("brands")
+    .select("pending_prompts, pending_prompts_effective_at")
+    .eq("id", brandId)
+    .single();
+  if (brandStateError || !brandState) {
+    throw new AppError(500, "Failed to load staged prompt changes");
+  }
+
+  // Insert the replacement first so a transient database failure never destroys
+  // the brand's only usable prompt set.
+  const { data: prompts, error: insertError } = await supabaseAdmin
+    .from("prompts")
+    .insert(inserts)
+    .select();
+  if (insertError || !prompts)
+    throw new AppError(500, "Failed to save replacement prompts");
+
+  const newIds = prompts.map((prompt) => prompt.id);
+  const rollbackNewPrompts = async () => {
+    if (!newIds.length) return;
+    const { error } = await supabaseAdmin
+      .from("prompts")
+      .delete()
+      .in("id", newIds);
+    if (error)
+      console.error("Failed to roll back replacement prompts:", error.message);
+  };
+
+  if (clearPending) {
+    const { error: pendingError } = await supabaseAdmin
+      .from("brands")
+      .update({ pending_prompts: null, pending_prompts_effective_at: null })
+      .eq("id", brandId);
+    if (pendingError) {
+      await rollbackNewPrompts();
+      throw new AppError(500, "Failed to clear staged prompt changes");
+    }
+  }
+
+  const oldIds = (existing ?? []).map((prompt) => prompt.id);
+  if (oldIds.length) {
+    const { error: deleteError } = await supabaseAdmin
+      .from("prompts")
+      .delete()
+      .in("id", oldIds);
+    if (deleteError) {
+      await rollbackNewPrompts();
+      if (clearPending) {
+        const { error: restorePendingError } = await supabaseAdmin
+          .from("brands")
+          .update({
+            pending_prompts: brandState.pending_prompts,
+            pending_prompts_effective_at:
+              brandState.pending_prompts_effective_at,
+          })
+          .eq("id", brandId);
+        if (restorePendingError) {
+          console.error(
+            "Failed to restore staged prompt changes:",
+            restorePendingError.message,
+          );
+        }
+      }
+      throw new AppError(500, "Failed to replace existing prompts");
+    }
+  }
+
+  return prompts;
+}
 
 export { app as promptRoutes };

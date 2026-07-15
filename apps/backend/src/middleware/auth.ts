@@ -1,6 +1,7 @@
 import type { Context, Next } from "hono";
 import { createClient } from "@supabase/supabase-js";
 import { isLocalDevBypassEnabled } from "../lib/env.js";
+import { isSuperAdminUser } from "../lib/superadmin.js";
 
 const DEV_USER_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -25,6 +26,7 @@ export async function authMiddleware(c: Context, next: Next) {
   // In dev, skip auth and inject a fixed user ID so all routes work without a session
   if (isLocalDevBypassEnabled()) {
     c.set("userId", DEV_USER_ID);
+    c.set("isSuperAdmin", false);
     await next();
     return;
   }
@@ -76,5 +78,6 @@ export async function authMiddleware(c: Context, next: Next) {
 
   c.set("user", user);
   c.set("userId", user.id);
+  c.set("isSuperAdmin", isSuperAdminUser(user));
   await next();
 }

@@ -2,9 +2,37 @@ import { supabaseAdmin } from "../lib/supabase.js";
 import { isLocalDevBypassEnabled } from "../lib/env.js";
 import { AppError } from "./error.js";
 import { PLAN_LIMITS, type PlanTier } from "@covable/shared";
+import { isSuperAdminUser } from "../lib/superadmin.js";
+
+const superadminCache = new Map<
+  string,
+  { isSuperAdmin: boolean; expiresAt: number }
+>();
+
+async function isSuperAdminUserId(userId: string): Promise<boolean> {
+  const cached = superadminCache.get(userId);
+  if (cached && cached.expiresAt > Date.now()) return cached.isSuperAdmin;
+
+  const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+  if (error) {
+    console.error("[plan] Failed to check superadmin status", {
+      userId,
+      error: error.message,
+    });
+    return false;
+  }
+
+  const isSuperAdmin = isSuperAdminUser(data.user);
+  superadminCache.set(userId, {
+    isSuperAdmin,
+    expiresAt: Date.now() + 5 * 60 * 1000,
+  });
+  return isSuperAdmin;
+}
 
 export async function getPlanTier(userId: string): Promise<PlanTier> {
   if (isLocalDevBypassEnabled()) return "pro";
+  if (await isSuperAdminUserId(userId)) return "pro";
   const { data, error } = await supabaseAdmin
     .from("subscriptions")
     .select("plan, plan_override, status, trial_expires_at")
@@ -18,7 +46,12 @@ export async function getPlanTier(userId: string): Promise<PlanTier> {
 
   if (!data) return "trial";
 
-  const tier = (data.plan_override ?? data.plan ?? "trial") as PlanTier;
+  const rawTier = data.plan_override ?? data.plan ?? "trial";
+  if (!Object.prototype.hasOwnProperty.call(PLAN_LIMITS, rawTier)) {
+    console.error("[plan] Subscription has an invalid plan", { userId, plan: rawTier });
+    throw new AppError(500, "Subscription plan is invalid");
+  }
+  const tier = rawTier as PlanTier;
 
   if (tier === "trial" && data.trial_expires_at && new Date(data.trial_expires_at) < new Date()) {
     throw new AppError(403, "Your trial has expired. Please upgrade to continue.");

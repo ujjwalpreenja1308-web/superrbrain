@@ -204,7 +204,7 @@ export function PageEditor() {
             </div>
           ) : page.content_html ? (
             <iframe
-              srcDoc={`<base href="http://localhost:5173/">` + page.content_html}
+              srcDoc={`<base href="${window.location.origin}/">` + page.content_html}
               className="w-full rounded-lg border border-border"
               style={{ height: "70vh", minHeight: 600, background: "#080b11", display: "block" }}
               sandbox="allow-same-origin"

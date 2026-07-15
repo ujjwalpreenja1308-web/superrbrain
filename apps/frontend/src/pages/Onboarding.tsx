@@ -2,8 +2,26 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PromptEditor } from "@/components/PromptEditor";
-import { useCreateBrand, useBrand, usePrompts, useUpdatePrompts, useRunMonitoring } from "@/hooks/useBrand";
-import { Globe, Loader2, ArrowRight, Sparkles, Search, BarChart3, CheckCircle2, Check, ChevronDown } from "lucide-react";
+import {
+  useCreateBrand,
+  useBrand,
+  usePrompts,
+  useReplacePrompts,
+  useRetryOnboarding,
+  useRunMonitoring,
+} from "@/hooks/useBrand";
+import {
+  Globe,
+  Loader2,
+  ArrowRight,
+  Sparkles,
+  Search,
+  BarChart3,
+  CheckCircle2,
+  Check,
+  ChevronDown,
+  X,
+} from "lucide-react";
 import { api } from "@/lib/api";
 import { usePlan } from "@/hooks/usePlan";
 
@@ -17,19 +35,23 @@ export function Onboarding() {
 
   const { data: regionsData } = useQuery({
     queryKey: ["regions"],
-    queryFn: () => api.get<{ regions: { code: string; label: string }[] }>("/api/regions"),
+    queryFn: () =>
+      api.get<{ regions: { code: string; label: string }[] }>("/api/regions"),
   });
 
-  const [step, setStep] = useState<"url" | "analyzing" | "prompts" | "running">("url");
+  const [step, setStep] = useState<
+    "url" | "analyzing" | "prompts" | "running" | "error"
+  >("url");
   const [urlFocused, setUrlFocused] = useState(false);
   const [analyzePhase, setAnalyzePhase] = useState(0);
 
   const createBrand = useCreateBrand();
   const { data: brand } = useBrand(brandId ?? undefined);
   const { data: prompts } = usePrompts(
-    brand?.status === "ready" ? brandId ?? undefined : undefined
+    brand?.status === "ready" ? (brandId ?? undefined) : undefined,
   );
-  const updatePrompts = useUpdatePrompts(brandId ?? "");
+  const replacePrompts = useReplacePrompts(brandId ?? "");
+  const retryOnboarding = useRetryOnboarding(brandId ?? "");
   const runMonitoring = useRunMonitoring(brandId ?? "");
   const plan = usePlan();
   const generatedPromptLimit = Math.min(plan.maxPrompts, 25);
@@ -49,6 +71,8 @@ export function Onboarding() {
   useEffect(() => {
     if (step === "analyzing" && brand?.status === "ready" && prompts) {
       setStep("prompts");
+    } else if (step === "analyzing" && brand?.status === "error") {
+      setStep("error");
     }
   }, [step, brand?.status, prompts]);
 
@@ -91,7 +115,10 @@ export function Onboarding() {
     if (hasRegions && !country) return;
 
     try {
-      const result = await createBrand.mutateAsync({ url: normalizeUrl(url), country: country || undefined });
+      const result = await createBrand.mutateAsync({
+        url: normalizeUrl(url),
+        country: country || undefined,
+      });
       localStorage.setItem("covable_brand_id", result.id);
       setBrandId(result.id);
       setStep("analyzing");
@@ -101,15 +128,29 @@ export function Onboarding() {
   };
 
   const handleSavePrompts = async (
-    items: { id?: string; text: string; is_active: boolean }[]
+    items: { id?: string; text: string; is_active: boolean }[],
   ) => {
-    await updatePrompts.mutateAsync(items);
+    await replacePrompts.mutateAsync(items);
   };
 
   const handleStartMonitoring = async () => {
     setStep("running");
-    await runMonitoring.mutateAsync();
-    navigate("/dashboard", { replace: true });
+    try {
+      await runMonitoring.mutateAsync();
+      navigate("/dashboard", { replace: true });
+    } catch {
+      setStep("prompts");
+    }
+  };
+
+  const handleRetryOnboarding = async () => {
+    try {
+      await retryOnboarding.mutateAsync();
+      setAnalyzePhase(0);
+      setStep("analyzing");
+    } catch {
+      // Mutation displays the error toast.
+    }
   };
 
   const analyzeSteps = [
@@ -118,7 +159,12 @@ export function Onboarding() {
     { icon: Sparkles, text: "Generating AI prompts..." },
     { icon: BarChart3, text: "Building your profile..." },
   ];
-  const progressStep = step === "url" || step === "analyzing" ? 0 : step === "prompts" ? 1 : 2;
+  const progressStep =
+    step === "url" || step === "analyzing" || step === "error"
+      ? 0
+      : step === "prompts"
+        ? 1
+        : 2;
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 bg-background">
@@ -131,8 +177,8 @@ export function Onboarding() {
                 index === progressStep
                   ? "border-primary/30 bg-primary/10 text-primary"
                   : index < progressStep
-                  ? "border-primary/15 bg-primary/5 text-foreground"
-                  : "border-border bg-card/40 text-muted-foreground"
+                    ? "border-primary/15 bg-primary/5 text-foreground"
+                    : "border-border bg-card/40 text-muted-foreground"
               }`}
             >
               {label}
@@ -162,7 +208,8 @@ export function Onboarding() {
                 Enter your brand website
               </h1>
               <p className="text-sm text-muted-foreground">
-                We'll analyze your brand and find out where you stand in AI search
+                We'll analyze your brand and find out where you stand in AI
+                search
               </p>
             </div>
 
@@ -196,7 +243,13 @@ export function Onboarding() {
                       onClick={() => setRegionOpen((open) => !open)}
                       className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-2.5 text-left text-sm outline-none transition-colors duration-200 hover:border-primary/30 focus:border-primary/50"
                     >
-                      <span className={selectedRegion ? "text-foreground" : "text-muted-foreground/50"}>
+                      <span
+                        className={
+                          selectedRegion
+                            ? "text-foreground"
+                            : "text-muted-foreground/50"
+                        }
+                      >
                         {selectedRegion?.label ?? "Select search region"}
                       </span>
                       <ChevronDown
@@ -228,7 +281,9 @@ export function Onboarding() {
                               }`}
                             >
                               <span>{region.label}</span>
-                              {isSelected && <Check className="h-4 w-4 shrink-0" />}
+                              {isSelected && (
+                                <Check className="h-4 w-4 shrink-0" />
+                              )}
                             </button>
                           );
                         })}
@@ -250,7 +305,11 @@ export function Onboarding() {
               {/* CTA button */}
               <button
                 type="submit"
-                disabled={createBrand.isPending || !url.trim() || (hasRegions && !country)}
+                disabled={
+                  createBrand.isPending ||
+                  !url.trim() ||
+                  (hasRegions && !country)
+                }
                 className="group relative w-full overflow-hidden rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition-all duration-200 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 mt-1"
               >
                 <span className="relative flex items-center justify-center gap-2">
@@ -307,14 +366,16 @@ export function Onboarding() {
                       isActive
                         ? "bg-primary/10 border border-primary/20 text-foreground"
                         : isDone
-                        ? "text-muted-foreground/50"
-                        : "text-muted-foreground/30"
+                          ? "text-muted-foreground/50"
+                          : "text-muted-foreground/30"
                     }`}
                   >
                     {isDone ? (
                       <CheckCircle2 className="h-4 w-4 shrink-0 text-primary/70" />
                     ) : (
-                      <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : ""}`} />
+                      <Icon
+                        className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : ""}`}
+                      />
                     )}
                     <span className="text-sm">{s.text}</span>
                     {isActive && (
@@ -360,9 +421,12 @@ export function Onboarding() {
             style={{ animationFillMode: "both" }}
           >
             <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-1">Review search prompts</h2>
+              <h2 className="text-xl font-semibold mb-1">
+                Review search prompts
+              </h2>
               <p className="text-sm text-muted-foreground">
-                We start with up to {generatedPromptLimit} generated prompts. You can add more later in Prompt Manager if your plan allows it.
+                We start with up to {generatedPromptLimit} generated prompts.
+                You can add more later in Prompt Manager if your plan allows it.
               </p>
             </div>
 
@@ -370,7 +434,7 @@ export function Onboarding() {
               <PromptEditor
                 prompts={prompts}
                 onSave={handleSavePrompts}
-                saving={updatePrompts.isPending}
+                saving={replacePrompts.isPending}
                 maxActivePrompts={generatedPromptLimit}
                 maxActivePromptsMessage={`AI onboarding starts with up to ${generatedPromptLimit} prompts. You can add more later from Prompt Manager if your plan allows it.`}
               />
@@ -407,14 +471,38 @@ export function Onboarding() {
                 </div>
               </div>
             </div>
-            <h2 className="text-xl font-semibold mb-2">Running AI monitoring</h2>
+            <h2 className="text-xl font-semibold mb-2">
+              Running AI monitoring
+            </h2>
             <p className="text-sm text-muted-foreground">
-              Firing {prompts?.filter((p) => p.is_active).length || 0} prompts across 2 AI engines.
-              Analyzing citations and computing your visibility score.
+              Firing {prompts?.filter((p) => p.is_active).length || 0} prompts
+              through ChatGPT. Analyzing citations and computing your visibility
+              score.
             </p>
           </div>
         )}
 
+        {step === "error" && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 text-center">
+            <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full border border-destructive/30 bg-destructive/10 text-destructive">
+              <X className="h-6 w-6" />
+            </div>
+            <h2 className="mb-2 text-xl font-semibold">
+              Brand analysis failed
+            </h2>
+            <p className="mb-6 text-sm text-muted-foreground">
+              We could not finish analyzing this website. You can retry without
+              creating a duplicate brand.
+            </p>
+            <button
+              onClick={handleRetryOnboarding}
+              disabled={retryOnboarding.isPending}
+              className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            >
+              {retryOnboarding.isPending ? "Restarting..." : "Retry analysis"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

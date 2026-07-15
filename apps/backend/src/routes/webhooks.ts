@@ -1,7 +1,12 @@
 import { Hono } from "hono";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { createHmac, timingSafeEqual } from "crypto";
-import { getCustomerEmail, getCustomerId, getMetadata, getPlanFromDodoData } from "../lib/dodo.js";
+import {
+  getCustomerEmail,
+  getCustomerId,
+  getMetadata,
+  getPlanFromDodoData,
+} from "../lib/dodo.js";
 
 const webhookRoutes = new Hono();
 
@@ -28,7 +33,10 @@ function safeEqual(a: Buffer, b: Buffer): boolean {
 
 function matchesSignature(digest: Buffer, candidates: string[]): boolean {
   for (const candidate of candidates) {
-    if (/^[a-f0-9]{64}$/i.test(candidate) && safeEqual(digest, Buffer.from(candidate, "hex"))) {
+    if (
+      /^[a-f0-9]{64}$/i.test(candidate) &&
+      safeEqual(digest, Buffer.from(candidate, "hex"))
+    ) {
       return true;
     }
 
@@ -49,7 +57,7 @@ function verifyDodoSignature(
   signature: string,
   secret: string,
   webhookId?: string,
-  webhookTimestamp?: string
+  webhookTimestamp?: string,
 ): boolean {
   try {
     const candidates = getSignatureCandidates(signature);
@@ -57,7 +65,9 @@ function verifyDodoSignature(
 
     if (webhookId && webhookTimestamp) {
       const signedPayload = `${webhookId}.${webhookTimestamp}.${body}`;
-      const digest = createHmac("sha256", decodeWebhookSecret(secret)).update(signedPayload).digest();
+      const digest = createHmac("sha256", decodeWebhookSecret(secret))
+        .update(signedPayload)
+        .digest();
       if (matchesSignature(digest, candidates)) return true;
     }
 
@@ -79,12 +89,24 @@ webhookRoutes.post("/dodo", async (c) => {
 
   // Read raw body for signature verification
   const rawBody = await c.req.text();
-  const signature = c.req.header("webhook-signature") ?? c.req.header("x-dodo-signature") ?? "";
-  const webhookId = c.req.header("webhook-id") ?? c.req.header("x-dodo-id") ?? undefined;
+  const signature =
+    c.req.header("webhook-signature") ?? c.req.header("x-dodo-signature") ?? "";
+  const webhookId =
+    c.req.header("webhook-id") ?? c.req.header("x-dodo-id") ?? undefined;
   const webhookTimestamp =
-    c.req.header("webhook-timestamp") ?? c.req.header("x-dodo-timestamp") ?? undefined;
+    c.req.header("webhook-timestamp") ??
+    c.req.header("x-dodo-timestamp") ??
+    undefined;
 
-  if (!verifyDodoSignature(rawBody, signature, webhookSecret, webhookId, webhookTimestamp)) {
+  if (
+    !verifyDodoSignature(
+      rawBody,
+      signature,
+      webhookSecret,
+      webhookId,
+      webhookTimestamp,
+    )
+  ) {
     console.warn("[webhook] Invalid Dodo signature");
     return c.json({ error: "Invalid signature" }, 401);
   }
@@ -109,25 +131,32 @@ webhookRoutes.post("/dodo", async (c) => {
   console.log(`[webhook] Dodo event: ${eventType}`);
 
   // payment.succeeded — activate plan
-  if (eventType === "payment.succeeded" || eventType === "subscription.active") {
+  if (
+    eventType === "payment.succeeded" ||
+    eventType === "subscription.active"
+  ) {
     const data = (event.data ?? event) as Record<string, unknown>;
     const customerEmail = getCustomerEmail(data);
     const customerId = getCustomerId(data);
-    const subscriptionId = (data.subscription_id ?? data.subscriptionId) as string | undefined;
+    const subscriptionId = (data.subscription_id ?? data.subscriptionId) as
+      | string
+      | undefined;
     const plan = getPlanFromDodoData(data);
+    const metadataUserId = getMetadata(data)?.user_id;
 
-    if (!plan || !customerEmail) {
-      console.warn("[webhook] Missing plan or customer_email", data);
+    if (!plan || (!metadataUserId && !customerEmail)) {
+      console.warn("[webhook] Missing plan or customer identity", data);
       return c.json({ received: true });
     }
 
     // Prefer user_id from metadata (fast, O(1)) — fall back to email scan
-    const metadataUserId = getMetadata(data)?.user_id;
-
-    let user: { id: string; email?: string; user_metadata: Record<string, unknown> } | undefined;
+    let user:
+      | { id: string; email?: string; user_metadata: Record<string, unknown> }
+      | undefined;
 
     if (metadataUserId) {
-      const { data: found, error } = await supabaseAdmin.auth.admin.getUserById(metadataUserId);
+      const { data: found, error } =
+        await supabaseAdmin.auth.admin.getUserById(metadataUserId);
       if (error || !found.user) {
         console.warn(`[webhook] No user found for id: ${metadataUserId}`);
         return c.json({ received: true });
@@ -136,7 +165,8 @@ webhookRoutes.post("/dodo", async (c) => {
     } else {
       // Fallback: scan by email
       if (!customerEmail) return c.json({ received: true });
-      const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+      const { data: users, error: listError } =
+        await supabaseAdmin.auth.admin.listUsers();
       if (listError) {
         console.error("[webhook] Failed to list users", listError);
         return c.json({ error: "Internal error" }, 500);
@@ -161,7 +191,7 @@ webhookRoutes.post("/dodo", async (c) => {
           dodo_subscription_id: subscriptionId ?? null,
           updated_at: new Date().toISOString(),
         },
-        { onConflict: "user_id" }
+        { onConflict: "user_id" },
       );
 
     if (updateError) {
@@ -169,19 +199,57 @@ webhookRoutes.post("/dodo", async (c) => {
       return c.json({ error: "Failed to update plan" }, 500);
     }
 
-    console.log(`[webhook] Plan activated: ${plan} for ${customerEmail} (user: ${user.id})`);
+    console.log(
+      `[webhook] Plan activated: ${plan} for ${customerEmail} (user: ${user.id})`,
+    );
   }
 
   // subscription.cancelled — downgrade to trial
-  if (eventType === "subscription.cancelled" || eventType === "subscription.expired") {
+  if (
+    eventType === "subscription.cancelled" ||
+    eventType === "subscription.expired"
+  ) {
     const data = (event.data ?? event) as Record<string, unknown>;
     const customerEmail = getCustomerEmail(data);
     const metadataUserId = getMetadata(data)?.user_id;
+    const subscriptionId = (data.subscription_id ?? data.subscriptionId) as
+      | string
+      | undefined;
 
-    let user: { id: string; user_metadata: Record<string, unknown> } | undefined;
+    if (subscriptionId) {
+      const { data: updated, error: updateBySubscriptionError } =
+        await supabaseAdmin
+          .from("subscriptions")
+          .update({
+            plan: "trial",
+            status: "cancelled",
+            dodo_subscription_id: null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("dodo_subscription_id", subscriptionId)
+          .select("user_id");
+      if (updateBySubscriptionError) {
+        console.error(
+          "[webhook] Failed to cancel subscription by provider ID",
+          updateBySubscriptionError,
+        );
+        return c.json({ error: "Failed to update plan" }, 500);
+      }
+      if (updated?.length) {
+        console.log(
+          `[webhook] Plan cancelled for subscription ${subscriptionId}`,
+        );
+        return c.json({ received: true });
+      }
+    }
+
+    let user:
+      | { id: string; user_metadata: Record<string, unknown> }
+      | undefined;
 
     if (metadataUserId) {
-      const { data: found } = await supabaseAdmin.auth.admin.getUserById(metadataUserId);
+      const { data: found } =
+        await supabaseAdmin.auth.admin.getUserById(metadataUserId);
       user = found?.user ?? undefined;
     } else {
       if (!customerEmail) return c.json({ received: true });
@@ -191,7 +259,7 @@ webhookRoutes.post("/dodo", async (c) => {
 
     if (!user) return c.json({ received: true });
 
-    await supabaseAdmin
+    const { error: cancellationError } = await supabaseAdmin
       .from("subscriptions")
       .upsert(
         {
@@ -201,10 +269,19 @@ webhookRoutes.post("/dodo", async (c) => {
           dodo_subscription_id: null,
           updated_at: new Date().toISOString(),
         },
-        { onConflict: "user_id" }
+        { onConflict: "user_id" },
       );
+    if (cancellationError) {
+      console.error(
+        "[webhook] Failed to update cancelled subscription",
+        cancellationError,
+      );
+      return c.json({ error: "Failed to update plan" }, 500);
+    }
 
-    console.log(`[webhook] Plan cancelled for ${customerEmail} — reverted to trial`);
+    console.log(
+      `[webhook] Plan cancelled for ${customerEmail} — reverted to trial`,
+    );
   }
 
   return c.json({ received: true });

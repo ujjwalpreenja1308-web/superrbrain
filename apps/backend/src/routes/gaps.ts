@@ -20,13 +20,14 @@ app.get("/:id/gaps", async (c) => {
   if (!brand) throw new AppError(404, "Brand not found");
 
   // Get latest run_id
-  const { data: latestResponse } = await supabaseAdmin
+  const { data: latestResponse, error: latestResponseError } = await supabaseAdmin
     .from("ai_responses")
     .select("run_id")
     .eq("brand_id", brandId)
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
+  if (latestResponseError) throw new AppError(500, "Failed to load latest monitoring run");
 
   const runId = latestResponse?.run_id;
   if (!runId) return c.json([]);

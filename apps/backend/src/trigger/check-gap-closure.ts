@@ -50,6 +50,7 @@ export const checkGapClosure = task({
         .eq("brand_id", brandId)
         .eq("url", gap.source_url)
         .eq("run_id", runId)
+        .limit(1)
         .single();
 
       if (!newCitation) continue;
