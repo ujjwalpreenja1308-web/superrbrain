@@ -35,6 +35,14 @@ services:
         sync: false
       - key: TRIGGER_SECRET_KEY
         sync: false
+      - key: QSTASH_URL
+        sync: false
+      - key: QSTASH_TOKEN
+        sync: false
+      - key: QSTASH_CURRENT_SIGNING_KEY
+        sync: false
+      - key: QSTASH_NEXT_SIGNING_KEY
+        sync: false
       - key: DODO_PAYMENTS_API_KEY
         sync: false
       - key: DODO_WEBHOOK_SECRET

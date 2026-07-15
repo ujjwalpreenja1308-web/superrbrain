@@ -5,7 +5,7 @@ import {
   type QualityPrompt,
 } from "./prompt-quality.service.js";
 
-interface BrandExtraction {
+export interface BrandExtraction {
   name: string;
   category: string;
   description: string;

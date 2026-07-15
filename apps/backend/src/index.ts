@@ -15,6 +15,7 @@ import { promptsV2Routes } from "./routes/prompts-v2.js";
 import { pagesRoutes } from "./routes/pages.js";
 import { publisherRoutes } from "./routes/publishers.js";
 import { reinforcementRoutes } from "./routes/reinforcement.js";
+import { workflowRoutes } from "./routes/workflows.js";
 import { authMiddleware } from "./middleware/auth.js";
 import { errorMiddleware, AppError } from "./middleware/error.js";
 import { rateLimitMiddleware } from "./middleware/rateLimit.js";
@@ -23,7 +24,11 @@ import type { AppVariables } from "./types.js";
 const app = new Hono<{ Variables: AppVariables }>();
 
 app.use("*", logger());
-app.use("*", rateLimitMiddleware());
+app.use("/api/*", rateLimitMiddleware());
+app.use("/webhooks/*", rateLimitMiddleware());
+// Workflow callbacks are signature-verified and can legitimately arrive in
+// bursts as independent durable steps.
+app.use("/workflows/*", rateLimitMiddleware(1_000, 60_000));
 
 const allowedOrigins = getFrontendOrigins();
 if (allowedOrigins.length === 0) {
@@ -67,6 +72,8 @@ app.get("/api/regions", (c) => c.json({ regions: REGIONS }));
 
 // Webhooks — no auth middleware, signature verified inside
 app.route("/webhooks", webhookRoutes);
+// QStash workflows — public callback URLs, signed and verified by Upstash.
+app.route("/workflows", workflowRoutes);
 
 app.route("/api/me", meRoutes);
 app.route("/api/brands", brandRoutes);

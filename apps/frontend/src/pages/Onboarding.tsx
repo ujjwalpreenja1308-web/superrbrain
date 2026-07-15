@@ -29,6 +29,8 @@ import {
   ONBOARDING_BRAND_STORAGE_KEY,
 } from "@/hooks/useActiveBrand";
 
+const ONBOARDING_STALE_MS = 3 * 60 * 1000;
+
 export function Onboarding() {
   const navigate = useNavigate();
   const [url, setUrl] = useState("");
@@ -54,6 +56,9 @@ export function Onboarding() {
   );
   const [urlFocused, setUrlFocused] = useState(false);
   const [analyzePhase, setAnalyzePhase] = useState(0);
+  const [analysisStartedAt, setAnalysisStartedAt] = useState<number | null>(
+    null,
+  );
 
   const createBrand = useCreateBrand();
   const { data: brand } = useBrand(brandId ?? undefined);
@@ -85,6 +90,28 @@ export function Onboarding() {
       setStep("error");
     }
   }, [step, brand?.status, prompts]);
+
+  useEffect(() => {
+    if (
+      step !== "analyzing" ||
+      !brand ||
+      (brand.status !== "pending" && brand.status !== "onboarding")
+    ) {
+      return;
+    }
+
+    const updatedAt = Date.parse(brand.updated_at);
+    const referenceTime = Math.max(
+      Number.isFinite(updatedAt) ? updatedAt : 0,
+      analysisStartedAt ?? 0,
+    );
+    const remaining = Math.max(
+      0,
+      referenceTime + ONBOARDING_STALE_MS - Date.now(),
+    );
+    const timeout = window.setTimeout(() => setStep("error"), remaining);
+    return () => window.clearTimeout(timeout);
+  }, [analysisStartedAt, brand, step]);
 
   useEffect(() => {
     if (step === "running" && brand?.status === "ready") {
@@ -132,6 +159,7 @@ export function Onboarding() {
       localStorage.setItem(ACTIVE_BRAND_STORAGE_KEY, result.id);
       localStorage.setItem(ONBOARDING_BRAND_STORAGE_KEY, result.id);
       setBrandId(result.id);
+      setAnalysisStartedAt(Date.now());
       setStep("analyzing");
     } catch {
       // error shown via mutation state
@@ -158,6 +186,7 @@ export function Onboarding() {
   const handleRetryOnboarding = async () => {
     try {
       await retryOnboarding.mutateAsync();
+      setAnalysisStartedAt(Date.now());
       setAnalyzePhase(0);
       setStep("analyzing");
     } catch {

@@ -3,6 +3,8 @@ import { AI_ENGINES, createBrandSchema } from "@covable/shared";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { AppError } from "../middleware/error.js";
 import { tasks } from "@trigger.dev/sdk/v3";
+import { dispatchBrandOnboarding } from "../lib/qstash.js";
+import { isBrandOnboardingStale } from "../lib/onboarding-state.js";
 import { checkPromptLimit, getPlanTier } from "../middleware/requirePlan.js";
 import { isLocalDevBypassEnabled } from "../lib/env.js";
 import { PLAN_LIMITS } from "@covable/shared";
@@ -59,7 +61,7 @@ const ingestResultsSchema = z.object({
     .min(1),
 });
 
-// POST /api/brands — create brand, trigger onboarding
+// POST /api/brands — create brand, dispatch durable onboarding workflow
 app.post("/", async (c) => {
   const userId = c.get("userId") as string;
   const body = await c.req.json();
@@ -120,9 +122,9 @@ app.post("/", async (c) => {
   // Do not leave an unusable pending brand if the background job cannot be
   // dispatched. Removing the just-created row lets the user retry cleanly.
   try {
-    await tasks.trigger("onboard-brand", { brandId: brand.id });
+    await dispatchBrandOnboarding(brand.id);
   } catch (err) {
-    console.error("Failed to trigger onboard-brand job:", err);
+    console.error("Failed to dispatch brand onboarding workflow:", err);
     await supabaseAdmin
       .from("brands")
       .delete()
@@ -521,24 +523,30 @@ app.post("/:id/results", async (c) => {
   });
 });
 
-// POST /api/brands/:id/onboard — retry a failed onboarding job
+// POST /api/brands/:id/onboard — retry a failed or stale onboarding job
 app.post("/:id/onboard", async (c) => {
   const userId = c.get("userId") as string;
   const brandId = c.req.param("id");
 
   const { data: brand, error } = await supabaseAdmin
     .from("brands")
-    .select("id, status")
+    .select("id, status, updated_at")
     .eq("id", brandId)
     .eq("user_id", userId)
     .single();
   if (error || !brand) throw new AppError(404, "Brand not found");
-  if (brand.status !== "error")
-    throw new AppError(409, "Only failed onboarding can be retried");
+  if (
+    brand.status !== "error" &&
+    !isBrandOnboardingStale(brand.status, brand.updated_at)
+  ) {
+    throw new AppError(409, "Only failed or stalled onboarding can be retried");
+  }
+
+  const retryStartedAt = new Date().toISOString();
 
   const { data: transitioned, error: transitionError } = await supabaseAdmin
     .from("brands")
-    .update({ status: "pending" })
+    .update({ status: "pending", updated_at: retryStartedAt })
     .eq("id", brandId)
     .eq("status", brand.status)
     .select("id")
@@ -548,12 +556,12 @@ app.post("/:id/onboard", async (c) => {
     throw new AppError(409, "Brand state changed; refresh and try again");
 
   try {
-    await tasks.trigger("onboard-brand", { brandId });
+    await dispatchBrandOnboarding(brandId);
   } catch (dispatchError) {
-    console.error("Failed to retry onboard-brand job:", dispatchError);
+    console.error("Failed to retry brand onboarding workflow:", dispatchError);
     await supabaseAdmin
       .from("brands")
-      .update({ status: brand.status })
+      .update({ status: brand.status, updated_at: brand.updated_at })
       .eq("id", brandId);
     throw new AppError(
       503,
