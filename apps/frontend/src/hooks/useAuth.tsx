@@ -1,4 +1,12 @@
-import { useState, useEffect } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
@@ -26,6 +34,17 @@ interface AuthRedirectPayload {
   refreshToken: string | null;
   authCode: string | null;
 }
+
+interface AuthContextValue {
+  user: User | null;
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
 
 function getAuthRedirectPayload(): AuthRedirectPayload {
   if (typeof window === "undefined") {
@@ -70,7 +89,7 @@ function clearAuthRedirectParams() {
   window.history.replaceState({}, "", url.toString());
 }
 
-export function useAuth() {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -85,17 +104,20 @@ export function useAuth() {
       setLoading(false);
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // During an auth callback, Supabase can briefly emit an empty initial session
       // before it finishes parsing the URL tokens/code. Ignoring that first null
       // prevents a redirect loop back to the sign-in/sign-up page.
-      if (pendingAuthRedirect && _event === "INITIAL_SESSION" && !session) {
+      if (pendingAuthRedirect && event === "INITIAL_SESSION" && !session) {
         return;
+      }
+
+      if (event === "SIGNED_IN") {
+        sessionStorage.removeItem("plan_chooser_dismissed");
       }
 
       applySession(session?.user ?? null);
     });
-
 
     const syncSession = async () => {
       try {
@@ -139,21 +161,21 @@ export function useAuth() {
     };
   }, []);
 
-  async function signIn(email: string, password: string) {
+  const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
     // AuthPage's onAuthStateChange handler will redirect to HOME_URL/plan
-  }
+  }, []);
 
-  async function signUp(email: string, password: string) {
+  const signUp = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) throw new Error(error.message);
     // AuthPage's onAuthStateChange handler will redirect to HOME_URL/plan
-  }
+  }, []);
 
-  async function signInWithGoogle() {
-    // Always redirect back to the current auth route so detectSessionInUrl can
-    // pick up the token before forwarding the user to home.covable.app.
+  const signInWithGoogle = useCallback(async () => {
+    // Return to the current auth route so AuthProvider can exchange the code
+    // before forwarding the verified session to home.covable.app.
     const redirectTo = import.meta.env.PROD
       ? `${MARKETING_URL}${window.location.pathname}${window.location.search}`
       : `${window.location.origin}${window.location.pathname}${window.location.search}`;
@@ -162,17 +184,30 @@ export function useAuth() {
       options: { redirectTo },
     });
     if (error) throw new Error(error.message);
-  }
+  }, []);
 
-  async function signOut() {
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     // Redirect to the public sign-in page after sign out.
     if (import.meta.env.PROD) {
       window.location.href = SIGN_IN_URL;
     }
-  }
+  }, []);
 
-  return { user, loading, signIn, signUp, signOut, signInWithGoogle };
+  const value = useMemo<AuthContextValue>(
+    () => ({ user, loading, signIn, signUp, signOut, signInWithGoogle }),
+    [loading, signIn, signInWithGoogle, signOut, signUp, user],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth(): AuthContextValue {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
+  return context;
 }
 
 export function isMarketingDomain(): boolean {

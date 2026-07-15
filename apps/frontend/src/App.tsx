@@ -61,14 +61,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// Invalidate /api/me cache on auth events so plan status is always fresh.
-supabase.auth.onAuthStateChange((event) => {
-  if (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") {
-    if (event === "SIGNED_IN") sessionStorage.removeItem("plan_chooser_dismissed");
-    queryClient.invalidateQueries({ queryKey: ["me"] });
-  }
-});
-
 /** Auth guard: if not logged in, redirect to covable.app/sign-in */
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();

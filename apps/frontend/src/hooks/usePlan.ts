@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
-import { PLAN_LIMITS } from "@covable/shared";
+import { isBuiltInSuperAdminEmail, PLAN_LIMITS } from "@covable/shared";
 import type { PlanTier, PlanLimits } from "@covable/shared";
 
 export type { PlanTier, PlanLimits };
@@ -33,19 +33,20 @@ interface UsePlanOptions {
 
 export function usePlan(options: UsePlanOptions = {}): UsePlanResult {
   const { user } = useAuth();
+  const hasSuperadminEmail = isBuiltInSuperAdminEmail(user?.email);
 
   const { data: me, isLoading, isError, refetch } = useQuery<MeResponse>({
     queryKey: ["me", user?.id],
     queryFn: () => api.get<MeResponse>("/api/me"),
-    enabled: !!user,
+    enabled: !!user && !hasSuperadminEmail,
     staleTime: 0,
     refetchOnWindowFocus: true,
     refetchInterval: options.refetchInterval,
   });
 
-  const rawTier = me?.plan ?? "trial";
+  const rawTier = hasSuperadminEmail ? "pro" : me?.plan ?? "trial";
   const tier = (rawTier in PLAN_LIMITS ? rawTier : "trial") as PlanTier;
-  const isSuperAdmin = me?.is_superadmin === true;
+  const isSuperAdmin = hasSuperadminEmail || me?.is_superadmin === true;
 
   const trialExpiresAt = me?.trial_expires_at ? new Date(me.trial_expires_at) : null;
   const trialExpired = tier === "trial" && trialExpiresAt !== null && trialExpiresAt < new Date();
@@ -53,7 +54,7 @@ export function usePlan(options: UsePlanOptions = {}): UsePlanResult {
 
   // Only block route rendering on the first load. Background refetches happen on
   // focus and should not unmount forms such as onboarding.
-  const loading = isLoading && !!user;
+  const loading = isLoading && !!user && !isSuperAdmin;
 
   return {
     ...PLAN_LIMITS[tier],

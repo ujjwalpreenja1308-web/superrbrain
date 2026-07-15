@@ -29,6 +29,20 @@ export type GapStatus = (typeof GAP_STATUSES)[number];
 
 export const DEFAULT_PROMPT_COUNT = 10;
 
+export const BUILT_IN_SUPERADMIN_EMAILS = [
+  "ujjwal.preenja1308@gmail.com",
+] as const;
+
+export function isBuiltInSuperAdminEmail(
+  email: string | null | undefined,
+): boolean {
+  if (!email) return false;
+  const normalizedEmail = email.trim().toLowerCase();
+  return BUILT_IN_SUPERADMIN_EMAILS.some(
+    (superadminEmail) => superadminEmail === normalizedEmail,
+  );
+}
+
 export type PlanTier = "trial" | "starter" | "growth" | "pro";
 
 export interface PlanLimits {

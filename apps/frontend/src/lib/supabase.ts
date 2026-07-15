@@ -70,7 +70,9 @@ export const supabase = createClient(
     persistSession: true,
     storageKey: COOKIE_NAME,
     storage: cookieStorage,
-    detectSessionInUrl: true,
+    // AuthProvider handles both PKCE codes and token hashes once. Letting the
+    // client auto-detect them as well can create competing session locks.
+    detectSessionInUrl: false,
   },
   }
 );

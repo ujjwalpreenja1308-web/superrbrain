@@ -1,6 +1,5 @@
 import type { User } from "@supabase/supabase-js";
-
-const BUILT_IN_SUPERADMIN_EMAILS = ["ujjwal.preenja1308@gmail.com"];
+import { isBuiltInSuperAdminEmail } from "@covable/shared";
 
 function configuredSuperadminEmails(): Set<string> {
   const configured = (process.env.SUPERADMIN_EMAILS ?? "")
@@ -8,11 +7,12 @@ function configuredSuperadminEmails(): Set<string> {
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean);
 
-  return new Set([...BUILT_IN_SUPERADMIN_EMAILS, ...configured]);
+  return new Set(configured);
 }
 
 export function isSuperAdminEmail(email: string | null | undefined): boolean {
   if (!email) return false;
+  if (isBuiltInSuperAdminEmail(email)) return true;
   return configuredSuperadminEmails().has(email.trim().toLowerCase());
 }
 
