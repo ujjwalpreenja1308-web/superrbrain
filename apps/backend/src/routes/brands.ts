@@ -7,6 +7,7 @@ import {
   dispatchMonitoringRun,
 } from "../lib/qstash.js";
 import { isBrandOnboardingStale } from "../lib/onboarding-state.js";
+import { isMonitoringRunStale } from "../lib/monitoring-state.js";
 import { checkPromptLimit, getPlanTier } from "../middleware/requirePlan.js";
 import { isLocalDevBypassEnabled } from "../lib/env.js";
 import { PLAN_LIMITS } from "@covable/shared";
@@ -169,6 +170,21 @@ app.get("/:id", async (c) => {
     .single();
 
   if (error || !brand) throw new AppError(404, "Brand not found");
+
+  if (isMonitoringRunStale(brand.status, brand.updated_at)) {
+    const { data: recovered, error: recoveryError } = await supabaseAdmin
+      .from("brands")
+      .update({ status: "error", updated_at: new Date().toISOString() })
+      .eq("id", brandId)
+      .eq("user_id", userId)
+      .eq("status", "running")
+      .select("*")
+      .maybeSingle();
+    if (recoveryError) {
+      throw new AppError(500, "Failed to recover stale monitoring run");
+    }
+    if (recovered) return c.json(recovered);
+  }
 
   return c.json(brand);
 });
@@ -581,7 +597,7 @@ app.post("/:id/run", async (c) => {
 
   const { data: brand, error } = await supabaseAdmin
     .from("brands")
-    .select("id, status")
+    .select("id, status, updated_at")
     .eq("id", brandId)
     .eq("user_id", userId)
     .single();
@@ -593,7 +609,7 @@ app.post("/:id/run", async (c) => {
 
   const { data: transitioned, error: transitionError } = await supabaseAdmin
     .from("brands")
-    .update({ status: "running" })
+    .update({ status: "running", updated_at: new Date().toISOString() })
     .eq("id", brandId)
     .eq("status", brand.status)
     .select("id")
@@ -609,7 +625,7 @@ app.post("/:id/run", async (c) => {
     console.error("Failed to dispatch monitoring workflow:", err);
     await supabaseAdmin
       .from("brands")
-      .update({ status: brand.status })
+      .update({ status: brand.status, updated_at: brand.updated_at })
       .eq("id", brandId);
     throw new AppError(503, "Failed to start monitoring. Please try again.");
   }

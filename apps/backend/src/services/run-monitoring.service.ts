@@ -47,7 +47,7 @@ export async function prepareMonitoringRun(
 ): Promise<MonitoringRunContext> {
   const { error: runningStatusError } = await supabaseAdmin
     .from("brands")
-    .update({ status: "running" })
+    .update({ status: "running", updated_at: new Date().toISOString() })
     .eq("id", brandId);
   if (runningStatusError) {
     throw new Error(
