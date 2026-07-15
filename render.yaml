@@ -21,6 +21,10 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
+      - key: OLLAMA_API_KEY
+        sync: false
+      - key: OLLAMA_MODEL
+        value: gpt-oss:120b
       - key: PERPLEXITY_API_KEY
         sync: false
       - key: FIRECRAWL_API_KEY

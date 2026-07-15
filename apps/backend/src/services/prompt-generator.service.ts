@@ -1,4 +1,5 @@
-import { openai } from "../lib/openai.js";
+import { z } from "zod";
+import { ollamaJsonCompletion } from "../lib/ollama.js";
 import {
   curateGeneratedPrompts,
   GENERATED_PROMPT_CATEGORIES,
@@ -14,13 +15,28 @@ export interface BrandExtraction {
 
 export type GeneratedPrompt = QualityPrompt;
 
+const brandExtractionSchema = z.object({
+  name: z.string().trim().min(1),
+  category: z.string().trim().min(1),
+  description: z.string().trim().min(1),
+  competitors: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1),
+        url: z.string().trim().optional().nullable(),
+      }),
+    )
+    .min(1)
+    .max(10),
+});
+
 export async function extractBrandData(
   markdown: string,
   url: string
 ): Promise<BrandExtraction> {
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    response_format: { type: "json_object" },
+  const extracted = await ollamaJsonCompletion({
+    maxTokens: 1800,
+    temperature: 0,
     messages: [
       {
         role: "system",
@@ -40,10 +56,14 @@ Work for any industry: SaaS, e-commerce, professional services, marketplaces, co
     ],
   });
 
-  const content = response.choices[0].message.content;
-  if (!content) throw new Error("No response from GPT-4o mini");
-
-  return JSON.parse(content);
+  const parsed = brandExtractionSchema.parse(extracted);
+  return {
+    ...parsed,
+    competitors: parsed.competitors.map((competitor) => ({
+      name: competitor.name,
+      ...(competitor.url ? { url: competitor.url } : {}),
+    })),
+  };
 }
 
 export async function generatePrompts(
@@ -65,37 +85,9 @@ export async function generatePrompts(
   const competitorPromptLimit = Math.max(1, Math.floor(promptCount * 0.3));
   const recencyPromptLimit = Math.max(1, Math.floor(promptCount * 0.2));
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    response_format: {
-      type: "json_schema",
-      json_schema: {
-        name: "generated_monitoring_prompts",
-        strict: true,
-        schema: {
-          type: "object",
-          properties: {
-            prompts: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  text: { type: "string" },
-                  category: {
-                    type: "string",
-                    enum: [...GENERATED_PROMPT_CATEGORIES],
-                  },
-                },
-                required: ["text", "category"],
-                additionalProperties: false,
-              },
-            },
-          },
-          required: ["prompts"],
-          additionalProperties: false,
-        },
-      },
-    },
+  const parsed = await ollamaJsonCompletion<{ prompts?: unknown }>({
+    maxTokens: Math.max(1800, candidateCount * 80),
+    temperature: 0.3,
     messages: [
       {
         role: "system",
@@ -130,7 +122,8 @@ Natural writing rules:
 - Avoid near-duplicates that merely swap "best", "top", "latest", a year, or a buyer type.
 - Tailor every query to this exact category and description. Do not assume the business is ecommerce.
 
-Return only the structured JSON requested by the schema.`,
+Return only valid JSON in this exact shape, with no markdown or commentary:
+{"prompts":[{"text":"query text","category":"best_for|comparison|reviews|price_value"}]}`,
       },
       {
         role: "user",
@@ -143,10 +136,6 @@ Create more candidates than the final set so weak or repetitive queries can be r
     ],
   });
 
-  const content = response.choices[0].message.content;
-  if (!content) throw new Error("No response from GPT-4o mini");
-
-  const parsed = JSON.parse(content) as { prompts?: unknown };
   const prompts = curateGeneratedPrompts(parsed.prompts, {
     limit: promptCount,
     brandName,
