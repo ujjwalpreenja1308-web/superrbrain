@@ -12,7 +12,7 @@ services:
       - key: FRONTEND_URL
         value: https://home.covable.app
       - key: BACKEND_URL
-        value: https://covable-backend.onrender.com
+        value: https://superrbrain.onrender.com
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
