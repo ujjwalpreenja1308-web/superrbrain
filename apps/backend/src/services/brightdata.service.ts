@@ -1,6 +1,9 @@
 const BRIGHTDATA_API_KEY = process.env.BRIGHTDATA_API_KEY;
 const DATASET_ID = "gd_m7aof0k82r803d5bjm";
-const SCRAPE_URL = `https://api.brightdata.com/datasets/v3/scrape?dataset_id=${DATASET_ID}&notify=false&include_errors=true`;
+const SCRAPE_URL = `https://api.brightdata.com/datasets/v3/scrape?dataset_id=${DATASET_ID}&format=json&notify=false&include_errors=true`;
+const SNAPSHOT_BASE_URL = "https://api.brightdata.com/datasets/v3";
+const SNAPSHOT_POLL_INTERVAL_MS = 5_000;
+const SNAPSHOT_TIMEOUT_MS = 10 * 60_000;
 
 export interface BrightDataResult {
   text: string;
@@ -10,13 +13,20 @@ export interface BrightDataResult {
 interface BrightDataRecord {
   answer_text_markdown?: string;
   answer_text?: string;
-  links_attached?: { url: string; text: string; position: number }[];
+  citations?: { url?: string; title?: string; position?: number }[];
+  links_attached?: { url?: string; text?: string; position?: number }[];
   search_sources?: { url: string; title?: string }[];
   error?: string;
 }
 
+interface BrightDataProgress {
+  status?: string;
+  error?: string;
+}
+
 /**
- * Scrape a single prompt. Bright Data returns results synchronously for single-input calls.
+ * Scrape a single prompt. If Bright Data cannot finish synchronously, it returns a
+ * snapshot id and continues in the background, so wait for and download that result.
  */
 export async function scrapeWithBrightData(
   prompt: string,
@@ -51,19 +61,16 @@ export async function scrapeWithBrightData(
     throw new Error(`Bright Data request failed (${res.status}): ${body}`);
   }
 
-  const raw = await res.json() as BrightDataRecord;
+  let payload: unknown = await res.json();
+  const snapshotId = getBrightDataSnapshotId(payload);
+  if (snapshotId) payload = await waitForBrightDataSnapshot(snapshotId);
 
-  if (raw.error) {
-    throw new Error(`Bright Data error: ${raw.error}`);
-  }
-
-  return extractResult(raw);
+  return parseBrightDataPayload(payload);
 }
 
 /**
- * Scrape multiple prompts concurrently — each as its own single-input request
- * (Bright Data is synchronous for single inputs, async for batches).
- * All requests fire in parallel so total time ≈ slowest single prompt (~30s).
+ * Scrape multiple prompts concurrently, waiting for any requests Bright Data
+ * defers to background snapshots before returning the batch.
  */
 export async function scrapeWithBrightDataBatch(
   inputs: { prompt: string; country?: string; webSearch?: boolean }[]
@@ -75,10 +82,88 @@ export async function scrapeWithBrightDataBatch(
   );
 }
 
-function extractResult(record: BrightDataRecord): BrightDataResult {
+export function getBrightDataSnapshotId(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return null;
+  }
+
+  const snapshotId = (payload as { snapshot_id?: unknown }).snapshot_id;
+  return typeof snapshotId === "string" && snapshotId.trim()
+    ? snapshotId
+    : null;
+}
+
+async function fetchBrightDataJson(url: string): Promise<unknown> {
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${BRIGHTDATA_API_KEY}` },
+    signal: AbortSignal.timeout(30_000),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Bright Data snapshot request failed (${res.status}): ${body}`);
+  }
+
+  return res.json();
+}
+
+async function waitForBrightDataSnapshot(snapshotId: string): Promise<unknown> {
+  const deadline = Date.now() + SNAPSHOT_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    const progress = (await fetchBrightDataJson(
+      `${SNAPSHOT_BASE_URL}/progress/${encodeURIComponent(snapshotId)}`,
+    )) as BrightDataProgress;
+    const status = progress.status?.toLowerCase();
+
+    if (status === "ready") {
+      return fetchBrightDataJson(
+        `${SNAPSHOT_BASE_URL}/snapshot/${encodeURIComponent(snapshotId)}?format=json`,
+      );
+    }
+
+    if (status === "failed") {
+      throw new Error(
+        `Bright Data snapshot ${snapshotId} failed${progress.error ? `: ${progress.error}` : ""}`,
+      );
+    }
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, SNAPSHOT_POLL_INTERVAL_MS),
+    );
+  }
+
+  throw new Error(
+    `Bright Data snapshot ${snapshotId} did not finish within 10 minutes`,
+  );
+}
+
+export function parseBrightDataPayload(payload: unknown): BrightDataResult {
+  const candidate = Array.isArray(payload) ? payload[0] : payload;
+  if (!candidate || typeof candidate !== "object") {
+    throw new Error("Bright Data returned no result record");
+  }
+
+  if ("snapshot_id" in candidate) {
+    throw new Error(
+      "Bright Data deferred the request to a snapshot instead of returning a synchronous result",
+    );
+  }
+
+  const record = candidate as BrightDataRecord;
+  if (record.error) throw new Error(`Bright Data error: ${record.error}`);
+
   const text = record.answer_text_markdown ?? record.answer_text ?? "";
+  if (!text.trim()) {
+    throw new Error("Bright Data returned an empty answer");
+  }
 
   const citations: string[] = [];
+  for (const citation of record.citations ?? []) {
+    if (citation.url && !citations.includes(citation.url)) {
+      citations.push(citation.url);
+    }
+  }
   for (const link of record.links_attached ?? []) {
     if (link.url && !citations.includes(link.url)) citations.push(link.url);
   }

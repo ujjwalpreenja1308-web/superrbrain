@@ -15,6 +15,7 @@ import {
   useActiveBrand,
 } from "@/hooks/useActiveBrand";
 import { useAuth } from "@/hooks/useAuth";
+import { usePlan } from "@/hooks/usePlan";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { RefreshCw, Loader2, Eye, AlertTriangle, Radio, Trophy, CheckCircle2 } from "lucide-react";
@@ -117,6 +118,7 @@ export function Dashboard() {
   const navigate = useNavigate();
   const { activeBrand: brand, activeBrandId: brandId, brands, isLoading: brandsLoading } = useActiveBrand();
   const { user } = useAuth();
+  const plan = usePlan();
   const { data: me, isLoading: meLoading } = useQuery({
     queryKey: ["me", user?.id],
     queryFn: () => api.get<{ plan: string }>("/api/me"),
@@ -221,8 +223,15 @@ export function Dashboard() {
         <Button
           variant="outline"
           size="sm"
-          disabled
-          title="Manual re-runs are disabled to keep scan volume controlled."
+          disabled={
+            !plan.isSuperAdmin || isRunning || runMonitoring.isPending
+          }
+          onClick={() => runMonitoring.mutate()}
+          title={
+            plan.isSuperAdmin
+              ? "Run monitoring again"
+              : "Manual re-runs are disabled to keep scan volume controlled."
+          }
           className="h-8 text-xs"
         >
           {isRunning ? (
