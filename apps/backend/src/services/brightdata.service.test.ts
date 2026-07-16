@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getBrightDataSnapshotId,
+  parseBrightDataBatchPayload,
   parseBrightDataPayload,
 } from "./brightdata.service.js";
 
@@ -42,5 +43,26 @@ describe("Bright Data response parsing", () => {
     expect(() => parseBrightDataPayload({ snapshot_id: "s_test" })).toThrow(
       "Bright Data deferred the request",
     );
+  });
+
+  it("orders batch records by their tracking index", () => {
+    expect(
+      parseBrightDataBatchPayload(
+        [
+          { index: 1, answer_text: "second" },
+          { index: 0, answer_text: "first" },
+        ],
+        2,
+      ),
+    ).toEqual([
+      { text: "first", citations: [] },
+      { text: "second", citations: [] },
+    ]);
+  });
+
+  it("rejects incomplete batch snapshots", () => {
+    expect(() =>
+      parseBrightDataBatchPayload([{ index: 0, answer_text: "first" }], 2),
+    ).toThrow("returned 1 of 2 results");
   });
 });

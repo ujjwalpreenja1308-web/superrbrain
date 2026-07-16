@@ -1,6 +1,7 @@
 const BRIGHTDATA_API_KEY = process.env.BRIGHTDATA_API_KEY;
 const DATASET_ID = "gd_m7aof0k82r803d5bjm";
 const SCRAPE_URL = `https://api.brightdata.com/datasets/v3/scrape?dataset_id=${DATASET_ID}&format=json&notify=false&include_errors=true`;
+const TRIGGER_URL = `https://api.brightdata.com/datasets/v3/trigger?dataset_id=${DATASET_ID}&format=json&include_errors=true`;
 const SNAPSHOT_BASE_URL = "https://api.brightdata.com/datasets/v3";
 const SNAPSHOT_POLL_INTERVAL_MS = 5_000;
 const SNAPSHOT_TIMEOUT_MS = 10 * 60_000;
@@ -10,7 +11,13 @@ export interface BrightDataResult {
   citations: string[];
 }
 
+export interface BrightDataSnapshotStatus {
+  status: "pending" | "ready" | "failed";
+  error?: string;
+}
+
 interface BrightDataRecord {
+  index?: number;
   answer_text_markdown?: string;
   answer_text?: string;
   citations?: { url?: string; title?: string; position?: number }[];
@@ -75,11 +82,70 @@ export async function scrapeWithBrightData(
 export async function scrapeWithBrightDataBatch(
   inputs: { prompt: string; country?: string; webSearch?: boolean }[]
 ): Promise<BrightDataResult[]> {
-  return Promise.all(
-    inputs.map(({ prompt, country, webSearch = true }) =>
-      scrapeWithBrightData(prompt, country, webSearch)
-    )
+  if (!inputs.length) return [];
+  const snapshotId = await triggerBrightDataBatch(inputs);
+  const payload = await waitForBrightDataSnapshot(snapshotId);
+  return parseBrightDataBatchPayload(payload, inputs.length);
+}
+
+export async function triggerBrightDataBatch(
+  inputs: { prompt: string; country?: string; webSearch?: boolean }[],
+): Promise<string> {
+  if (!BRIGHTDATA_API_KEY) {
+    throw new Error("BRIGHTDATA_API_KEY is not set");
+  }
+
+  const res = await fetch(TRIGGER_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${BRIGHTDATA_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(
+      inputs.map(({ prompt, country, webSearch = true }, index) => ({
+        url: "https://chatgpt.com/",
+        prompt,
+        country: country ?? "",
+        web_search: webSearch,
+        additional_prompt: "",
+        index,
+      })),
+    ),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Bright Data batch request failed (${res.status}): ${body}`);
+  }
+
+  const snapshotId = getBrightDataSnapshotId(await res.json());
+  if (!snapshotId) {
+    throw new Error("Bright Data batch request returned no snapshot id");
+  }
+
+  return snapshotId;
+}
+
+export async function downloadBrightDataSnapshot(
+  snapshotId: string,
+  expectedCount: number,
+): Promise<BrightDataResult[]> {
+  const payload = await fetchBrightDataJson(
+    `${SNAPSHOT_BASE_URL}/snapshot/${encodeURIComponent(snapshotId)}?format=json`,
   );
+  return parseBrightDataBatchPayload(payload, expectedCount);
+}
+
+export async function getBrightDataSnapshotStatus(
+  snapshotId: string,
+): Promise<BrightDataSnapshotStatus> {
+  const progress = (await fetchBrightDataJson(
+    `${SNAPSHOT_BASE_URL}/progress/${encodeURIComponent(snapshotId)}`,
+  )) as BrightDataProgress;
+  const status = progress.status?.toLowerCase();
+  if (status === "ready") return { status: "ready" };
+  if (status === "failed") return { status: "failed", error: progress.error };
+  return { status: "pending" };
 }
 
 export function getBrightDataSnapshotId(payload: unknown): string | null {
@@ -111,18 +177,15 @@ async function waitForBrightDataSnapshot(snapshotId: string): Promise<unknown> {
   const deadline = Date.now() + SNAPSHOT_TIMEOUT_MS;
 
   while (Date.now() < deadline) {
-    const progress = (await fetchBrightDataJson(
-      `${SNAPSHOT_BASE_URL}/progress/${encodeURIComponent(snapshotId)}`,
-    )) as BrightDataProgress;
-    const status = progress.status?.toLowerCase();
+    const progress = await getBrightDataSnapshotStatus(snapshotId);
 
-    if (status === "ready") {
+    if (progress.status === "ready") {
       return fetchBrightDataJson(
         `${SNAPSHOT_BASE_URL}/snapshot/${encodeURIComponent(snapshotId)}?format=json`,
       );
     }
 
-    if (status === "failed") {
+    if (progress.status === "failed") {
       throw new Error(
         `Bright Data snapshot ${snapshotId} failed${progress.error ? `: ${progress.error}` : ""}`,
       );
@@ -150,7 +213,37 @@ export function parseBrightDataPayload(payload: unknown): BrightDataResult {
     );
   }
 
-  const record = candidate as BrightDataRecord;
+  return parseBrightDataRecord(candidate as BrightDataRecord);
+}
+
+export function parseBrightDataBatchPayload(
+  payload: unknown,
+  expectedCount: number,
+): BrightDataResult[] {
+  if (!Array.isArray(payload)) {
+    throw new Error("Bright Data batch returned a non-array result");
+  }
+  if (payload.length !== expectedCount) {
+    throw new Error(
+      `Bright Data batch returned ${payload.length} of ${expectedCount} results`,
+    );
+  }
+
+  const records = payload as BrightDataRecord[];
+  const hasUsableIndexes = records.every(
+    (record) =>
+      Number.isInteger(record.index) &&
+      (record.index as number) >= 0 &&
+      (record.index as number) < expectedCount,
+  );
+  const ordered = hasUsableIndexes
+    ? [...records].sort((a, b) => (a.index as number) - (b.index as number))
+    : records;
+
+  return ordered.map(parseBrightDataRecord);
+}
+
+function parseBrightDataRecord(record: BrightDataRecord): BrightDataResult {
   if (record.error) throw new Error(`Bright Data error: ${record.error}`);
 
   const text = record.answer_text_markdown ?? record.answer_text ?? "";

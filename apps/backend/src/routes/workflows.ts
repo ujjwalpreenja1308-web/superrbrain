@@ -14,11 +14,13 @@ import {
 import {
   analyzeMonitoringCitations,
   completeMonitoringRun,
+  downloadMonitoringQueries,
   markMonitoringRunError,
   prepareMonitoringRun,
-  runMonitoringQueries,
   saveMonitoringResponses,
+  triggerMonitoringQueries,
 } from "../services/run-monitoring.service.js";
+import { getBrightDataSnapshotStatus } from "../services/brightdata.service.js";
 
 const app = new Hono();
 const onboardPayloadSchema = z.object({ brandId: z.string().uuid() });
@@ -85,8 +87,29 @@ const runMonitoringWorkflow = serve<MonitoringPayload>(
     const run = await context.run("prepare-monitoring-run", () =>
       prepareMonitoringRun(brandId, runId),
     );
-    const results = await context.run("run-bright-data-searches", () =>
-      runMonitoringQueries(run),
+    const snapshotId = await context.run("trigger-bright-data-batch", () =>
+      triggerMonitoringQueries(run),
+    );
+    let ready = false;
+    for (let attempt = 0; attempt < 120; attempt++) {
+      const progress = await context.run(`check-bright-data-${attempt}`, () =>
+        getBrightDataSnapshotStatus(snapshotId),
+      );
+      if (progress.status === "failed") {
+        throw new Error(
+          `Bright Data snapshot failed${progress.error ? `: ${progress.error}` : ""}`,
+        );
+      }
+      if (progress.status === "ready") {
+        ready = true;
+        break;
+      }
+      await context.sleep(`wait-bright-data-${attempt}`, "15s");
+    }
+    if (!ready) throw new Error("Bright Data snapshot timed out after 30 minutes");
+
+    const results = await context.run("download-bright-data-results", () =>
+      downloadMonitoringQueries(run, snapshotId),
     );
     const responseCount = await context.run("save-ai-responses", () =>
       saveMonitoringResponses(run, results),

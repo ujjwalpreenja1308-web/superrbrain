@@ -3,6 +3,11 @@ import { requireEnv } from "../lib/env.js";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { getPlanTier } from "../middleware/requirePlan.js";
 import { firePromptBatch } from "./ai-engine.service.js";
+import { parseAiResponse } from "./ai-response-parser.service.js";
+import {
+  downloadBrightDataSnapshot,
+  triggerBrightDataBatch,
+} from "./brightdata.service.js";
 import {
   buildCitationRows,
   enrichCitation,
@@ -115,6 +120,43 @@ export async function runMonitoringQueries(
     run.location,
   );
 
+  return mapMonitoringResults(run, results);
+}
+
+export async function triggerMonitoringQueries(
+  run: MonitoringRunContext,
+): Promise<string> {
+  requireEnv("BRIGHTDATA_API_KEY");
+  return triggerBrightDataBatch(
+    run.prompts.map((prompt) => ({
+      prompt: prompt.text,
+      country: run.location.country,
+    })),
+  );
+}
+
+export async function downloadMonitoringQueries(
+  run: MonitoringRunContext,
+  snapshotId: string,
+): Promise<MonitoringQueryResult[]> {
+  const results = (
+    await downloadBrightDataSnapshot(snapshotId, run.prompts.length)
+  ).map((result) =>
+    parseAiResponse(
+      result.text,
+      run.brandName,
+      run.competitors,
+      "chatgpt",
+      result.citations,
+    ),
+  );
+  return mapMonitoringResults(run, results);
+}
+
+function mapMonitoringResults(
+  run: MonitoringRunContext,
+  results: Awaited<ReturnType<typeof firePromptBatch>>,
+): MonitoringQueryResult[] {
   return run.prompts.map((prompt, index) => {
     const result = results[index];
     if (!result) {
