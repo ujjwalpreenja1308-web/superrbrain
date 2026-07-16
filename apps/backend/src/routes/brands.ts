@@ -587,7 +587,7 @@ app.post("/:id/onboard", async (c) => {
     );
   }
 
-  return c.json({ status: "pending" });
+  return c.json({ status: "pending", updated_at: retryStartedAt });
 });
 
 // POST /api/brands/:id/run — manually trigger monitoring run

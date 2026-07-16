@@ -116,10 +116,36 @@ export function useRetryOnboarding(brandId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () =>
-      api.post<{ status: string }>(`/api/brands/${brandId}/onboard`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["brand", brandId] });
-      queryClient.invalidateQueries({ queryKey: ["brands"] });
+      api.post<{ status: Brand["status"]; updated_at: string }>(
+        `/api/brands/${brandId}/onboard`,
+      ),
+    onSuccess: async (retry) => {
+      // Replace the cached error state before Onboarding switches back to its
+      // analyzing screen. This also immediately re-enables useBrand polling.
+      queryClient.setQueryData<Brand>(["brand", brandId], (brand) =>
+        brand
+          ? {
+              ...brand,
+              status: retry.status,
+              updated_at: retry.updated_at,
+            }
+          : brand,
+      );
+      queryClient.setQueryData<Brand[]>(["brands"], (brands) =>
+        brands?.map((brand) =>
+          brand.id === brandId
+            ? {
+                ...brand,
+                status: retry.status,
+                updated_at: retry.updated_at,
+              }
+            : brand,
+        ),
+      );
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["brand", brandId] }),
+        queryClient.invalidateQueries({ queryKey: ["brands"] }),
+      ]);
       toast.success("Brand analysis restarted");
     },
     onError: (err: Error) => toast.error(err.message),
