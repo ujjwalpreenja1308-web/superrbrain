@@ -50,6 +50,8 @@ export function mergeBrandMentions(
 export function normalizeUrlForComparison(input: string): string {
   try {
     const url = new URL(input);
+    url.protocol = "https:";
+    url.hostname = url.hostname.toLowerCase().replace(/^www\./, "");
     url.hash = "";
     for (const key of Array.from(url.searchParams.keys())) {
       if (
@@ -59,11 +61,22 @@ export function normalizeUrlForComparison(input: string): string {
         url.searchParams.delete(key);
       }
     }
+    url.searchParams.sort();
+    url.pathname = url.pathname.replace(/^\/[a-z]{2}-[a-z]{2}(?=\/)/i, "");
     if (url.pathname !== "/") url.pathname = url.pathname.replace(/\/+$/, "");
     return url.toString();
   } catch {
     return input.trim();
   }
+}
+
+export function shouldIncludeCitationMapSource(
+  sourceType: SourceType,
+  brandsMentioned: unknown[],
+): boolean {
+  return (
+    !["blog", "listicle"].includes(sourceType) || brandsMentioned.length > 0
+  );
 }
 
 /**

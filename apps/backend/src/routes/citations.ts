@@ -2,7 +2,10 @@ import { Hono } from "hono";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { AppError } from "../middleware/error.js";
 import type { AppVariables } from "../types.js";
-import { normalizeUrlForComparison } from "../services/citation.service.js";
+import {
+  normalizeUrlForComparison,
+  shouldIncludeCitationMapSource,
+} from "../services/citation.service.js";
 
 const app = new Hono<{ Variables: AppVariables }>();
 
@@ -54,7 +57,7 @@ app.get("/:id/citations", async (c) => {
     citationsByUrl.set(key, existing);
   }
 
-  const enriched = Array.from(citationsByUrl.values()).map((group) => {
+  const enriched = Array.from(citationsByUrl.values()).flatMap((group) => {
     const [first] = group;
     const brands = new Map<string, { name: string; frequency: number }>();
     for (const cit of group) {
@@ -74,11 +77,20 @@ app.get("/:id/citations", async (c) => {
       }
     }
 
-    return {
-      ...first,
-      brands_mentioned: Array.from(brands.values()),
-      frequency_score: group.length,
-    };
+    const brandsMentioned = Array.from(brands.values());
+    if (!shouldIncludeCitationMapSource(first.source_type, brandsMentioned)) {
+      return [];
+    }
+
+    return [
+      {
+        ...first,
+        brands_mentioned: brandsMentioned,
+        frequency_score: new Set(
+          group.map((citation) => citation.ai_response_id),
+        ).size,
+      },
+    ];
   });
 
   return c.json(enriched);

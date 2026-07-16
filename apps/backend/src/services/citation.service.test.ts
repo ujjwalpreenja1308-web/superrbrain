@@ -4,6 +4,7 @@ import {
   enrichCitation,
   mergeBrandMentions,
   normalizeUrlForComparison,
+  shouldIncludeCitationMapSource,
 } from "./citation.service.js";
 
 describe("citation helpers", () => {
@@ -47,6 +48,20 @@ describe("citation helpers", () => {
     ).toBe("https://example.com/article");
     expect(normalizeUrlForComparison("https://example.com/other")).not.toBe(
       normalizeUrlForComparison("https://example.com/article"),
+    );
+  });
+
+  it("deduplicates localized URLs and hides brandless editorial sources", () => {
+    expect(
+      normalizeUrlForComparison(
+        "https://www.example.com/en-hu/article?utm_source=chatgpt",
+      ),
+    ).toBe(normalizeUrlForComparison("http://example.com/ko-hk/article"));
+    expect(shouldIncludeCitationMapSource("blog", [])).toBe(false);
+    expect(shouldIncludeCitationMapSource("listicle", [])).toBe(false);
+    expect(shouldIncludeCitationMapSource("reddit", [])).toBe(true);
+    expect(shouldIncludeCitationMapSource("blog", [{ name: "Ethique" }])).toBe(
+      true,
     );
   });
 
