@@ -12,7 +12,10 @@ import { checkPromptLimit, getPlanTier } from "../middleware/requirePlan.js";
 import { isLocalDevBypassEnabled } from "../lib/env.js";
 import { PLAN_LIMITS } from "@covable/shared";
 import type { AppVariables } from "../types.js";
-import { buildCitationRows } from "../services/citation.service.js";
+import {
+  buildCitationRows,
+  normalizeCompetitorMentions,
+} from "../services/citation.service.js";
 import { z } from "zod";
 import { assertSafePublicUrl } from "../services/url-safety.service.js";
 
@@ -186,6 +189,31 @@ app.get("/:id", async (c) => {
     if (recovered) return c.json(recovered);
   }
 
+  if (brand.status === "running") {
+    // ponytail: derive progress from existing rows; persist run metadata only if prompts become editable mid-run.
+    const [completedResult, totalResult] = await Promise.all([
+      supabaseAdmin
+        .from("ai_responses")
+        .select("id", { count: "exact", head: true })
+        .eq("brand_id", brandId)
+        .gte("created_at", brand.updated_at),
+      supabaseAdmin
+        .from("prompts")
+        .select("id", { count: "exact", head: true })
+        .eq("brand_id", brandId)
+        .eq("is_active", true),
+    ]);
+    if (!completedResult.error && !totalResult.error) {
+      return c.json({
+        ...brand,
+        monitoring_progress: {
+          completed: completedResult.count ?? 0,
+          total: totalResult.count ?? 0,
+        },
+      });
+    }
+  }
+
   return c.json(brand);
 });
 
@@ -196,7 +224,7 @@ app.get("/:id/report", async (c) => {
 
   const { data: brand, error: brandError } = await supabaseAdmin
     .from("brands")
-    .select("id")
+    .select("id, name, competitors")
     .eq("id", brandId)
     .eq("user_id", userId)
     .single();
@@ -217,14 +245,23 @@ app.get("/:id/report", async (c) => {
 
   const { data: responses, error: responsesError } = await supabaseAdmin
     .from("ai_responses")
-    .select("engine, brand_mentioned, competitor_mentions")
+    .select("id, engine, brand_mentioned, competitor_mentions")
     .eq("brand_id", brandId)
     .eq("run_id", latest.run_id);
   if (responsesError)
     throw new AppError(500, "Failed to load report responses");
 
+  const { data: citations, error: citationsError } = await supabaseAdmin
+    .from("citations")
+    .select("ai_response_id, brands_mentioned")
+    .eq("brand_id", brandId)
+    .eq("run_id", latest.run_id);
+  if (citationsError)
+    throw new AppError(500, "Failed to load report citations");
+
   const engineMap = new Map<string, { total: number; mentioned: number }>();
   const competitorMap = new Map<string, number>();
+  const mentionsByResponse = new Map<string, { name: string }[]>();
   for (const r of responses ?? []) {
     const entry = engineMap.get(r.engine) || { total: 0, mentioned: 0 };
     entry.total++;
@@ -234,10 +271,35 @@ app.get("/:id/report", async (c) => {
     const competitors = Array.isArray(r.competitor_mentions)
       ? r.competitor_mentions
       : [];
-    for (const competitor of competitors) {
-      const name =
-        typeof competitor?.name === "string" ? competitor.name.trim() : "";
-      if (name) competitorMap.set(name, (competitorMap.get(name) || 0) + 1);
+    mentionsByResponse.set(r.id, competitors);
+  }
+
+  for (const citation of citations ?? []) {
+    const mentions = Array.isArray(citation.brands_mentioned)
+      ? citation.brands_mentioned
+      : [];
+    mentionsByResponse.set(citation.ai_response_id, [
+      ...(mentionsByResponse.get(citation.ai_response_id) ?? []),
+      ...mentions,
+    ]);
+  }
+
+  const configuredCompetitors = Array.isArray(brand.competitors)
+    ? (brand.competitors as { name: string }[])
+    : [];
+  for (const mentions of mentionsByResponse.values()) {
+    for (const competitor of normalizeCompetitorMentions(
+      mentions.filter(
+        (mention): mention is { name: string } =>
+          typeof mention?.name === "string",
+      ),
+      configuredCompetitors,
+      brand.name ?? "",
+    )) {
+      competitorMap.set(
+        competitor.name,
+        (competitorMap.get(competitor.name) || 0) + 1,
+      );
     }
   }
 

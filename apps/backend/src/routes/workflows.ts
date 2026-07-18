@@ -20,7 +20,10 @@ import {
   saveMonitoringResponses,
   triggerMonitoringQueries,
 } from "../services/run-monitoring.service.js";
-import { getBrightDataSnapshotStatus } from "../services/brightdata.service.js";
+import {
+  chunkBrightDataInputs,
+  getBrightDataSnapshotStatus,
+} from "../services/brightdata.service.js";
 
 const app = new Hono();
 const onboardPayloadSchema = z.object({ brandId: z.string().uuid() });
@@ -87,33 +90,60 @@ const runMonitoringWorkflow = serve<MonitoringPayload>(
     const run = await context.run("prepare-monitoring-run", () =>
       prepareMonitoringRun(brandId, runId),
     );
-    const snapshotId = await context.run("trigger-bright-data-batch", () =>
-      triggerMonitoringQueries(run),
+    const batches = chunkBrightDataInputs(run.prompts).map((prompts) => ({
+      ...run,
+      prompts,
+    }));
+    const snapshotIds = await Promise.all(
+      batches.map((batch, index) =>
+        context.run(`trigger-bright-data-batch-${index}`, () =>
+          triggerMonitoringQueries(batch),
+        ),
+      ),
     );
-    let ready = false;
+    const resultsByBatch: Awaited<
+      ReturnType<typeof downloadMonitoringQueries>
+    >[] = [];
     for (let attempt = 0; attempt < 120; attempt++) {
-      const progress = await context.run(`check-bright-data-${attempt}`, () =>
-        getBrightDataSnapshotStatus(snapshotId),
+      const pending = snapshotIds
+        .map((_, index) => index)
+        .filter((index) => !resultsByBatch[index]);
+      const progress = await Promise.all(
+        pending.map((index) =>
+          context.run(`check-bright-data-${index}-${attempt}`, () =>
+            getBrightDataSnapshotStatus(snapshotIds[index]),
+          ),
+        ),
       );
-      if (progress.status === "failed") {
-        throw new Error(
-          `Bright Data snapshot failed${progress.error ? `: ${progress.error}` : ""}`,
+
+      for (let offset = 0; offset < pending.length; offset++) {
+        const index = pending[offset];
+        const batchProgress = progress[offset];
+        if (batchProgress.status === "failed") {
+          throw new Error(
+            `Bright Data batch ${index + 1} failed${batchProgress.error ? `: ${batchProgress.error}` : ""}`,
+          );
+        }
+        if (batchProgress.status !== "ready") continue;
+
+        const results = await context.run(
+          `download-bright-data-results-${index}`,
+          () => downloadMonitoringQueries(batches[index], snapshotIds[index]),
         );
+        await context.run(`save-ai-responses-${index}`, () =>
+          saveMonitoringResponses(run, results),
+        );
+        resultsByBatch[index] = results;
       }
-      if (progress.status === "ready") {
-        ready = true;
-        break;
-      }
+
+      if (resultsByBatch.filter(Boolean).length === batches.length) break;
       await context.sleep(`wait-bright-data-${attempt}`, "15s");
     }
-    if (!ready) throw new Error("Bright Data snapshot timed out after 30 minutes");
+    if (resultsByBatch.filter(Boolean).length !== batches.length)
+      throw new Error("Bright Data batches timed out after 30 minutes");
 
-    const results = await context.run("download-bright-data-results", () =>
-      downloadMonitoringQueries(run, snapshotId),
-    );
-    const responseCount = await context.run("save-ai-responses", () =>
-      saveMonitoringResponses(run, results),
-    );
+    const results = resultsByBatch.flat();
+    const responseCount = results.length;
     const citationAnalysis = await context.run(
       "analyze-monitoring-citations",
       () => analyzeMonitoringCitations(run, results),

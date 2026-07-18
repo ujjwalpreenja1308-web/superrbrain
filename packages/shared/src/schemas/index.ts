@@ -33,6 +33,9 @@ export const brandSchema = z.object({
   status: z.enum(BRAND_STATUSES),
   latest_visibility_score: z.number().nullable(),
   latest_gap_score: z.number().nullable(),
+  monitoring_progress: z
+    .object({ completed: z.number(), total: z.number() })
+    .optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });

@@ -5,6 +5,7 @@ import { getPlanTier } from "../middleware/requirePlan.js";
 import { firePromptBatch } from "./ai-engine.service.js";
 import { parseAiResponse } from "./ai-response-parser.service.js";
 import {
+  chunkBrightDataInputs,
   downloadBrightDataSnapshot,
   triggerBrightDataBatch,
 } from "./brightdata.service.js";
@@ -13,6 +14,7 @@ import {
   enrichCitation,
   extractBrandsFromResponse,
   mergeBrandMentions,
+  normalizeCompetitorMentions,
 } from "./citation.service.js";
 import { computeReport } from "./scoring.service.js";
 
@@ -179,6 +181,26 @@ export async function saveMonitoringResponses(
   run: MonitoringRunContext,
   results: MonitoringQueryResult[],
 ): Promise<number> {
+  await Promise.all(
+    results.map(async (result) => {
+      const extracted = await extractBrandsFromResponse(
+        result.rawResponse,
+        run.brandName,
+      ).catch((error) => {
+        console.warn("Optional brand extraction failed", {
+          responseId: result.responseId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return [];
+      });
+      result.competitorMentions = normalizeCompetitorMentions(
+        [...result.competitorMentions, ...extracted],
+        run.competitors,
+        run.brandName,
+      );
+    }),
+  );
+
   const rows = results.map((result) => ({
     id: result.responseId,
     prompt_id: result.promptId,
@@ -237,10 +259,15 @@ export async function analyzeMonitoringCitations(
 
   let citationCount = 0;
   let gapCount = 0;
-  const extractedBrandsByResponse = new Map<
-    string,
-    Promise<{ name: string; frequency: number }[]>
-  >();
+  const extractedBrandsByResponse = new Map(
+    results.map((result) => [
+      result.responseId,
+      result.competitorMentions.map((mention) => ({
+        name: mention.name,
+        frequency: 1,
+      })),
+    ]),
+  );
 
   await Promise.all(
     Array.from(urlData.entries()).map(async ([url, contexts]) => {
@@ -252,23 +279,9 @@ export async function analyzeMonitoringCitations(
             run.brandName,
             run.competitors,
           );
-          let extracted = extractedBrandsByResponse.get(context.responseId);
-          if (!extracted) {
-            extracted = extractBrandsFromResponse(
-              context.responseText,
-              run.brandName,
-            ).catch((error) => {
-              console.warn("Optional brand extraction failed", {
-                responseId: context.responseId,
-                error: error instanceof Error ? error.message : String(error),
-              });
-              return [];
-            });
-            extractedBrandsByResponse.set(context.responseId, extracted);
-          }
           analysis.brands_mentioned = mergeBrandMentions(
             analysis.brands_mentioned,
-            await extracted,
+            extractedBrandsByResponse.get(context.responseId) ?? [],
           );
           return analysis;
         }),
@@ -366,8 +379,18 @@ export async function runMonitoringPipeline(
 ) {
   try {
     const run = await prepareMonitoringRun(brandId, runId);
-    const results = await runMonitoringQueries(run);
-    await saveMonitoringResponses(run, results);
+    const batches = await Promise.allSettled(
+      chunkBrightDataInputs(run.prompts).map(async (prompts) => {
+        const batch = await runMonitoringQueries({ ...run, prompts });
+        await saveMonitoringResponses(run, batch);
+        return batch;
+      }),
+    );
+    const failure = batches.find((batch) => batch.status === "rejected");
+    if (failure) throw failure.reason;
+    const results = batches.flatMap((batch) =>
+      batch.status === "fulfilled" ? batch.value : [],
+    );
     await analyzeMonitoringCitations(run, results);
     const report = await completeMonitoringRun(run);
     return { success: true, runId, ...report };

@@ -1,11 +1,20 @@
 import { describe, expect, it } from "vitest";
 import {
+  chunkBrightDataInputs,
   getBrightDataSnapshotId,
   parseBrightDataBatchPayload,
   parseBrightDataPayload,
 } from "./brightdata.service.js";
 
 describe("Bright Data response parsing", () => {
+  it("splits monitoring prompts into batches of at most three", () => {
+    expect(chunkBrightDataInputs([1, 2, 3, 4, 5, 6, 7])).toEqual([
+      [1, 2, 3],
+      [4, 5, 6],
+      [7],
+    ]);
+  });
+
   it("parses the documented array response and all citation fields", () => {
     expect(
       parseBrightDataPayload([

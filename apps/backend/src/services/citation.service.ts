@@ -47,6 +47,54 @@ export function mergeBrandMentions(
   return [...merged.values()];
 }
 
+export function normalizeCompetitorMentions(
+  mentions: { name: string; position?: number | null }[],
+  competitors: { name: string }[],
+  brandName: string,
+): { name: string; position: number | null }[] {
+  const configured = competitors
+    .map((competitor) => competitor.name.trim())
+    .filter(Boolean);
+  const names = new Map<string, { name: string; position: number | null }>();
+
+  for (const mention of mentions) {
+    const rawName = mention.name.trim();
+    if (!rawName || areBrandAliases(rawName, brandName)) continue;
+    const name =
+      configured.find((competitor) => areBrandAliases(rawName, competitor)) ??
+      rawName;
+    const key = brandKey(name);
+    if (!names.has(key)) {
+      names.set(key, { name, position: mention.position ?? null });
+    }
+  }
+
+  return [...names.values()];
+}
+
+function areBrandAliases(left: string, right: string): boolean {
+  const leftKey = brandKey(left);
+  const rightKey = brandKey(right);
+  if (!leftKey || !rightKey) return false;
+  if (leftKey === rightKey) return true;
+
+  const leftBase = brandKey(left.replace(/\s*\([^)]*\)\s*$/, ""));
+  const rightBase = brandKey(right.replace(/\s*\([^)]*\)\s*$/, ""));
+  if (leftBase === rightBase) return true;
+
+  const shorter = leftKey.length < rightKey.length ? leftKey : rightKey;
+  const longer = shorter === leftKey ? rightKey : leftKey;
+  return shorter.replace(/\s/g, "").length >= 6 && longer.startsWith(`${shorter} `);
+}
+
+function brandKey(name: string): string {
+  return name
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
 export function normalizeUrlForComparison(input: string): string {
   try {
     const url = new URL(input);
@@ -99,6 +147,7 @@ Return JSON: { "brands": ["Brand A", "Brand B"] }
 Rules:
 - Only include actual company/brand names (e.g. "Garden of Life", "Ritual", "Athletic Greens")
 - Do NOT include generic ingredients, nutrients, or concepts (e.g. "Spirulina", "Vitamin D", "Probiotics")
+- Do NOT include publishers, social networks, review platforms, or other cited sources unless they directly compete with the tracked brand
 - Do NOT include the brand "${brandName}"
 - If no brand names appear, return { "brands": [] }`,
       },

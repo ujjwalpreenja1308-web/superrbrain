@@ -1,5 +1,7 @@
 import { Client } from "@upstash/workflow";
-import { requireEnv } from "./env.js";
+import { isLocalDevBypassEnabled, requireEnv } from "./env.js";
+import { runBrandOnboarding } from "../services/onboard-brand.service.js";
+import { runMonitoringPipeline } from "../services/run-monitoring.service.js";
 
 export const ONBOARD_BRAND_WORKFLOW_PATH = "/workflows/onboard-brand";
 export const RUN_MONITORING_WORKFLOW_PATH = "/workflows/run-monitoring";
@@ -25,6 +27,12 @@ export function getRunMonitoringWorkflowUrl(): string {
 }
 
 export async function dispatchBrandOnboarding(brandId: string) {
+  if (isLocalDevBypassEnabled()) {
+    void runBrandOnboarding(brandId).catch((error) =>
+      console.error("Local brand onboarding failed:", error),
+    );
+    return;
+  }
   return getWorkflowClient().trigger({
     url: getOnboardBrandWorkflowUrl(),
     body: { brandId },
@@ -34,6 +42,12 @@ export async function dispatchBrandOnboarding(brandId: string) {
 }
 
 export async function dispatchMonitoringRun(brandId: string, runId: string) {
+  if (isLocalDevBypassEnabled()) {
+    void runMonitoringPipeline(brandId, runId).catch((error) =>
+      console.error("Local monitoring run failed:", error),
+    );
+    return;
+  }
   return getWorkflowClient().trigger({
     url: getRunMonitoringWorkflowUrl(),
     body: { brandId, runId },

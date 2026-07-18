@@ -5,6 +5,7 @@ const TRIGGER_URL = `https://api.brightdata.com/datasets/v3/trigger?dataset_id=$
 const SNAPSHOT_BASE_URL = "https://api.brightdata.com/datasets/v3";
 const SNAPSHOT_POLL_INTERVAL_MS = 5_000;
 const SNAPSHOT_TIMEOUT_MS = 10 * 60_000;
+const BATCH_SIZE = 3;
 
 export interface BrightDataResult {
   text: string;
@@ -29,6 +30,14 @@ interface BrightDataRecord {
 interface BrightDataProgress {
   status?: string;
   error?: string;
+}
+
+export function chunkBrightDataInputs<T>(inputs: T[]): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < inputs.length; index += BATCH_SIZE) {
+    chunks.push(inputs.slice(index, index + BATCH_SIZE));
+  }
+  return chunks;
 }
 
 /**

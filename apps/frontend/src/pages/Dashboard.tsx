@@ -8,6 +8,7 @@ import { ErrorCard } from "@/components/ErrorCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { useBrand, useRunMonitoring } from "@/hooks/useBrand";
 import { useCitations, useGaps, useReport } from "@/hooks/useReport";
 import {
@@ -58,10 +59,12 @@ function DashboardSkeleton() {
 
 function FirstRunPanel({
   status,
+  progress,
   onRun,
   isStarting,
 }: {
   status: string;
+  progress?: { completed: number; total: number };
   onRun: () => void;
   isStarting: boolean;
 }) {
@@ -82,9 +85,18 @@ function FirstRunPanel({
         </h2>
         <p className="mx-auto mb-6 max-w-sm text-sm leading-6 text-muted-foreground">
           {isWorking
-            ? "We are preparing prompts, firing them at AI search, and collecting the citations that shape your visibility."
+            ? progress?.total
+              ? `${progress.completed} of ${progress.total} AI responses complete.`
+              : "We are preparing prompts, firing them at AI search, and collecting the citations that shape your visibility."
             : "Run your first AI visibility scan to populate scores, competitors, citations, and opportunities."}
         </p>
+        {isWorking && progress?.total ? (
+          <Progress
+            value={(progress.completed / progress.total) * 100}
+            aria-label={`${progress.completed} of ${progress.total} AI responses complete`}
+            className="mb-6"
+          />
+        ) : null}
         <div className="mb-6 grid grid-cols-3 gap-2 text-[11px]">
           {["Prompts", "AI responses", "Citation map"].map((label, index) => (
             <div
@@ -235,7 +247,12 @@ export function Dashboard() {
           className="h-8 text-xs"
         >
           {isRunning ? (
-            <><Loader2 className="size-3.5 animate-spin" /> Running...</>
+            <>
+              <Loader2 className="size-3.5 animate-spin" /> Running
+              {activeBrandDetail.monitoring_progress?.total
+                ? ` ${activeBrandDetail.monitoring_progress.completed}/${activeBrandDetail.monitoring_progress.total}`
+                : "..."}
+            </>
           ) : (
             <><RefreshCw className="size-3.5" /> Re-run</>
           )}
@@ -272,7 +289,7 @@ export function Dashboard() {
       </div>
 
       {/* Error state */}
-      {(citError || gapError || reportError) && (
+      {!isRunning && (citError || gapError || reportError) && (
         <div className="shrink-0">
           <ErrorCard
             message="Some data failed to load."
@@ -312,6 +329,7 @@ export function Dashboard() {
       ) : (
         <FirstRunPanel
           status={activeBrandDetail.status}
+          progress={activeBrandDetail.monitoring_progress}
           onRun={() => runMonitoring.mutate()}
           isStarting={runMonitoring.isPending}
         />

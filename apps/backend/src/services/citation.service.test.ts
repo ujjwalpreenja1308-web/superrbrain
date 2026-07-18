@@ -3,6 +3,7 @@ import {
   buildCitationRows,
   enrichCitation,
   mergeBrandMentions,
+  normalizeCompetitorMentions,
   normalizeUrlForComparison,
   shouldIncludeCitationMapSource,
 } from "./citation.service.js";
@@ -74,6 +75,30 @@ describe("citation helpers", () => {
     ).toEqual([
       { name: "Superbrain", frequency: 2 },
       { name: "Acme", frequency: 1 },
+    ]);
+  });
+
+  it("normalizes competitor aliases and counts each response mention once", () => {
+    expect(
+      normalizeCompetitorMentions(
+        [
+          { name: "SG" },
+          { name: "SG (Sareen Sports)" },
+          { name: "New Balance" },
+          { name: "Gray‑Nicolls" },
+          { name: "Tramboo" },
+        ],
+        [
+          { name: "SG (Sareen Sports)" },
+          { name: "New Balance Cricket" },
+          { name: "Gray-Nicolls" },
+        ],
+        "Tramboo Sports",
+      ),
+    ).toEqual([
+      { name: "SG (Sareen Sports)", position: null },
+      { name: "New Balance Cricket", position: null },
+      { name: "Gray-Nicolls", position: null },
     ]);
   });
 });
